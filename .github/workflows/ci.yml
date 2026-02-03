@@ -32,4 +32,4 @@ jobs:
         
       - name: Run tests
         working-directory: packages/cli
-        run: pnpm test -- --run
+        run: pnpm exec vitest run
