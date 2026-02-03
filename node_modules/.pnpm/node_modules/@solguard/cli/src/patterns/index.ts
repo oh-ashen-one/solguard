@@ -12,6 +12,10 @@ import { checkRoundingErrors } from './rounding.js';
 import { checkAccountConfusion } from './account-confusion.js';
 import { checkClosingVulnerabilities } from './closing-account.js';
 import { checkReentrancyRisk } from './reentrancy.js';
+import { checkArbitraryCpi } from './arbitrary-cpi.js';
+import { checkDuplicateMutable } from './duplicate-mutable.js';
+import { checkRentExemption } from './rent-check.js';
+import { checkTypeCosplay } from './type-cosplay.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -93,6 +97,30 @@ const patterns: Pattern[] = [
     name: 'Cross-Program Reentrancy',
     severity: 'high',
     run: checkReentrancyRisk,
+  },
+  {
+    id: 'SOL012',
+    name: 'Arbitrary CPI',
+    severity: 'critical',
+    run: checkArbitraryCpi,
+  },
+  {
+    id: 'SOL013',
+    name: 'Duplicate Mutable Accounts',
+    severity: 'high',
+    run: checkDuplicateMutable,
+  },
+  {
+    id: 'SOL014',
+    name: 'Missing Rent Exemption',
+    severity: 'medium',
+    run: checkRentExemption,
+  },
+  {
+    id: 'SOL015',
+    name: 'Type Cosplay',
+    severity: 'critical',
+    run: checkTypeCosplay,
   },
 ];
 

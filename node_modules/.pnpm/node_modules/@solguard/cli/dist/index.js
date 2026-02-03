@@ -2,7 +2,7 @@
 import {
   listPatterns,
   runPatterns
-} from "./chunk-BD477S7T.js";
+} from "./chunk-YO5RPWWK.js";
 import {
   parseIdl
 } from "./chunk-HWAQQY7Q.js";
@@ -601,7 +601,7 @@ async function certificateCommand(path, options) {
     };
     try {
       const { parseRustFiles: parseRustFiles2 } = await import("./rust-LZBLPUB7.js");
-      const { runPatterns: runPatterns2 } = await import("./patterns-53OEOY4Y.js");
+      const { runPatterns: runPatterns2 } = await import("./patterns-7NVPT5DP.js");
       const { existsSync: existsSync4, statSync: statSync3, readdirSync: readdirSync3 } = await import("fs");
       if (!existsSync4(path)) {
         throw new Error(`Path not found: ${path}`);
