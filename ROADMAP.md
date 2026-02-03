@@ -7,7 +7,7 @@ Where we're heading after the hackathon.
 ## Phase 1: Hackathon (Current) ✅
 
 - [x] 130 vulnerability patterns
-- [x] CLI with 7 commands
+- [x] CLI with 16 commands
 - [x] Web UI
 - [x] API endpoint
 - [x] Anchor program (registry, disputes, profiles)

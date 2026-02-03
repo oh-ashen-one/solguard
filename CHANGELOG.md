@@ -49,7 +49,7 @@ All notable changes to SolGuard during the hackathon.
   - DeFi Patterns (oracles, flash loans, sandwiches)
   - NFT Patterns (Metaplex, royalties)
   - Advanced (type cosplay, denial of service)
-- **CLI** with 7 commands
+- **CLI** with 16 commands
   - `audit` - Audit local programs
   - `fetch` - Fetch and audit on-chain programs
   - `github` - Audit GitHub repos/PRs

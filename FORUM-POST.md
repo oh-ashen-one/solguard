@@ -47,7 +47,7 @@ Full list: [patterns page](https://github.com/oh-ashen-one/solguard/blob/main/pa
 ```
 📊 Stats
 ├── 130 vulnerability patterns
-├── 7 CLI commands (audit, fetch, github, watch, ci, stats, list)
+├── 16 CLI commands (audit, score, badge, fetch, github, watch, ci, compare, etc.)
 ├── 19 tests (all passing)
 ├── ~15,000 lines of TypeScript
 └── Full Anchor program for on-chain registry
