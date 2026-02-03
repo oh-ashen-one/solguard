@@ -56,6 +56,11 @@ import { checkClockDependency } from './clock-dependency.js';
 import { checkAccountOrder } from './account-order.js';
 import { checkSerialization } from './serialization.js';
 import { checkProgramId } from './program-id.js';
+import { checkAuthorityTransfer } from './authority-transfer.js';
+import { checkFeeHandling } from './fee-handling.js';
+import { checkPauseMechanism } from './pause-mechanism.js';
+import { checkWithdrawPattern } from './withdraw-pattern.js';
+import { checkInitializationFrontrun } from './initialization-frontrun.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -401,6 +406,36 @@ const patterns: Pattern[] = [
     name: 'Program ID Vulnerability',
     severity: 'critical',
     run: checkProgramId,
+  },
+  {
+    id: 'SOL056',
+    name: 'Authority Transfer Vulnerability',
+    severity: 'medium',
+    run: checkAuthorityTransfer,
+  },
+  {
+    id: 'SOL057',
+    name: 'Fee Handling Vulnerability',
+    severity: 'high',
+    run: checkFeeHandling,
+  },
+  {
+    id: 'SOL058',
+    name: 'Pause Mechanism Issue',
+    severity: 'medium',
+    run: checkPauseMechanism,
+  },
+  {
+    id: 'SOL059',
+    name: 'Withdrawal Pattern Issue',
+    severity: 'critical',
+    run: checkWithdrawPattern,
+  },
+  {
+    id: 'SOL060',
+    name: 'Initialization Frontrunning',
+    severity: 'critical',
+    run: checkInitializationFrontrun,
   },
 ];
 

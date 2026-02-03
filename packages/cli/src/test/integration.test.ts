@@ -7,15 +7,15 @@ import { describe, it, expect } from 'vitest';
 
 describe('CLI Integration', () => {
   describe('pattern registry', () => {
-    it('has all 55 patterns registered', async () => {
+    it('has all 60 patterns registered', async () => {
       const { listPatterns } = await import('../patterns/index.js');
       const patterns = listPatterns();
       
-      expect(patterns.length).toBe(55);
+      expect(patterns.length).toBe(60);
       
       // Check all pattern IDs exist
       const ids = patterns.map(p => p.id);
-      for (let i = 1; i <= 55; i++) {
+      for (let i = 1; i <= 60; i++) {
         const expectedId = `SOL${String(i).padStart(3, '0')}`;
         expect(ids).toContain(expectedId);
       }
