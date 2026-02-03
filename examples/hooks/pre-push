@@ -1,0 +1,20 @@
+#!/bin/sh
+# SolGuard Pre-Push Hook
+# Add to .git/hooks/pre-push to audit before pushing
+
+echo "🛡️ Running SolGuard full audit before push..."
+
+# Run full audit with report
+solguard audit . --output terminal
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Critical security issues found!"
+    echo "   Fix issues before pushing to remote."
+    echo "   Use 'git push --no-verify' to bypass (not recommended)."
+    exit 1
+fi
+
+echo ""
+echo "✅ All security checks passed! Pushing..."
+exit 0
