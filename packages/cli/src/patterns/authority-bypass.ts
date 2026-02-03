@@ -36,22 +36,25 @@ export function checkAuthorityBypass(input: PatternInput): Finding[] {
       if (fnMatch) {
         // Check previous function if it was sensitive without auth check
         if (inFunction && isSensitiveOperation && !hasAuthorityCheck) {
-          findings.push({
-            id: `SOL005-${counter++}`,
-            pattern: 'authority-bypass',
-            severity: 'critical',
-            title: `Function '${functionName}' may lack authority verification`,
-            description: `The function '${functionName}' performs sensitive operations but doesn't appear to verify authority before execution. An attacker could potentially call this function and bypass intended access controls.`,
-            location: {
-              file: file.path,
-              line: functionStart,
-            },
-            suggestion: `Add authority verification at the start of the function:
+          // Skip initialize functions - they create accounts, not modify existing ones
+          if (!/^init|initialize|create|new/i.test(functionName)) {
+            findings.push({
+              id: `SOL005-${counter++}`,
+              pattern: 'authority-bypass',
+              severity: 'critical',
+              title: `Function '${functionName}' may lack authority verification`,
+              description: `The function '${functionName}' performs sensitive operations but doesn't appear to verify authority before execution. An attacker could potentially call this function and bypass intended access controls.`,
+              location: {
+                file: file.path,
+                line: functionStart,
+              },
+              suggestion: `Add authority verification at the start of the function:
 require!(ctx.accounts.authority.key() == expected_authority, ErrorCode::Unauthorized);
 
 Or use Anchor's has_one constraint:
 #[account(has_one = authority)]`,
-          });
+            });
+          }
         }
         
         inFunction = true;
@@ -68,8 +71,8 @@ Or use Anchor's has_one constraint:
       
       // Detect function end
       if (inFunction && braceDepth <= 0 && line.includes('}')) {
-        // Check this function
-        if (isSensitiveOperation && !hasAuthorityCheck) {
+        // Check this function (skip initialize functions)
+        if (isSensitiveOperation && !hasAuthorityCheck && !/^init|initialize|create|new/i.test(functionName)) {
           findings.push({
             id: `SOL005-${counter++}`,
             pattern: 'authority-bypass',
@@ -121,10 +124,14 @@ Or use Anchor's has_one constraint:
         /require!\s*\([^)]*authority/i,
         /require!\s*\([^)]*admin/i,
         /require!\s*\([^)]*owner/i,
+        /require_keys_eq!/,  // Anchor's key comparison macro
         /\.key\(\)\s*==\s*.*authority/,
         /has_one\s*=\s*authority/,
+        /has_one\s*=\s*owner/,
+        /has_one\s*=\s*admin/,
         /constraint\s*=.*authority/,
-        /Signer<'info>/,  // If authority is a Signer, it's checked
+        /Signer<'info>/,  // If authority is a Signer, it's implicitly checked
+        /authority:\s*Signer/,  // Authority declared as Signer in struct
       ];
       
       for (const pattern of authCheckPatterns) {
@@ -132,6 +139,12 @@ Or use Anchor's has_one constraint:
           hasAuthorityCheck = true;
           break;
         }
+      }
+      
+      // Also check if we're in a struct that has has_one constraint
+      // (these get executed before the function body)
+      if (/has_one\s*=/.test(line) || /constraint\s*=.*==/.test(line)) {
+        hasAuthorityCheck = true;
       }
     }
   }

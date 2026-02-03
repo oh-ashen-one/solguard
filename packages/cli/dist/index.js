@@ -106,19 +106,39 @@ function findUncheckedArithmetic(rust) {
 }
 function findMissingOwnerChecks(rust) {
   const results = [];
-  const accountPattern = /pub\s+(\w+):\s*Account<'info,\s*(\w+)>/g;
-  const ownerPattern = /#\[account\([^)]*owner\s*=/;
+  const externalAccountTypes = ["TokenAccount", "Mint", "AssociatedTokenAccount"];
   for (const file of rust.files) {
     const content = file.content;
-    const matches = content.matchAll(accountPattern);
+    for (const extType of externalAccountTypes) {
+      const pattern = new RegExp(`pub\\s+(\\w+):\\s*Account<'info,\\s*${extType}>`, "g");
+      const ownerPattern = /#\[account\([^)]*(?:owner|token::authority|associated_token::authority)\s*=/;
+      const matches2 = content.matchAll(pattern);
+      for (const match of matches2) {
+        const lineIndex = content.substring(0, match.index).split("\n").length - 1;
+        const precedingLines = file.lines.slice(Math.max(0, lineIndex - 5), lineIndex + 1).join("\n");
+        if (!ownerPattern.test(precedingLines)) {
+          results.push({
+            file: file.path,
+            line: lineIndex + 1,
+            account: match[1]
+          });
+        }
+      }
+    }
+    const accountInfoPattern = /pub\s+(\w+):\s*(?:UncheckedAccount|AccountInfo)<'info>/g;
+    const matches = content.matchAll(accountInfoPattern);
     for (const match of matches) {
       const lineIndex = content.substring(0, match.index).split("\n").length - 1;
-      const precedingLines = file.lines.slice(Math.max(0, lineIndex - 5), lineIndex + 1).join("\n");
-      if (!ownerPattern.test(precedingLines)) {
+      const accountName = match[1];
+      const precedingLines = file.lines.slice(Math.max(0, lineIndex - 3), lineIndex + 1).join("\n");
+      if (/\/\/\/?\s*CHECK:/.test(precedingLines)) continue;
+      if (/system_program|rent|clock|token_program|associated_token_program/i.test(accountName)) continue;
+      const ownerCheckPattern = new RegExp(`${accountName}\\s*\\.\\s*owner|owner.*${accountName}|require.*${accountName}.*owner`, "i");
+      if (!ownerCheckPattern.test(content)) {
         results.push({
           file: file.path,
           line: lineIndex + 1,
-          account: match[1]
+          account: accountName
         });
       }
     }
@@ -360,22 +380,24 @@ function checkAuthorityBypass(input) {
       const fnMatch = line.match(/pub\s+fn\s+(\w+)/);
       if (fnMatch) {
         if (inFunction && isSensitiveOperation && !hasAuthorityCheck) {
-          findings.push({
-            id: `SOL005-${counter++}`,
-            pattern: "authority-bypass",
-            severity: "critical",
-            title: `Function '${functionName}' may lack authority verification`,
-            description: `The function '${functionName}' performs sensitive operations but doesn't appear to verify authority before execution. An attacker could potentially call this function and bypass intended access controls.`,
-            location: {
-              file: file.path,
-              line: functionStart
-            },
-            suggestion: `Add authority verification at the start of the function:
+          if (!/^init|initialize|create|new/i.test(functionName)) {
+            findings.push({
+              id: `SOL005-${counter++}`,
+              pattern: "authority-bypass",
+              severity: "critical",
+              title: `Function '${functionName}' may lack authority verification`,
+              description: `The function '${functionName}' performs sensitive operations but doesn't appear to verify authority before execution. An attacker could potentially call this function and bypass intended access controls.`,
+              location: {
+                file: file.path,
+                line: functionStart
+              },
+              suggestion: `Add authority verification at the start of the function:
 require!(ctx.accounts.authority.key() == expected_authority, ErrorCode::Unauthorized);
 
 Or use Anchor's has_one constraint:
 #[account(has_one = authority)]`
-          });
+            });
+          }
         }
         inFunction = true;
         functionName = fnMatch[1];
@@ -387,7 +409,7 @@ Or use Anchor's has_one constraint:
       braceDepth += (line.match(/{/g) || []).length;
       braceDepth -= (line.match(/}/g) || []).length;
       if (inFunction && braceDepth <= 0 && line.includes("}")) {
-        if (isSensitiveOperation && !hasAuthorityCheck) {
+        if (isSensitiveOperation && !hasAuthorityCheck && !/^init|initialize|create|new/i.test(functionName)) {
           findings.push({
             id: `SOL005-${counter++}`,
             pattern: "authority-bypass",
@@ -446,17 +468,26 @@ Or use Anchor's has_one constraint:
         /require!\s*\([^)]*authority/i,
         /require!\s*\([^)]*admin/i,
         /require!\s*\([^)]*owner/i,
+        /require_keys_eq!/,
+        // Anchor's key comparison macro
         /\.key\(\)\s*==\s*.*authority/,
         /has_one\s*=\s*authority/,
+        /has_one\s*=\s*owner/,
+        /has_one\s*=\s*admin/,
         /constraint\s*=.*authority/,
-        /Signer<'info>/
-        // If authority is a Signer, it's checked
+        /Signer<'info>/,
+        // If authority is a Signer, it's implicitly checked
+        /authority:\s*Signer/
+        // Authority declared as Signer in struct
       ];
       for (const pattern of authCheckPatterns) {
         if (pattern.test(line)) {
           hasAuthorityCheck = true;
           break;
         }
+      }
+      if (/has_one\s*=/.test(line) || /constraint\s*=.*==/.test(line)) {
+        hasAuthorityCheck = true;
       }
     }
   }
@@ -471,79 +502,9 @@ function checkMissingInitCheck(input) {
   let counter = 1;
   for (const file of rust.files) {
     const lines = file.content.split("\n");
-    let inAccountStruct = false;
-    let structName = "";
-    let accounts = [];
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const lineNum = i + 1;
-      if (line.includes("#[derive(Accounts)]")) {
-        inAccountStruct = true;
-        accounts = [];
-        continue;
-      }
-      if (inAccountStruct && line.includes("struct")) {
-        const match = line.match(/struct\s+(\w+)/);
-        if (match) {
-          structName = match[1];
-        }
-        continue;
-      }
-      if (inAccountStruct) {
-        const hasInitConstraint = /\binit\b/.test(lines.slice(Math.max(0, i - 3), i + 1).join("\n"));
-        const hasInitIfNeeded = /init_if_needed/.test(lines.slice(Math.max(0, i - 3), i + 1).join("\n"));
-        const accountMatch = line.match(/pub\s+(\w+):\s*Account<'info,\s*(\w+)>/);
-        if (accountMatch) {
-          const [, accountName, accountType] = accountMatch;
-          const context = lines.slice(Math.max(0, i - 5), Math.min(lines.length, i + 5)).join("\n");
-          const hasInitCheck = /is_initialized|initialized\s*==\s*true|\.initialized/.test(context);
-          accounts.push({
-            name: accountName,
-            line: lineNum,
-            hasInitCheck: hasInitCheck || hasInitConstraint,
-            hasInitConstraint: hasInitConstraint || hasInitIfNeeded
-          });
-        }
-        if (line.includes("}") && !line.includes("{")) {
-          for (const account of accounts) {
-            if (!account.hasInitCheck && !account.hasInitConstraint) {
-              const laterContent = lines.slice(i).join("\n");
-              const usedWithoutCheck = new RegExp(`${account.name}\\s*\\.`).test(laterContent) && !new RegExp(`${account.name}.*is_initialized`).test(laterContent);
-              if (usedWithoutCheck) {
-                findings.push({
-                  id: `SOL006-${counter++}`,
-                  pattern: "missing-init-check",
-                  severity: "critical",
-                  title: `Account '${account.name}' may lack initialization verification`,
-                  description: `The account '${account.name}' in '${structName}' is used without verifying it has been initialized. An attacker could pass an uninitialized account with arbitrary data, potentially leading to undefined behavior or exploits. This is the same vulnerability class that caused the $320M Wormhole hack.`,
-                  location: {
-                    file: file.path,
-                    line: account.line
-                  },
-                  code: `pub ${account.name}: Account<'info, ...>`,
-                  suggestion: `Add initialization verification:
-
-Option 1 - Add is_initialized field to your account struct:
-#[account]
-pub struct YourAccount {
-    pub is_initialized: bool,
-    // ... other fields
-}
-
-Then check it:
-require!(ctx.accounts.${account.name}.is_initialized, ErrorCode::NotInitialized);
-
-Option 2 - Use Anchor's init constraint for new accounts:
-#[account(init, payer = user, space = 8 + size)]
-pub ${account.name}: Account<'info, YourAccount>,`
-                });
-              }
-            }
-          }
-          inAccountStruct = false;
-          accounts = [];
-        }
-      }
       if (line.includes("UncheckedAccount") && !line.includes("/// CHECK:")) {
         const prevLines = lines.slice(Math.max(0, i - 3), i).join("\n");
         if (!prevLines.includes("/// CHECK:") && !prevLines.includes("// CHECK:")) {

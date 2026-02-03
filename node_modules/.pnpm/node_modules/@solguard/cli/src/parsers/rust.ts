@@ -152,25 +152,57 @@ export function findUncheckedArithmetic(rust: ParsedRust): { file: string; line:
 export function findMissingOwnerChecks(rust: ParsedRust): { file: string; line: number; account: string }[] {
   const results: { file: string; line: number; account: string }[] = [];
   
-  // Look for Account<'info, T> without owner constraint
-  const accountPattern = /pub\s+(\w+):\s*Account<'info,\s*(\w+)>/g;
-  const ownerPattern = /#\[account\([^)]*owner\s*=/;
+  // NOTE: Anchor's Account<'info, T> already validates ownership for #[account] types.
+  // We only flag AccountInfo<'info> used without manual owner verification,
+  // or external types like TokenAccount that need explicit owner constraints.
+  
+  const externalAccountTypes = ['TokenAccount', 'Mint', 'AssociatedTokenAccount'];
   
   for (const file of rust.files) {
     const content = file.content;
-    const matches = content.matchAll(accountPattern);
+    
+    // Check for external account types without owner constraint
+    for (const extType of externalAccountTypes) {
+      const pattern = new RegExp(`pub\\s+(\\w+):\\s*Account<'info,\\s*${extType}>`, 'g');
+      const ownerPattern = /#\[account\([^)]*(?:owner|token::authority|associated_token::authority)\s*=/;
+      
+      const matches = content.matchAll(pattern);
+      for (const match of matches) {
+        const lineIndex = content.substring(0, match.index).split('\n').length - 1;
+        const precedingLines = file.lines.slice(Math.max(0, lineIndex - 5), lineIndex + 1).join('\n');
+        
+        if (!ownerPattern.test(precedingLines)) {
+          results.push({
+            file: file.path,
+            line: lineIndex + 1,
+            account: match[1],
+          });
+        }
+      }
+    }
+    
+    // Check for raw AccountInfo without owner verification in the function body
+    const accountInfoPattern = /pub\s+(\w+):\s*(?:UncheckedAccount|AccountInfo)<'info>/g;
+    const matches = content.matchAll(accountInfoPattern);
     
     for (const match of matches) {
       const lineIndex = content.substring(0, match.index).split('\n').length - 1;
+      const accountName = match[1];
       
-      // Look back for #[account(...)] with owner constraint
-      const precedingLines = file.lines.slice(Math.max(0, lineIndex - 5), lineIndex + 1).join('\n');
+      // Skip if it has a CHECK comment (intentionally unchecked)
+      const precedingLines = file.lines.slice(Math.max(0, lineIndex - 3), lineIndex + 1).join('\n');
+      if (/\/\/\/?\s*CHECK:/.test(precedingLines)) continue;
       
-      if (!ownerPattern.test(precedingLines)) {
+      // Skip system accounts that don't need owner checks
+      if (/system_program|rent|clock|token_program|associated_token_program/i.test(accountName)) continue;
+      
+      // Look for owner verification in the file
+      const ownerCheckPattern = new RegExp(`${accountName}\\s*\\.\\s*owner|owner.*${accountName}|require.*${accountName}.*owner`, 'i');
+      if (!ownerCheckPattern.test(content)) {
         results.push({
           file: file.path,
           line: lineIndex + 1,
-          account: match[1],
+          account: accountName,
         });
       }
     }
