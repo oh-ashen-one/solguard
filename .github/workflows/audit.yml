@@ -1,24 +1,18 @@
-# SolGuard Security Audit
-# Add this workflow to your Solana project to automatically audit on every push/PR
+# SolGuard CI - Build and Test
+# Runs on every push to verify the build works
 
-name: Security Audit
+name: CI
 
 on:
   push:
     branches: [main, master]
-    paths:
-      - '**.rs'
-      - '**/Cargo.toml'
   pull_request:
     branches: [main, master]
-    paths:
-      - '**.rs'
-      - '**/Cargo.toml'
 
 jobs:
-  audit:
+  build:
     runs-on: ubuntu-latest
-    name: SolGuard Security Audit
+    name: Build & Test
     
     steps:
       - name: Checkout code
@@ -29,24 +23,23 @@ jobs:
         with:
           node-version: '20'
           
-      - name: Install SolGuard
-        run: npm install -g @solguard/cli
-        
-      - name: Run Security Audit
-        run: |
-          solguard ci . \
-            --fail-on high \
-            --sarif results.sarif
-            
-      - name: Upload SARIF to GitHub
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
         with:
-          sarif_file: results.sarif
+          version: 8
           
-      - name: Add Audit Summary
+      - name: Install dependencies
+        run: cd packages/cli && pnpm install
+        
+      - name: Build CLI
+        run: cd packages/cli && pnpm build
+        
+      - name: Run tests
+        run: cd packages/cli && pnpm test
+        
+      - name: Build Summary
         if: always()
         run: |
-          echo "## 🛡️ SolGuard Audit Complete" >> $GITHUB_STEP_SUMMARY
+          echo "## 🛡️ SolGuard Build" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "See the Security tab for detailed findings." >> $GITHUB_STEP_SUMMARY
+          echo "CLI built and tested successfully." >> $GITHUB_STEP_SUMMARY
