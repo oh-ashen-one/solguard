@@ -736,76 +736,83 @@ function checkAccountConfusion(input) {
   for (const file of rust.files) {
     const lines = file.content.split("\n");
     const content = file.content;
-    const accountPattern = /pub\s+(\w+):\s*(Account|AccountInfo|UncheckedAccount)<'info(?:,\s*(\w+))?>/g;
-    const accounts = [];
-    let match;
-    while ((match = accountPattern.exec(content)) !== null) {
-      const lineNum = content.substring(0, match.index).split("\n").length;
-      accounts.push({
-        name: match[1],
-        type: match[2],
-        dataType: match[3],
-        line: lineNum
-      });
-    }
-    for (let i = 0; i < accounts.length; i++) {
-      for (let j = i + 1; j < accounts.length; j++) {
-        const a = accounts[i];
-        const b = accounts[j];
-        if (a.dataType && a.dataType === b.dataType && a.type === "Account") {
-          const hasDiscrimination = new RegExp(
-            `(${a.name}|${b.name}).*!=.*(${a.name}|${b.name})|require.*${a.name}.*${b.name}|constraint.*${a.name}.*!=.*${b.name}`
-          ).test(content);
-          if (!hasDiscrimination) {
-            findings.push({
-              id: `SOL009-${counter++}`,
-              pattern: "account-confusion",
-              severity: "high",
-              title: `Accounts '${a.name}' and '${b.name}' may be confusable`,
-              description: `Both '${a.name}' and '${b.name}' are of type ${a.dataType}. An attacker might pass the same account for both, or swap them, leading to unexpected behavior. This is especially dangerous in transfer/swap operations.`,
-              location: {
-                file: file.path,
-                line: a.line
-              },
-              suggestion: `Add constraints to ensure accounts are different:
+    const structPattern = /#\[derive\(Accounts\)\]\s*pub\s+struct\s+(\w+)[^{]*\{([^}]+)\}/g;
+    let structMatch;
+    while ((structMatch = structPattern.exec(content)) !== null) {
+      const structName = structMatch[1];
+      const structBody = structMatch[2];
+      const structStartLine = content.substring(0, structMatch.index).split("\n").length;
+      const accountPattern = /pub\s+(\w+):\s*Account<'info,\s*(\w+)>/g;
+      const accounts = [];
+      let accountMatch;
+      while ((accountMatch = accountPattern.exec(structBody)) !== null) {
+        const lineOffset = structBody.substring(0, accountMatch.index).split("\n").length;
+        accounts.push({
+          name: accountMatch[1],
+          dataType: accountMatch[2],
+          line: structStartLine + lineOffset
+        });
+      }
+      for (let i = 0; i < accounts.length; i++) {
+        for (let j = i + 1; j < accounts.length; j++) {
+          const a = accounts[i];
+          const b = accounts[j];
+          if (a.dataType === b.dataType && a.name !== b.name) {
+            const hasDiscrimination = new RegExp(
+              `${a.name}.*!=.*${b.name}|${b.name}.*!=.*${a.name}|constraint.*${a.name}.*${b.name}|constraint.*${b.name}.*${a.name}`
+            ).test(structBody);
+            if (!hasDiscrimination) {
+              findings.push({
+                id: `SOL009-${counter++}`,
+                pattern: "account-confusion",
+                severity: "high",
+                title: `Accounts '${a.name}' and '${b.name}' in '${structName}' may be confusable`,
+                description: `Both '${a.name}' and '${b.name}' are of type ${a.dataType} within the same instruction context. An attacker might pass the same account for both, or swap them, leading to unexpected behavior. This is especially dangerous in transfer/swap operations.`,
+                location: {
+                  file: file.path,
+                  line: a.line
+                },
+                suggestion: `Add constraints to ensure accounts are different:
 #[account(
     constraint = ${a.name}.key() != ${b.name}.key() @ ErrorCode::SameAccount
 )]
 
 Or use different account types/discriminators for different purposes.`
-            });
+              });
+            }
           }
         }
       }
     }
-    for (const account of accounts) {
-      if (account.type === "AccountInfo" || account.type === "UncheckedAccount") {
-        if (/system_program|rent|clock|token_program|^_/.test(account.name)) continue;
-        const lineContent = lines[account.line - 1] || "";
-        const prevLines = lines.slice(Math.max(0, account.line - 4), account.line).join("\n");
-        if (!prevLines.includes("CHECK:")) {
-          const usagePattern = new RegExp(`${account.name}\\s*\\.\\s*(data|try_borrow_data|deserialize)`);
-          if (usagePattern.test(content)) {
-            findings.push({
-              id: `SOL009-${counter++}`,
-              pattern: "untyped-account-data-access",
-              severity: "high",
-              title: `Untyped account '${account.name}' has data accessed`,
-              description: `The account '${account.name}' is declared as ${account.type} but its data is accessed. Without type validation, an attacker could pass any account with arbitrary data, potentially bypassing security checks.`,
-              location: {
-                file: file.path,
-                line: account.line
-              },
-              code: lineContent.trim(),
-              suggestion: `Use a typed Account instead:
-pub ${account.name}: Account<'info, YourDataType>,
+    const accountInfoPattern = /pub\s+(\w+):\s*(AccountInfo|UncheckedAccount)<'info>/g;
+    let aiMatch;
+    while ((aiMatch = accountInfoPattern.exec(content)) !== null) {
+      const accountName = aiMatch[1];
+      const accountType = aiMatch[2];
+      const lineNum = content.substring(0, aiMatch.index).split("\n").length;
+      if (/system_program|rent|clock|token_program|^_/.test(accountName)) continue;
+      const prevLines = lines.slice(Math.max(0, lineNum - 4), lineNum).join("\n");
+      if (prevLines.includes("CHECK:")) continue;
+      const usagePattern = new RegExp(`${accountName}\\s*\\.\\s*(data|try_borrow_data|deserialize)`);
+      if (usagePattern.test(content)) {
+        findings.push({
+          id: `SOL009-${counter++}`,
+          pattern: "untyped-account-data-access",
+          severity: "high",
+          title: `Untyped account '${accountName}' has data accessed`,
+          description: `The account '${accountName}' is declared as ${accountType} but its data is accessed. Without type validation, an attacker could pass any account with arbitrary data, potentially bypassing security checks.`,
+          location: {
+            file: file.path,
+            line: lineNum
+          },
+          code: lines[lineNum - 1]?.trim() || "",
+          suggestion: `Use a typed Account instead:
+pub ${accountName}: Account<'info, YourDataType>,
 
 Or manually validate the account discriminator:
-let data = ${account.name}.try_borrow_data()?;
+let data = ${accountName}.try_borrow_data()?;
 require!(data[..8] == YourDataType::DISCRIMINATOR, ErrorCode::InvalidAccount);`
-            });
-          }
-        }
+        });
       }
     }
   }
