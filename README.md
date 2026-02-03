@@ -244,29 +244,65 @@ require!(audit_passed, ErrorCode::NotAudited);
 ## 📊 Example Output
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  📋 AUDIT REPORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🛡️ SOLGUARD AUDIT REPORT
   ./examples/vulnerable/defi-vault
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   SUMMARY
-    🔴 Critical: 3
-    🟠 High: 17
-    🟡 Medium: 4
-    Total: 24 findings
+    🔴 Critical: 4    🟠 High: 8    🟡 Medium: 3    🔵 Low: 2
+    Total: 17 findings across 12 pattern categories
 
-  ❌ FAILED - Critical or high severity issues found
+  ❌ AUDIT FAILED — Critical issues must be fixed before deployment
 
-  FINDINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  CRITICAL FINDINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  [SOL002-1] CRITICAL: Authority account 'authority' is not a Signer
-  └─ defi-vault/src/lib.rs:71
+  [SOL002] Missing Signer Check
+  └─ src/lib.rs:42 — pub authority: AccountInfo<'info>
+  
+     Authority account lacks Signer constraint. Anyone can call
+     this instruction pretending to be the authority.
+     
+     💡 Fix: pub authority: Signer<'info>
 
-     The account 'authority' appears to be an authority/admin 
-     account but is declared as AccountInfo instead of Signer.
+  [SOL005] Authority Bypass  
+  └─ src/lib.rs:87 — withdraw() has no authority verification
+  
+     Funds can be withdrawn without checking ctx.accounts.authority
+     matches the vault's stored authority pubkey.
+     
+     💡 Fix: require!(authority.key() == vault.authority, Unauthorized)
 
-     💡 Fix: Change to Signer:
-        pub authority: Signer<'info>,
+  [SOL003] Integer Overflow
+  └─ src/lib.rs:91 — vault.balance = vault.balance - amount
+  
+     Unchecked subtraction can underflow if amount > balance,
+     wrapping to a huge number.
+     
+     💡 Fix: vault.balance.checked_sub(amount).ok_or(ErrorCode::Underflow)?
+
+  [SOL012] Arbitrary CPI
+  └─ src/lib.rs:156 — invoke(&ix, &accounts)?
+  
+     Program ID for CPI is taken from user input without validation.
+     Attacker can invoke malicious program.
+     
+     💡 Fix: Hardcode expected program_id or use constraint
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  HIGH SEVERITY (showing 3 of 8)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [SOL004] PDA Validation Gap — Missing bump verification
+  [SOL016] Bump Seed — Using find_program_address in instruction  
+  [SOL018] Oracle Manipulation — Price feed has no staleness check
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Scanned with 130 patterns in 0.34s
+  Run `solguard audit --verbose` for full details
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 ## 🏆 What We Built
