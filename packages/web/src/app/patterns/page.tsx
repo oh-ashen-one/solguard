@@ -136,6 +136,11 @@ const patterns = [
   { id: 'SOL118', name: 'Zero-Copy', severity: 'high', category: 'Anchor' },
   { id: 'SOL119', name: 'Program Upgrade', severity: 'critical', category: 'Program Safety' },
   { id: 'SOL120', name: 'Constraint Combos', severity: 'high', category: 'Anchor' },
+  { id: 'SOL121', name: 'CPI Depth', severity: 'medium', category: 'CPI Security' },
+  { id: 'SOL122', name: 'Close Destination', severity: 'high', category: 'Account Safety' },
+  { id: 'SOL123', name: 'Token Account Close', severity: 'high', category: 'Token Security' },
+  { id: 'SOL124', name: 'Account Data Init', severity: 'high', category: 'Account Safety' },
+  { id: 'SOL125', name: 'Program Signer', severity: 'medium', category: 'PDA Security' },
 ];
 
 const severityColors: Record<string, string> = {
@@ -167,7 +172,7 @@ export default function PatternsPage() {
       <main className="max-w-6xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold mb-2">Vulnerability Patterns</h1>
         <p className="text-zinc-400 mb-8">
-          120 security patterns covering Solana smart contract vulnerabilities
+          125 security patterns covering Solana smart contract vulnerabilities
         </p>
 
         {/* Stats */}
