@@ -8,6 +8,7 @@ import { watchCommand } from './commands/watch.js';
 import { statsCommand } from './commands/stats.js';
 import { auditGithub, formatGithubAuditResult } from './commands/github.js';
 import { ciCommand } from './commands/ci.js';
+import { generateHtmlReport, saveHtmlReport } from './commands/report.js';
 
 const program = new Command();
 
@@ -121,5 +122,98 @@ program
   .option('--sarif <file>', 'Output SARIF report for GitHub Code Scanning')
   .option('--summary <file>', 'Write markdown summary to file')
   .action(ciCommand);
+
+program
+  .command('report')
+  .description('Generate HTML audit report')
+  .argument('<path>', 'Path to program directory')
+  .option('-o, --output <file>', 'Output HTML file', 'solguard-report.html')
+  .option('-n, --name <name>', 'Program name for report')
+  .action(async (path: string, options: any) => {
+    const { existsSync, readdirSync, statSync, readFileSync } = await import('fs');
+    const { join, basename } = await import('path');
+    const { parseRustFiles } = await import('./parsers/rust.js');
+    const { parseIdl } = await import('./parsers/idl.js');
+    const { runPatterns } = await import('./patterns/index.js');
+    
+    if (!existsSync(path)) {
+      console.error(chalk.red(`Path not found: ${path}`));
+      process.exit(1);
+    }
+    
+    const startTime = Date.now();
+    const programName = options.name || basename(path);
+    
+    // Find Rust files
+    function findRustFiles(dir: string): string[] {
+      const files: string[] = [];
+      const scan = (d: string) => {
+        for (const entry of readdirSync(d, { withFileTypes: true })) {
+          const full = join(d, entry.name);
+          if (entry.isDirectory() && !['node_modules', 'target', '.git'].includes(entry.name)) {
+            scan(full);
+          } else if (entry.name.endsWith('.rs')) {
+            files.push(full);
+          }
+        }
+      };
+      scan(dir);
+      return files;
+    }
+    
+    const rustFiles = statSync(path).isDirectory() ? findRustFiles(path) : [path];
+    
+    if (rustFiles.length === 0) {
+      console.error(chalk.red('No Rust files found'));
+      process.exit(1);
+    }
+    
+    console.log(chalk.cyan(`Scanning ${rustFiles.length} files...`));
+    
+    // Parse and audit
+    const parsed = await parseRustFiles(rustFiles);
+    const allFindings: any[] = [];
+    
+    if (parsed && parsed.files) {
+      for (const file of parsed.files) {
+        const findings = await runPatterns({
+          path: file.path,
+          rust: {
+            files: [file],
+            functions: parsed.functions.filter((f: any) => f.file === file.path),
+            structs: parsed.structs.filter((s: any) => s.file === file.path),
+            implBlocks: parsed.implBlocks.filter((i: any) => i.file === file.path),
+            content: file.content,
+          } as any,
+          idl: null,
+        });
+        allFindings.push(...findings);
+      }
+    }
+    
+    const duration = Date.now() - startTime;
+    
+    const summary = {
+      critical: allFindings.filter(f => f.severity === 'critical').length,
+      high: allFindings.filter(f => f.severity === 'high').length,
+      medium: allFindings.filter(f => f.severity === 'medium').length,
+      low: allFindings.filter(f => f.severity === 'low').length,
+      info: allFindings.filter(f => f.severity === 'info').length,
+      total: allFindings.length,
+    };
+    
+    saveHtmlReport({
+      programName,
+      programPath: path,
+      timestamp: new Date().toISOString(),
+      findings: allFindings,
+      summary,
+      passed: summary.critical === 0 && summary.high === 0,
+      duration,
+    }, options.output);
+    
+    console.log(chalk.green(`✓ Report saved to ${options.output}`));
+    console.log(chalk.dim(`  ${summary.total} findings | ${duration}ms`));
+  });
 
 program.parse();
