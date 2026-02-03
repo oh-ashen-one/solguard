@@ -1,7 +1,7 @@
 # 🛡️ SolGuard
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-19%20passing-brightgreen.svg)](#)
+[![CI](https://github.com/oh-ashen-one/solguard/actions/workflows/ci.yml/badge.svg)](https://github.com/oh-ashen-one/solguard/actions/workflows/ci.yml)
 [![Patterns](https://img.shields.io/badge/patterns-130-blue.svg)](#vulnerability-patterns)
 [![Commands](https://img.shields.io/badge/CLI%20commands-7-purple.svg)](#cli)
 [![Built by AI](https://img.shields.io/badge/Built%20by-AI%20Agent%20🤖-ff69b4.svg)](HACKATHON.md)
@@ -324,7 +324,7 @@ require!(audit_passed, ErrorCode::NotAudited);
 - [x] **19 tests** — all passing, CI/CD pipeline
 
 ### 🚀 Roadmap (Post-Hackathon)
-- [ ] Deploy Anchor program to devnet/mainnet
+- [ ] Deploy Anchor program to devnet/mainnet ([deployment guide](DEPLOYMENT.md))
 - [ ] NFT audit certificates via Metaplex
 - [ ] VS Code extension
 - [ ] GitHub App for auto-PR audits

@@ -1,42 +1,71 @@
 # Security Policy
 
+## Supported Versions
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 0.1.x   | ✅ Current (Beta)  |
+
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in SolGuard itself, please report it responsibly:
+SolGuard is a security auditing tool, so we take security seriously. If you discover a vulnerability:
 
-1. **Do NOT** open a public GitHub issue
-2. Email: security@solguard.io (or DM @ashen_one on Twitter)
+### In the SolGuard Tool Itself
+
+1. **DO NOT** open a public issue
+2. Email: security@solguard.dev (or open a private GitHub Security Advisory)
 3. Include:
    - Description of the vulnerability
    - Steps to reproduce
    - Potential impact
    - Suggested fix (if any)
 
-We will respond within 48 hours and work with you to address the issue.
+We will acknowledge within 48 hours and provide a timeline for resolution.
+
+### In the Detection Patterns
+
+If you find that SolGuard:
+- **Misses** a vulnerability (false negative)
+- **Incorrectly flags** safe code (false positive)
+- Has a **pattern that can be bypassed**
+
+Please open a GitHub issue! These help us improve detection accuracy.
 
 ## Scope
 
-This policy applies to:
-- SolGuard CLI (`@solguard/cli`)
-- SolGuard Web UI
-- SolGuard on-chain program
+### In Scope
+- CLI application (`@solguard/cli`)
+- Web UI (`packages/web`)
+- On-chain program (`packages/program`)
+- Detection patterns (`packages/cli/src/patterns/`)
+- API endpoints
 
-## Out of Scope
+### Out of Scope
+- Third-party dependencies (report to upstream)
+- Social engineering attacks
+- Physical security
 
-- Vulnerabilities in dependencies (report to upstream)
-- Vulnerabilities found BY SolGuard in other programs (that's the point!)
+## Security Measures
 
-## Recognition
+### CLI
+- No network calls except explicit GitHub/RPC fetches
+- Code is parsed locally, not sent to external servers
+- API mode is opt-in
 
-We appreciate security researchers who help keep SolGuard safe. Contributors will be acknowledged in our changelog (unless they prefer anonymity).
+### Web UI
+- Audit requests processed server-side
+- No code stored after audit completes
+- No authentication required (stateless)
 
-## Disclaimer
+### On-Chain Program
+- All accounts validated with Anchor constraints
+- Admin operations require registry authority
+- Dispute mechanism for challenging incorrect audits
 
-SolGuard is a security tool, not a guarantee. While we strive for accuracy:
+## Acknowledgments
 
-- False positives may occur
-- False negatives may occur
-- Always conduct thorough manual review
-- SolGuard supplements, not replaces, professional audits
+We appreciate responsible disclosure. Security researchers who report valid vulnerabilities will be acknowledged in our README (with permission).
 
-Use at your own risk. See LICENSE for full terms.
+---
+
+*Building secure tools to help others build secure code.*
