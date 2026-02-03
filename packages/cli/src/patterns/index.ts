@@ -41,6 +41,11 @@ import { checkStateInitialization } from './state-initialization.js';
 import { checkToken2022 } from './token-2022.js';
 import { checkMemoLogging } from './memo-logging.js';
 import { checkCpiGuard } from './cpi-guard.js';
+import { checkGovernance } from './governance.js';
+import { checkNftSecurity } from './nft-security.js';
+import { checkStaking } from './staking.js';
+import { checkAmm } from './amm.js';
+import { checkLending } from './lending.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -296,6 +301,36 @@ const patterns: Pattern[] = [
     name: 'CPI Guard Vulnerability',
     severity: 'high',
     run: checkCpiGuard,
+  },
+  {
+    id: 'SOL041',
+    name: 'Governance Vulnerability',
+    severity: 'critical',
+    run: checkGovernance,
+  },
+  {
+    id: 'SOL042',
+    name: 'NFT Security Issue',
+    severity: 'high',
+    run: checkNftSecurity,
+  },
+  {
+    id: 'SOL043',
+    name: 'Staking Vulnerability',
+    severity: 'high',
+    run: checkStaking,
+  },
+  {
+    id: 'SOL044',
+    name: 'AMM/DEX Vulnerability',
+    severity: 'critical',
+    run: checkAmm,
+  },
+  {
+    id: 'SOL045',
+    name: 'Lending Protocol Vulnerability',
+    severity: 'critical',
+    run: checkLending,
   },
 ];
 
