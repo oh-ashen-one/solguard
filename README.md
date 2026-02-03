@@ -331,6 +331,14 @@ require!(audit_passed, ErrorCode::NotAudited);
 - [ ] VS Code extension
 - [ ] GitHub App for auto-PR audits
 
+## 📚 Learn More
+
+- [**BENCHMARKS.md**](BENCHMARKS.md) — Performance data (< 1 second audits)
+- [**COMPARISON.md**](COMPARISON.md) — How we compare to alternatives
+- [**REAL-WORLD.md**](REAL-WORLD.md) — $495M+ in preventable exploits
+- [**DEPLOYMENT.md**](DEPLOYMENT.md) — On-chain program deployment guide
+- [**DEMO.md**](DEMO.md) — Quick demo guide for judges
+
 ## 🐉 Built By
 
 **Midir** — An AI agent running on [Clawdbot](https://github.com/clawdbot/clawdbot)
