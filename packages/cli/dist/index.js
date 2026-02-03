@@ -12,7 +12,7 @@ import {
 
 // src/index.ts
 import { Command } from "commander";
-import chalk7 from "chalk";
+import chalk8 from "chalk";
 
 // src/commands/audit.ts
 import chalk2 from "chalk";
@@ -602,20 +602,20 @@ async function certificateCommand(path, options) {
     try {
       const { parseRustFiles: parseRustFiles2 } = await import("./rust-LZBLPUB7.js");
       const { runPatterns: runPatterns2 } = await import("./patterns-7NVPT5DP.js");
-      const { existsSync: existsSync6, statSync: statSync5, readdirSync: readdirSync5 } = await import("fs");
-      if (!existsSync6(path)) {
+      const { existsSync: existsSync7, statSync: statSync6, readdirSync: readdirSync6 } = await import("fs");
+      if (!existsSync7(path)) {
         throw new Error(`Path not found: ${path}`);
       }
-      const isDirectory = statSync5(path).isDirectory();
+      const isDirectory = statSync6(path).isDirectory();
       let rustFiles = [];
       if (isDirectory) {
-        const findRustFiles4 = (dir) => {
+        const findRustFiles5 = (dir) => {
           const files = [];
-          const entries = readdirSync5(dir, { withFileTypes: true });
+          const entries = readdirSync6(dir, { withFileTypes: true });
           for (const entry of entries) {
             const fullPath = join3(dir, entry.name);
             if (entry.isDirectory() && !entry.name.startsWith(".") && entry.name !== "target") {
-              files.push(...findRustFiles4(fullPath));
+              files.push(...findRustFiles5(fullPath));
             } else if (entry.name.endsWith(".rs")) {
               files.push(fullPath);
             }
@@ -624,12 +624,12 @@ async function certificateCommand(path, options) {
         };
         const srcDir = join3(path, "src");
         const programsDir = join3(path, "programs");
-        if (existsSync6(programsDir)) {
-          rustFiles = findRustFiles4(programsDir);
-        } else if (existsSync6(srcDir)) {
-          rustFiles = findRustFiles4(srcDir);
+        if (existsSync7(programsDir)) {
+          rustFiles = findRustFiles5(programsDir);
+        } else if (existsSync7(srcDir)) {
+          rustFiles = findRustFiles5(srcDir);
         } else {
-          rustFiles = findRustFiles4(path);
+          rustFiles = findRustFiles5(path);
         }
       } else if (path.endsWith(".rs")) {
         rustFiles = [path];
@@ -816,22 +816,30 @@ function statsCommand() {
   }
   console.log(chalk6.bold("  Capabilities:"));
   console.log("");
-  console.log(chalk6.green("  \u2713"), "Anchor IDL parsing");
-  console.log(chalk6.green("  \u2713"), "Rust source code analysis");
-  console.log(chalk6.green("  \u2713"), "AI-powered explanations");
-  console.log(chalk6.green("  \u2713"), "On-chain program fetching");
+  console.log(chalk6.green("  \u2713"), "Anchor IDL + Rust parsing");
+  console.log(chalk6.green("  \u2713"), "GitHub repo/PR auditing");
+  console.log(chalk6.green("  \u2713"), "CI/CD with SARIF output");
+  console.log(chalk6.green("  \u2713"), "HTML report generation");
   console.log(chalk6.green("  \u2713"), "NFT certificate generation");
   console.log(chalk6.green("  \u2713"), "Watch mode for development");
-  console.log(chalk6.green("  \u2713"), "JSON/Markdown output");
+  console.log(chalk6.green("  \u2713"), "Git pre-commit/push hooks");
+  console.log(chalk6.green("  \u2713"), "Config file support");
+  console.log(chalk6.green("  \u2713"), "JSON/Markdown/Terminal output");
   console.log("");
-  console.log(chalk6.bold("  Available Commands:"));
+  console.log(chalk6.bold("  Available Commands (12):"));
   console.log("");
-  console.log(chalk6.cyan("  solguard audit <path>"), "      Audit a program");
-  console.log(chalk6.cyan("  solguard fetch <program-id>"), "Fetch and audit on-chain");
-  console.log(chalk6.cyan("  solguard certificate <path>"), "Generate NFT certificate");
-  console.log(chalk6.cyan("  solguard watch <path>"), "      Watch and auto-audit");
-  console.log(chalk6.cyan("  solguard programs"), "          List known programs");
-  console.log(chalk6.cyan("  solguard stats"), "             Show this info");
+  console.log(chalk6.cyan("  solguard audit <path>"), "       Audit a program");
+  console.log(chalk6.cyan("  solguard fetch <id>"), "         Fetch and audit on-chain");
+  console.log(chalk6.cyan("  solguard github <repo>"), "      Audit GitHub repo/PR");
+  console.log(chalk6.cyan("  solguard check <path>"), "       Quick pass/fail check");
+  console.log(chalk6.cyan("  solguard ci <path>"), "          CI mode with SARIF");
+  console.log(chalk6.cyan("  solguard watch <path>"), "       Watch and auto-audit");
+  console.log(chalk6.cyan("  solguard report <path>"), "      Generate HTML report");
+  console.log(chalk6.cyan("  solguard certificate <path>"), " Generate NFT certificate");
+  console.log(chalk6.cyan("  solguard init"), "               Create config file");
+  console.log(chalk6.cyan("  solguard programs"), "           List known programs");
+  console.log(chalk6.cyan("  solguard parse <idl>"), "        Parse IDL file");
+  console.log(chalk6.cyan("  solguard stats"), "              Show this info");
   console.log("");
   console.log(chalk6.gray("  Built by Midir for Solana Agent Hackathon 2026"));
   console.log(chalk6.gray("  https://github.com/oh-ashen-one/solguard"));
@@ -1649,12 +1657,225 @@ function generateExampleConfig() {
   }, null, 2);
 }
 
+// src/commands/compare.ts
+import { existsSync as existsSync6, readdirSync as readdirSync5, statSync as statSync5 } from "fs";
+import { join as join8, relative as relative2 } from "path";
+import chalk7 from "chalk";
+
+// src/commands/diff.ts
+function diffAudits(oldFindings, newFindings) {
+  const added = [];
+  const removed = [];
+  const unchanged = [];
+  const oldMap = /* @__PURE__ */ new Map();
+  const newMap = /* @__PURE__ */ new Map();
+  for (const f of oldFindings) {
+    const key = getFindingKey(f);
+    oldMap.set(key, f);
+  }
+  for (const f of newFindings) {
+    const key = getFindingKey(f);
+    newMap.set(key, f);
+  }
+  for (const [key, finding] of newMap) {
+    if (!oldMap.has(key)) {
+      added.push(finding);
+    } else {
+      unchanged.push(finding);
+    }
+  }
+  for (const [key, finding] of oldMap) {
+    if (!newMap.has(key)) {
+      removed.push(finding);
+    }
+  }
+  const severityWeight = {
+    critical: 100,
+    high: 50,
+    medium: 10,
+    low: 2,
+    info: 1
+  };
+  const addedScore = added.reduce((sum, f) => sum + (severityWeight[f.severity] || 0), 0);
+  const removedScore = removed.reduce((sum, f) => sum + (severityWeight[f.severity] || 0), 0);
+  return {
+    added,
+    removed,
+    unchanged,
+    summary: {
+      added: added.length,
+      removed: removed.length,
+      unchanged: unchanged.length,
+      improved: removedScore > addedScore
+    }
+  };
+}
+function getFindingKey(finding) {
+  const location = typeof finding.location === "string" ? finding.location : `${finding.location.file}:${finding.location.line || 0}`;
+  return `${finding.pattern}:${location}`;
+}
+function formatDiff(diff) {
+  const lines = [];
+  lines.push("\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550");
+  lines.push("  AUDIT DIFF");
+  lines.push("\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550");
+  lines.push("");
+  const emoji = diff.summary.improved ? "\u2705" : "\u26A0\uFE0F";
+  lines.push(`${emoji} Summary: ${diff.summary.added} added, ${diff.summary.removed} removed, ${diff.summary.unchanged} unchanged`);
+  lines.push("");
+  if (diff.added.length > 0) {
+    lines.push("\u{1F534} NEW FINDINGS:");
+    for (const f of diff.added) {
+      lines.push(`  + [${f.pattern}] ${f.title} (${f.severity})`);
+      const loc = typeof f.location === "string" ? f.location : f.location.file;
+      lines.push(`    \u2514\u2500 ${loc}`);
+    }
+    lines.push("");
+  }
+  if (diff.removed.length > 0) {
+    lines.push("\u{1F7E2} FIXED:");
+    for (const f of diff.removed) {
+      lines.push(`  - [${f.pattern}] ${f.title} (${f.severity})`);
+    }
+    lines.push("");
+  }
+  if (diff.unchanged.length > 0) {
+    lines.push(`\u{1F4CB} UNCHANGED: ${diff.unchanged.length} findings remain`);
+  }
+  lines.push("");
+  lines.push("\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550");
+  return lines.join("\n");
+}
+
+// src/commands/compare.ts
+async function compareCommand(pathA, pathB, options = {}) {
+  const format = options.output || "terminal";
+  if (!existsSync6(pathA)) {
+    console.error(chalk7.red(`Path not found: ${pathA}`));
+    process.exit(1);
+  }
+  if (!existsSync6(pathB)) {
+    console.error(chalk7.red(`Path not found: ${pathB}`));
+    process.exit(1);
+  }
+  console.log(chalk7.cyan("Analyzing both versions..."));
+  const findingsA = await auditPath(pathA);
+  const findingsB = await auditPath(pathB);
+  console.log(chalk7.dim(`  Version A: ${findingsA.length} findings`));
+  console.log(chalk7.dim(`  Version B: ${findingsB.length} findings`));
+  console.log("");
+  const diff = diffAudits(findingsA, findingsB);
+  if (format === "json") {
+    console.log(JSON.stringify({
+      versionA: pathA,
+      versionB: pathB,
+      diff
+    }, null, 2));
+  } else if (format === "markdown") {
+    console.log(`# Security Comparison
+`);
+    console.log(`**Version A:** ${pathA}`);
+    console.log(`**Version B:** ${pathB}
+`);
+    console.log(formatDiffMarkdown(diff));
+  } else {
+    console.log(chalk7.bold("Security Comparison"));
+    console.log(chalk7.gray("\u2500".repeat(50)));
+    console.log(`  A: ${pathA}`);
+    console.log(`  B: ${pathB}`);
+    console.log("");
+    console.log(formatDiff(diff));
+  }
+  if (diff.added.length > 0) {
+    const criticalAdded = diff.added.filter((f) => f.severity === "critical").length;
+    if (criticalAdded > 0) {
+      console.log(chalk7.red(`
+\u26A0\uFE0F  ${criticalAdded} new CRITICAL issues introduced!`));
+      process.exit(1);
+    }
+  }
+  if (diff.summary.improved) {
+    console.log(chalk7.green("\n\u2713 Security improved!"));
+    process.exit(0);
+  } else if (diff.added.length > 0) {
+    console.log(chalk7.yellow("\n\u26A0\uFE0F  New security issues introduced"));
+    process.exit(1);
+  } else {
+    console.log(chalk7.blue("\n\u2192 Security unchanged"));
+    process.exit(0);
+  }
+}
+async function auditPath(path) {
+  const rustFiles = findRustFiles4(path);
+  if (rustFiles.length === 0) {
+    return [];
+  }
+  const parsed = await parseRustFiles(rustFiles);
+  const findings = [];
+  if (parsed && parsed.files) {
+    for (const file of parsed.files) {
+      const fileFindings = await runPatterns({
+        path: relative2(path, file.path) || file.path,
+        rust: {
+          files: [file],
+          functions: parsed.functions.filter((f) => f.file === file.path),
+          structs: parsed.structs.filter((s) => s.file === file.path),
+          implBlocks: parsed.implBlocks.filter((i) => i.file === file.path),
+          content: file.content
+        },
+        idl: null
+      });
+      findings.push(...fileFindings);
+    }
+  }
+  return findings;
+}
+function findRustFiles4(path) {
+  if (statSync5(path).isFile()) {
+    return path.endsWith(".rs") ? [path] : [];
+  }
+  const files = [];
+  function scan(dir) {
+    for (const entry of readdirSync5(dir, { withFileTypes: true })) {
+      const full = join8(dir, entry.name);
+      if (entry.isDirectory() && !["node_modules", "target", ".git"].includes(entry.name)) {
+        scan(full);
+      } else if (entry.name.endsWith(".rs")) {
+        files.push(full);
+      }
+    }
+  }
+  scan(path);
+  return files;
+}
+function formatDiffMarkdown(diff) {
+  const lines = [];
+  const emoji = diff.summary.improved ? "\u2705" : diff.added.length > 0 ? "\u26A0\uFE0F" : "\u2796";
+  lines.push(`${emoji} **Summary:** ${diff.summary.added} new, ${diff.summary.removed} fixed, ${diff.summary.unchanged} unchanged
+`);
+  if (diff.added.length > 0) {
+    lines.push("## \u{1F534} New Issues\n");
+    for (const f of diff.added) {
+      lines.push(`- **[${f.pattern}] ${f.title}** (${f.severity})`);
+    }
+    lines.push("");
+  }
+  if (diff.removed.length > 0) {
+    lines.push("## \u{1F7E2} Fixed Issues\n");
+    for (const f of diff.removed) {
+      lines.push(`- ~~[${f.pattern}] ${f.title}~~ (${f.severity})`);
+    }
+    lines.push("");
+  }
+  return lines.join("\n");
+}
+
 // src/index.ts
 var program = new Command();
 var args = process.argv.slice(2);
 var isJsonOutput = args.includes("--output") && args[args.indexOf("--output") + 1] === "json";
 if (!isJsonOutput) {
-  console.log(chalk7.cyan(`
+  console.log(chalk8.cyan(`
 \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557
 \u2551  \u{1F6E1}\uFE0F  SolGuard - Smart Contract Auditor    \u2551
 \u2551     AI-Powered Security for Solana        \u2551
@@ -1687,41 +1908,42 @@ program.command("github").description("Audit a Solana program directly from GitH
       process.exit(1);
     }
   } catch (error) {
-    console.error(chalk7.red(`Error: ${error.message}`));
+    console.error(chalk8.red(`Error: ${error.message}`));
     process.exit(1);
   }
 });
 program.command("ci").description("Run audit in CI mode (GitHub Actions, etc.)").argument("<path>", "Path to program directory").option("--fail-on <level>", "Fail on severity level: critical, high, medium, low, any", "critical").option("--sarif <file>", "Output SARIF report for GitHub Code Scanning").option("--summary <file>", "Write markdown summary to file").action(ciCommand);
+program.command("compare").description("Compare security between two program versions").argument("<pathA>", "First version (baseline)").argument("<pathB>", "Second version (new)").option("-o, --output <format>", "Output format: terminal, json, markdown", "terminal").action(compareCommand);
 program.command("init").description("Initialize SolGuard in a project").option("-f, --force", "Overwrite existing config").action(async (options) => {
-  const { existsSync: existsSync6, writeFileSync: writeFileSync5 } = await import("fs");
+  const { existsSync: existsSync7, writeFileSync: writeFileSync5 } = await import("fs");
   const configPath = "solguard.config.json";
-  if (existsSync6(configPath) && !options.force) {
-    console.log(chalk7.yellow(`Config already exists: ${configPath}`));
-    console.log(chalk7.dim("Use --force to overwrite"));
+  if (existsSync7(configPath) && !options.force) {
+    console.log(chalk8.yellow(`Config already exists: ${configPath}`));
+    console.log(chalk8.dim("Use --force to overwrite"));
     return;
   }
   writeFileSync5(configPath, generateExampleConfig());
-  console.log(chalk7.green(`\u2713 Created ${configPath}`));
-  console.log(chalk7.dim("Edit the file to customize SolGuard behavior"));
+  console.log(chalk8.green(`\u2713 Created ${configPath}`));
+  console.log(chalk8.dim("Edit the file to customize SolGuard behavior"));
 });
 program.command("check").description("Quick pass/fail check for scripts and pre-commit hooks").argument("<path>", "Path to program directory or Rust file").option("--fail-on <level>", "Fail on severity: critical, high, medium, low, any", "critical").option("-q, --quiet", "Suppress output, only use exit code").action(checkCommand);
 program.command("report").description("Generate HTML audit report").argument("<path>", "Path to program directory").option("-o, --output <file>", "Output HTML file", "solguard-report.html").option("-n, --name <name>", "Program name for report").action(async (path, options) => {
-  const { existsSync: existsSync6, readdirSync: readdirSync5, statSync: statSync5, readFileSync: readFileSync2 } = await import("fs");
-  const { join: join8, basename } = await import("path");
+  const { existsSync: existsSync7, readdirSync: readdirSync6, statSync: statSync6, readFileSync: readFileSync3 } = await import("fs");
+  const { join: join9, basename } = await import("path");
   const { parseRustFiles: parseRustFiles2 } = await import("./rust-LZBLPUB7.js");
   const { parseIdl: parseIdl2 } = await import("./idl-YYKIXDKT.js");
   const { runPatterns: runPatterns2 } = await import("./patterns-7NVPT5DP.js");
-  if (!existsSync6(path)) {
-    console.error(chalk7.red(`Path not found: ${path}`));
+  if (!existsSync7(path)) {
+    console.error(chalk8.red(`Path not found: ${path}`));
     process.exit(1);
   }
   const startTime = Date.now();
   const programName = options.name || basename(path);
-  function findRustFiles4(dir) {
+  function findRustFiles5(dir) {
     const files = [];
     const scan = (d) => {
-      for (const entry of readdirSync5(d, { withFileTypes: true })) {
-        const full = join8(d, entry.name);
+      for (const entry of readdirSync6(d, { withFileTypes: true })) {
+        const full = join9(d, entry.name);
         if (entry.isDirectory() && !["node_modules", "target", ".git"].includes(entry.name)) {
           scan(full);
         } else if (entry.name.endsWith(".rs")) {
@@ -1732,12 +1954,12 @@ program.command("report").description("Generate HTML audit report").argument("<p
     scan(dir);
     return files;
   }
-  const rustFiles = statSync5(path).isDirectory() ? findRustFiles4(path) : [path];
+  const rustFiles = statSync6(path).isDirectory() ? findRustFiles5(path) : [path];
   if (rustFiles.length === 0) {
-    console.error(chalk7.red("No Rust files found"));
+    console.error(chalk8.red("No Rust files found"));
     process.exit(1);
   }
-  console.log(chalk7.cyan(`Scanning ${rustFiles.length} files...`));
+  console.log(chalk8.cyan(`Scanning ${rustFiles.length} files...`));
   const parsed = await parseRustFiles2(rustFiles);
   const allFindings = [];
   if (parsed && parsed.files) {
@@ -1774,7 +1996,7 @@ program.command("report").description("Generate HTML audit report").argument("<p
     passed: summary.critical === 0 && summary.high === 0,
     duration
   }, options.output);
-  console.log(chalk7.green(`\u2713 Report saved to ${options.output}`));
-  console.log(chalk7.dim(`  ${summary.total} findings | ${duration}ms`));
+  console.log(chalk8.green(`\u2713 Report saved to ${options.output}`));
+  console.log(chalk8.dim(`  ${summary.total} findings | ${duration}ms`));
 });
 program.parse();

@@ -11,6 +11,7 @@ import { ciCommand } from './commands/ci.js';
 import { generateHtmlReport, saveHtmlReport } from './commands/report.js';
 import { checkCommand } from './commands/check.js';
 import { generateExampleConfig } from './config.js';
+import { compareCommand } from './commands/compare.js';
 
 const program = new Command();
 
@@ -124,6 +125,14 @@ program
   .option('--sarif <file>', 'Output SARIF report for GitHub Code Scanning')
   .option('--summary <file>', 'Write markdown summary to file')
   .action(ciCommand);
+
+program
+  .command('compare')
+  .description('Compare security between two program versions')
+  .argument('<pathA>', 'First version (baseline)')
+  .argument('<pathB>', 'Second version (new)')
+  .option('-o, --output <format>', 'Output format: terminal, json, markdown', 'terminal')
+  .action(compareCommand);
 
 program
   .command('init')
