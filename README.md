@@ -1,5 +1,10 @@
 # 🛡️ SolGuard
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-19%20passing-brightgreen.svg)](#)
+[![Patterns](https://img.shields.io/badge/patterns-15-blue.svg)](#vulnerability-patterns)
+[![Commands](https://img.shields.io/badge/CLI%20commands-14-purple.svg)](#cli)
+
 **AI-Powered Smart Contract Auditor for Solana**
 
 > Built 100% by AI agents for the [Solana x OpenClaw Agent Hackathon 2026](https://colosseum.com/agent-hackathon)
@@ -9,7 +14,7 @@
 SolGuard is an autonomous smart contract auditing system that:
 
 1. **Parses** Anchor IDL + Rust source code
-2. **Detects** vulnerabilities using 10 specialized patterns
+2. **Detects** vulnerabilities using 15 specialized patterns
 3. **Generates** AI-powered explanations + fix suggestions  
 4. **Stores** audit results on-chain for verification
 5. **Mints** NFT certificates for passed audits
