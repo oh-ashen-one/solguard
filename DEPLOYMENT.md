@@ -1,6 +1,55 @@
 # 🚀 SolGuard Deployment Guide
 
-This guide explains how to deploy the SolGuard on-chain program to Solana devnet/mainnet.
+This guide covers deploying both the **Web UI** and the **On-chain Program**.
+
+---
+
+## Web UI Deployment
+
+### Option 1: Netlify (Recommended)
+
+```bash
+# Install Netlify CLI
+npm install -g netlify-cli
+
+# Navigate to web package
+cd packages/web
+
+# Login to Netlify
+netlify login
+
+# Deploy (follow prompts)
+netlify deploy --prod
+```
+
+The `netlify.toml` is already configured.
+
+### Option 2: Cloudflare Pages
+
+```bash
+# Install Wrangler
+npm install -g wrangler
+
+# Login
+wrangler login
+
+# Deploy
+cd packages/web
+npm run build
+wrangler pages deploy .next
+```
+
+### Option 3: Railway
+
+1. Connect GitHub repo at [railway.app](https://railway.app)
+2. Set root directory to `packages/web`
+3. Deploy automatically on push
+
+---
+
+## On-chain Program Deployment
+
+This section explains how to deploy the SolGuard Anchor program to Solana devnet/mainnet.
 
 ---
 
