@@ -4,6 +4,7 @@
 [![Tests](https://img.shields.io/badge/tests-19%20passing-brightgreen.svg)](#)
 [![Patterns](https://img.shields.io/badge/patterns-130-blue.svg)](#vulnerability-patterns)
 [![Commands](https://img.shields.io/badge/CLI%20commands-7-purple.svg)](#cli)
+[![Built by AI](https://img.shields.io/badge/Built%20by-AI%20Agent%20🤖-ff69b4.svg)](HACKATHON.md)
 
 **AI-Powered Smart Contract Auditor for Solana**
 
