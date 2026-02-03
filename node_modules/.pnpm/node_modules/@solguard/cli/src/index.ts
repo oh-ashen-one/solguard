@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { auditCommand } from './commands/audit.js';
 import { fetchAndAuditCommand, listKnownPrograms } from './commands/fetch.js';
+import { certificateCommand } from './commands/certificate.js';
 
 const program = new Command();
 
@@ -56,5 +57,13 @@ program
   .command('programs')
   .description('List known Solana programs')
   .action(listKnownPrograms);
+
+program
+  .command('certificate')
+  .description('Generate an audit certificate (metadata + SVG)')
+  .argument('<path>', 'Path to program directory or Rust file')
+  .option('-o, --output <dir>', 'Output directory', '.')
+  .option('-p, --program-id <id>', 'Program ID for the certificate')
+  .action(certificateCommand);
 
 program.parse();

@@ -1,1010 +1,21 @@
 #!/usr/bin/env node
 import {
-  getAccountsWithoutSigner,
-  getMutableAccountsWithoutOwnerCheck,
+  runPatterns
+} from "./chunk-IZJZB5ZX.js";
+import {
   parseIdl
 } from "./chunk-HWAQQY7Q.js";
+import {
+  parseRustFiles
+} from "./chunk-F7WQYU5F.js";
 
 // src/index.ts
 import { Command } from "commander";
-import chalk4 from "chalk";
+import chalk5 from "chalk";
 
 // src/commands/audit.ts
 import chalk2 from "chalk";
 import ora from "ora";
-
-// src/parsers/rust.ts
-import { readFileSync } from "fs";
-async function parseRustFiles(paths) {
-  const files = paths.map((path) => {
-    const content = readFileSync(path, "utf-8");
-    return {
-      path,
-      content,
-      lines: content.split("\n")
-    };
-  });
-  const functions = [];
-  const structs = [];
-  const implBlocks = [];
-  for (const file of files) {
-    const fnMatches = file.content.matchAll(/^(\s*)(pub\s+)?fn\s+(\w+)/gm);
-    for (const match of fnMatches) {
-      const line = file.content.substring(0, match.index).split("\n").length;
-      functions.push({
-        name: match[3],
-        file: file.path,
-        line,
-        isPublic: !!match[2],
-        content: extractBlock(file.content, match.index)
-      });
-    }
-    const structMatches = file.content.matchAll(/((?:#\[[\w\(\)]+\]\s*)+)?pub\s+struct\s+(\w+)/gm);
-    for (const match of structMatches) {
-      const line = file.content.substring(0, match.index).split("\n").length;
-      const attributes = match[1] ? match[1].match(/#\[[\w\(\),\s=]+\]/g) || [] : [];
-      structs.push({
-        name: match[2],
-        file: file.path,
-        line,
-        fields: [],
-        // Would need proper parsing for fields
-        attributes
-      });
-    }
-    const implMatches = file.content.matchAll(/impl(?:<[^>]+>)?\s+(\w+)/gm);
-    for (const match of implMatches) {
-      const line = file.content.substring(0, match.index).split("\n").length;
-      implBlocks.push({
-        structName: match[1],
-        file: file.path,
-        line,
-        methods: []
-      });
-    }
-  }
-  return { files, functions, structs, implBlocks };
-}
-function extractBlock(content, startIndex) {
-  let braceCount = 0;
-  let started = false;
-  let endIndex = startIndex;
-  for (let i = startIndex; i < content.length; i++) {
-    if (content[i] === "{") {
-      braceCount++;
-      started = true;
-    } else if (content[i] === "}") {
-      braceCount--;
-      if (started && braceCount === 0) {
-        endIndex = i + 1;
-        break;
-      }
-    }
-  }
-  return content.substring(startIndex, endIndex);
-}
-function findUncheckedArithmetic(rust) {
-  const results = [];
-  const arithmeticPattern = /(\w+)\s*[\+\-\*]\s*(\w+)(?!\s*\.checked_)/g;
-  for (const file of rust.files) {
-    for (let i = 0; i < file.lines.length; i++) {
-      const line = file.lines[i];
-      if (line.trim().startsWith("//")) continue;
-      const matches = line.matchAll(arithmeticPattern);
-      for (const match of matches) {
-        if (!line.includes("checked_") && !line.includes(".saturating_")) {
-          results.push({
-            file: file.path,
-            line: i + 1,
-            code: line.trim()
-          });
-        }
-      }
-    }
-  }
-  return results;
-}
-function findMissingOwnerChecks(rust) {
-  const results = [];
-  const externalAccountTypes = ["TokenAccount", "Mint", "AssociatedTokenAccount"];
-  for (const file of rust.files) {
-    const content = file.content;
-    for (const extType of externalAccountTypes) {
-      const pattern = new RegExp(`pub\\s+(\\w+):\\s*Account<'info,\\s*${extType}>`, "g");
-      const ownerPattern = /#\[account\([^)]*(?:owner|token::authority|associated_token::authority)\s*=/;
-      const matches2 = content.matchAll(pattern);
-      for (const match of matches2) {
-        const lineIndex = content.substring(0, match.index).split("\n").length - 1;
-        const precedingLines = file.lines.slice(Math.max(0, lineIndex - 5), lineIndex + 1).join("\n");
-        if (!ownerPattern.test(precedingLines)) {
-          results.push({
-            file: file.path,
-            line: lineIndex + 1,
-            account: match[1]
-          });
-        }
-      }
-    }
-    const accountInfoPattern = /pub\s+(\w+):\s*(?:UncheckedAccount|AccountInfo)<'info>/g;
-    const matches = content.matchAll(accountInfoPattern);
-    for (const match of matches) {
-      const lineIndex = content.substring(0, match.index).split("\n").length - 1;
-      const accountName = match[1];
-      const precedingLines = file.lines.slice(Math.max(0, lineIndex - 3), lineIndex + 1).join("\n");
-      if (/\/\/\/?\s*CHECK:/.test(precedingLines)) continue;
-      if (/system_program|rent|clock|token_program|associated_token_program/i.test(accountName)) continue;
-      const ownerCheckPattern = new RegExp(`${accountName}\\s*\\.\\s*owner|owner.*${accountName}|require.*${accountName}.*owner`, "i");
-      if (!ownerCheckPattern.test(content)) {
-        results.push({
-          file: file.path,
-          line: lineIndex + 1,
-          account: accountName
-        });
-      }
-    }
-  }
-  return results;
-}
-function findMissingSignerChecks(rust) {
-  const results = [];
-  const accountInfoPattern = /pub\s+(\w+):\s*AccountInfo<'info>/g;
-  for (const file of rust.files) {
-    const matches = file.content.matchAll(accountInfoPattern);
-    for (const match of matches) {
-      const lineIndex = file.content.substring(0, match.index).split("\n").length;
-      const accountName = match[1];
-      if (/authority|admin|owner|signer|payer/i.test(accountName)) {
-        results.push({
-          file: file.path,
-          line: lineIndex,
-          account: accountName
-        });
-      }
-    }
-  }
-  return results;
-}
-
-// src/patterns/owner-check.ts
-function checkMissingOwner(input) {
-  const findings = [];
-  if (input.idl) {
-    const issues = getMutableAccountsWithoutOwnerCheck(input.idl);
-    for (const issue of issues) {
-      findings.push({
-        id: `SOL001-${findings.length + 1}`,
-        pattern: "Missing Owner Check",
-        severity: "critical",
-        title: `Mutable account '${issue.account}' may lack owner verification`,
-        description: `In instruction '${issue.instruction}', the account '${issue.account}' is mutable but may not have proper owner verification. An attacker could pass a fake account owned by a different program.`,
-        location: {
-          file: "IDL",
-          line: void 0
-        },
-        suggestion: `Add owner constraint: #[account(owner = expected_program_id)]`
-      });
-    }
-  }
-  if (input.rust) {
-    const issues = findMissingOwnerChecks(input.rust);
-    for (const issue of issues) {
-      findings.push({
-        id: `SOL001-${findings.length + 1}`,
-        pattern: "Missing Owner Check",
-        severity: "critical",
-        title: `Account '${issue.account}' may lack owner constraint`,
-        description: `The account '${issue.account}' is declared as Account<'info, T> but may not have an owner constraint. Without this, an attacker could pass an account owned by a malicious program with matching data layout.`,
-        location: {
-          file: issue.file,
-          line: issue.line
-        },
-        suggestion: `Add owner constraint to the account:
-#[account(owner = crate::ID)]
-pub ${issue.account}: Account<'info, YourType>,`
-      });
-    }
-  }
-  return findings;
-}
-
-// src/patterns/signer-check.ts
-function checkMissingSigner(input) {
-  const findings = [];
-  if (input.idl) {
-    const issues = getAccountsWithoutSigner(input.idl);
-    for (const issue of issues) {
-      findings.push({
-        id: `SOL002-${findings.length + 1}`,
-        pattern: "Missing Signer Check",
-        severity: "critical",
-        title: `Instruction '${issue.instruction}' has no signer requirement`,
-        description: `The instruction '${issue.instruction}' doesn't require any account to sign the transaction. This means anyone can call this instruction, which may allow unauthorized actions.`,
-        location: {
-          file: "IDL",
-          line: void 0
-        },
-        suggestion: `Add a signer account:
-pub authority: Signer<'info>,`
-      });
-    }
-  }
-  if (input.rust) {
-    const issues = findMissingSignerChecks(input.rust);
-    for (const issue of issues) {
-      findings.push({
-        id: `SOL002-${findings.length + 1}`,
-        pattern: "Missing Signer Check",
-        severity: "critical",
-        title: `Authority account '${issue.account}' is not a Signer`,
-        description: `The account '${issue.account}' appears to be an authority/admin account but is declared as AccountInfo instead of Signer. This means anyone could pass any account as the authority without proving ownership.`,
-        location: {
-          file: issue.file,
-          line: issue.line
-        },
-        code: `pub ${issue.account}: AccountInfo<'info>`,
-        suggestion: `Change to Signer:
-pub ${issue.account}: Signer<'info>,`
-      });
-    }
-  }
-  return findings;
-}
-
-// src/patterns/overflow.ts
-function checkIntegerOverflow(input) {
-  const findings = [];
-  if (!input.rust) return findings;
-  const issues = findUncheckedArithmetic(input.rust);
-  for (const issue of issues) {
-    if (isSafeArithmetic(issue.code)) continue;
-    findings.push({
-      id: `SOL003-${findings.length + 1}`,
-      pattern: "Integer Overflow",
-      severity: "high",
-      title: "Potential integer overflow in arithmetic operation",
-      description: `Unchecked arithmetic operation found. In Rust, integer overflow in release mode wraps around silently, which can lead to serious vulnerabilities like incorrect balances or bypassed checks.`,
-      location: {
-        file: issue.file,
-        line: issue.line
-      },
-      code: issue.code,
-      suggestion: `Use checked arithmetic:
-let result = a.checked_add(b).ok_or(ErrorCode::Overflow)?;
-
-Or saturating arithmetic:
-let result = a.saturating_add(b);`
-    });
-  }
-  return findings;
-}
-function isSafeArithmetic(code) {
-  if (/\.checked_|\.saturating_|\.overflowing_/.test(code)) return true;
-  if (/\".*\"/.test(code)) return true;
-  if (/for\s+\w+\s+in/.test(code)) return true;
-  if (/\[\s*\w+\s*\+\s*\d+\s*\]/.test(code)) return true;
-  if (/\+\s*1\s*[;\)]/.test(code) && !/amount|balance|value|price|total/i.test(code)) return true;
-  if (/space\s*=.*\+/.test(code)) return true;
-  if (/INIT_SPACE/.test(code)) return true;
-  return false;
-}
-
-// src/patterns/pda-validation.ts
-function checkPdaValidation(input) {
-  const findings = [];
-  if (!input.rust) return findings;
-  for (const file of input.rust.files) {
-    const lines = file.lines;
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (/find_program_address/.test(line) || /Pubkey::find_program_address/.test(line)) {
-        const context = lines.slice(Math.max(0, i - 5), Math.min(lines.length, i + 10)).join("\n");
-        if (!/bump\s*==|bump\.eq|assert.*bump|require.*bump/.test(context)) {
-          findings.push({
-            id: `SOL004-${findings.length + 1}`,
-            pattern: "PDA Validation Gap",
-            severity: "high",
-            title: "PDA derived without bump verification",
-            description: `A PDA is derived using find_program_address but the bump may not be verified. An attacker could potentially pass a PDA with a different bump, leading to account confusion.`,
-            location: {
-              file: file.path,
-              line: i + 1
-            },
-            code: line.trim(),
-            suggestion: `Store and verify the bump:
-let (pda, bump) = Pubkey::find_program_address(&seeds, &program_id);
-assert!(bump == expected_bump);`
-          });
-        }
-      }
-      if (/create_program_address/.test(line) && !/\?|unwrap_or|ok_or/.test(line)) {
-        findings.push({
-          id: `SOL004-${findings.length + 1}`,
-          pattern: "PDA Validation Gap",
-          severity: "medium",
-          title: "Unhandled PDA creation error",
-          description: `create_program_address can fail if the seeds produce an invalid PDA (on-curve point). The error should be handled gracefully.`,
-          location: {
-            file: file.path,
-            line: i + 1
-          },
-          code: line.trim(),
-          suggestion: `Handle the Result:
-let pda = Pubkey::create_program_address(&seeds, &program_id)
-    .map_err(|_| ErrorCode::InvalidPda)?;`
-        });
-      }
-      if (/#\[account\(.*seeds\s*=/.test(line) && !/#\[account\(.*bump/.test(line)) {
-        const context = lines.slice(i, Math.min(lines.length, i + 3)).join(" ");
-        if (!context.includes("bump")) {
-          findings.push({
-            id: `SOL004-${findings.length + 1}`,
-            pattern: "PDA Validation Gap",
-            severity: "medium",
-            title: "PDA seeds without bump constraint",
-            description: `An account has a seeds constraint but no bump constraint. While Anchor will derive the bump, explicitly storing it is more gas-efficient and clearer.`,
-            location: {
-              file: file.path,
-              line: i + 1
-            },
-            code: line.trim(),
-            suggestion: `Add bump constraint:
-#[account(
-    seeds = [b"prefix", user.key().as_ref()],
-    bump = pda_account.bump,
-)]`
-          });
-        }
-      }
-    }
-  }
-  return findings;
-}
-
-// src/patterns/authority-bypass.ts
-function checkAuthorityBypass(input) {
-  const rust = input.rust;
-  const findings = [];
-  if (!rust?.files) return findings;
-  let counter = 1;
-  for (const file of rust.files) {
-    const lines = file.content.split("\n");
-    let inFunction = false;
-    let functionName = "";
-    let functionStart = 0;
-    let hasAuthorityCheck = false;
-    let isSensitiveOperation = false;
-    let braceDepth = 0;
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const lineNum = i + 1;
-      const fnMatch = line.match(/pub\s+fn\s+(\w+)/);
-      if (fnMatch) {
-        if (inFunction && isSensitiveOperation && !hasAuthorityCheck) {
-          if (!/^init|initialize|create|new/i.test(functionName)) {
-            findings.push({
-              id: `SOL005-${counter++}`,
-              pattern: "authority-bypass",
-              severity: "critical",
-              title: `Function '${functionName}' may lack authority verification`,
-              description: `The function '${functionName}' performs sensitive operations but doesn't appear to verify authority before execution. An attacker could potentially call this function and bypass intended access controls.`,
-              location: {
-                file: file.path,
-                line: functionStart
-              },
-              suggestion: `Add authority verification at the start of the function:
-require!(ctx.accounts.authority.key() == expected_authority, ErrorCode::Unauthorized);
-
-Or use Anchor's has_one constraint:
-#[account(has_one = authority)]`
-            });
-          }
-        }
-        inFunction = true;
-        functionName = fnMatch[1];
-        functionStart = lineNum;
-        hasAuthorityCheck = false;
-        isSensitiveOperation = false;
-        braceDepth = 0;
-      }
-      braceDepth += (line.match(/{/g) || []).length;
-      braceDepth -= (line.match(/}/g) || []).length;
-      if (inFunction && braceDepth <= 0 && line.includes("}")) {
-        if (isSensitiveOperation && !hasAuthorityCheck && !/^init|initialize|create|new/i.test(functionName)) {
-          findings.push({
-            id: `SOL005-${counter++}`,
-            pattern: "authority-bypass",
-            severity: "critical",
-            title: `Function '${functionName}' may lack authority verification`,
-            description: `The function '${functionName}' performs sensitive operations but doesn't appear to verify authority before execution. An attacker could potentially call this function and bypass intended access controls.`,
-            location: {
-              file: file.path,
-              line: functionStart
-            },
-            suggestion: `Add authority verification at the start of the function:
-require!(ctx.accounts.authority.key() == expected_authority, ErrorCode::Unauthorized);
-
-Or use Anchor's has_one constraint:
-#[account(has_one = authority)]`
-          });
-        }
-        inFunction = false;
-      }
-      if (!inFunction) continue;
-      const sensitivePatterns = [
-        /\.transfer\s*\(/,
-        // SOL transfers
-        /\.withdraw\s*\(/,
-        // Withdrawals
-        /transfer_checked/,
-        // SPL token transfers
-        /invoke_signed/,
-        // CPIs with signer seeds
-        /set_authority/,
-        // Authority changes
-        /close_account/,
-        // Account closure
-        /\.sub\s*\(/,
-        // Balance subtraction
-        /balance\s*[-=]/,
-        // Balance modification
-        /mint_to/,
-        // Token minting
-        /burn/,
-        // Token burning
-        /freeze/,
-        // Account freezing
-        /\.authority\s*=/,
-        // Authority assignment
-        /admin/i
-        // Admin operations
-      ];
-      for (const pattern of sensitivePatterns) {
-        if (pattern.test(line)) {
-          isSensitiveOperation = true;
-          break;
-        }
-      }
-      const authCheckPatterns = [
-        /require!\s*\([^)]*authority/i,
-        /require!\s*\([^)]*admin/i,
-        /require!\s*\([^)]*owner/i,
-        /require_keys_eq!/,
-        // Anchor's key comparison macro
-        /\.key\(\)\s*==\s*.*authority/,
-        /has_one\s*=\s*authority/,
-        /has_one\s*=\s*owner/,
-        /has_one\s*=\s*admin/,
-        /constraint\s*=.*authority/,
-        /Signer<'info>/,
-        // If authority is a Signer, it's implicitly checked
-        /authority:\s*Signer/
-        // Authority declared as Signer in struct
-      ];
-      for (const pattern of authCheckPatterns) {
-        if (pattern.test(line)) {
-          hasAuthorityCheck = true;
-          break;
-        }
-      }
-      if (/has_one\s*=/.test(line) || /constraint\s*=.*==/.test(line)) {
-        hasAuthorityCheck = true;
-      }
-    }
-  }
-  return findings;
-}
-
-// src/patterns/init-check.ts
-function checkMissingInitCheck(input) {
-  const rust = input.rust;
-  const findings = [];
-  if (!rust?.files) return findings;
-  let counter = 1;
-  for (const file of rust.files) {
-    const lines = file.content.split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const lineNum = i + 1;
-      if (line.includes("UncheckedAccount") && !line.includes("/// CHECK:")) {
-        const prevLines = lines.slice(Math.max(0, i - 3), i).join("\n");
-        if (!prevLines.includes("/// CHECK:") && !prevLines.includes("// CHECK:")) {
-          findings.push({
-            id: `SOL006-${counter++}`,
-            pattern: "unchecked-account",
-            severity: "high",
-            title: "UncheckedAccount without safety documentation",
-            description: "UncheckedAccount is used without a /// CHECK: comment explaining why it's safe. While sometimes necessary, unchecked accounts are a common source of vulnerabilities and should be documented.",
-            location: {
-              file: file.path,
-              line: lineNum
-            },
-            code: line.trim(),
-            suggestion: `Add a CHECK comment explaining why this account is safe:
-/// CHECK: This account is safe because [your reason here]
-pub my_account: UncheckedAccount<'info>,
-
-Or use a typed Account with appropriate constraints if possible.`
-          });
-        }
-      }
-    }
-  }
-  return findings;
-}
-
-// src/patterns/cpi-check.ts
-function checkCpiVulnerabilities(input) {
-  const rust = input.rust;
-  const findings = [];
-  if (!rust?.files) return findings;
-  let counter = 1;
-  for (const file of rust.files) {
-    const lines = file.content.split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const lineNum = i + 1;
-      if (/\binvoke\s*\(/.test(line) && !line.includes("invoke_signed")) {
-        const context = lines.slice(Math.max(0, i - 10), Math.min(lines.length, i + 5)).join("\n");
-        if (!/(program_id|program\.key\(\)).*==|require.*program/.test(context)) {
-          findings.push({
-            id: `SOL007-${counter++}`,
-            pattern: "cpi-vulnerability",
-            severity: "high",
-            title: "CPI invoke() without program ID verification",
-            description: "Cross-program invocation (invoke) is called without verifying the target program ID. An attacker could substitute a malicious program with the same interface, leading to arbitrary code execution with your program's privileges.",
-            location: {
-              file: file.path,
-              line: lineNum
-            },
-            code: line.trim(),
-            suggestion: `Verify the program ID before CPI:
-require_keys_eq!(target_program.key(), expected_program::ID, ErrorCode::InvalidProgram);
-invoke(&instruction, &account_infos)?;`
-          });
-        }
-      }
-      if (/invoke_signed\s*\(/.test(line)) {
-        const context = lines.slice(i, Math.min(lines.length, i + 10)).join("\n");
-        if (/seeds\s*=\s*\[\s*b"[^"]+"\s*\]/.test(context) && !context.includes(".key()") && !context.includes(".as_ref()")) {
-          findings.push({
-            id: `SOL007-${counter++}`,
-            pattern: "cpi-static-seeds",
-            severity: "medium",
-            title: "invoke_signed() with static-only seeds",
-            description: "The PDA seeds for invoke_signed appear to contain only static values without any dynamic components (like user pubkey). This could lead to a single global PDA that any user can interact with, potentially causing unauthorized access.",
-            location: {
-              file: file.path,
-              line: lineNum
-            },
-            code: line.trim(),
-            suggestion: `Include dynamic seeds to create user-specific PDAs:
-let seeds = &[
-    b"prefix",
-    user.key().as_ref(),
-    &[bump],
-];`
-          });
-        }
-      }
-      if (/AccountInfo.*program/.test(line) && !/Program<'info/.test(line)) {
-        const context = lines.slice(Math.max(0, i - 5), Math.min(lines.length, i + 10)).join("\n");
-        if (/invoke/.test(context) && !/(executable|key\(\)\s*==|CHECK:)/.test(context)) {
-          findings.push({
-            id: `SOL007-${counter++}`,
-            pattern: "cpi-unchecked-program",
-            severity: "critical",
-            title: "CPI to unverified program account",
-            description: "A program account is passed as AccountInfo and used for CPI without verification. The account might not be executable or could be a different program than expected. Use Anchor's Program<> type or manually verify the executable flag and program ID.",
-            location: {
-              file: file.path,
-              line: lineNum
-            },
-            code: line.trim(),
-            suggestion: `Use Anchor's Program type for automatic verification:
-pub token_program: Program<'info, Token>,
-
-Or manually verify:
-require!(program_account.executable, ErrorCode::NotExecutable);
-require_keys_eq!(program_account.key(), expected::ID, ErrorCode::InvalidProgram);`
-          });
-        }
-      }
-    }
-  }
-  return findings;
-}
-
-// src/patterns/rounding.ts
-function checkRoundingErrors(input) {
-  const rust = input.rust;
-  const findings = [];
-  if (!rust?.files) return findings;
-  let counter = 1;
-  for (const file of rust.files) {
-    const lines = file.content.split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const lineNum = i + 1;
-      if (line.trim().startsWith("//")) continue;
-      if (/\/.*\*/.test(line) || /\bdiv\s*\(.*\).*mul/.test(line)) {
-        if (!/(ceil|floor|round|checked_div.*checked_mul)/.test(line)) {
-          findings.push({
-            id: `SOL008-${counter++}`,
-            pattern: "rounding-division-first",
-            severity: "medium",
-            title: "Division before multiplication may cause precision loss",
-            description: "Performing division before multiplication can lead to precision loss due to integer truncation. In financial calculations, this can result in users receiving fewer tokens than expected, or protocol fees being under-collected.",
-            location: {
-              file: file.path,
-              line: lineNum
-            },
-            code: line.trim(),
-            suggestion: `Reorder to multiply before divide:
-// Instead of: (amount / total) * shares
-// Use: (amount * shares) / total
-
-// Or use fixed-point math:
-let result = amount
-    .checked_mul(shares)?
-    .checked_div(total)?;`
-          });
-        }
-      }
-      if (/(amount|balance|tokens?).*\/.*10/.test(line) || /\/ 1_?000_?000/.test(line)) {
-        if (!/decimals|DECIMALS|checked_div/.test(line)) {
-          findings.push({
-            id: `SOL008-${counter++}`,
-            pattern: "rounding-decimal-truncation",
-            severity: "low",
-            title: "Potential decimal truncation in token calculation",
-            description: "Division by powers of 10 (often for decimal conversion) without proper rounding may truncate small amounts. Consider whether rounding up or down is appropriate for your use case.",
-            location: {
-              file: file.path,
-              line: lineNum
-            },
-            code: line.trim(),
-            suggestion: `Consider explicit rounding direction:
-// Round down (default, favors protocol):
-let amount = raw_amount / 10u64.pow(decimals);
-
-// Round up (favors user):
-let amount = (raw_amount + 10u64.pow(decimals) - 1) / 10u64.pow(decimals);`
-          });
-        }
-      }
-      if (/(fee|commission|tax).*[*\/]/.test(line.toLowerCase())) {
-        const context = lines.slice(Math.max(0, i - 2), Math.min(lines.length, i + 3)).join("\n");
-        if (!/(min|minimum|max|\.max\(|\.min\()/.test(context.toLowerCase())) {
-          findings.push({
-            id: `SOL008-${counter++}`,
-            pattern: "rounding-zero-fee",
-            severity: "medium",
-            title: "Fee calculation may round to zero",
-            description: "Fee calculations on small amounts may truncate to zero, allowing users to transact without paying fees. Consider enforcing a minimum fee or using ceiling division for fee calculations.",
-            location: {
-              file: file.path,
-              line: lineNum
-            },
-            code: line.trim(),
-            suggestion: `Enforce minimum fee or use ceiling division:
-// Option 1: Minimum fee
-let fee = calculated_fee.max(MINIMUM_FEE);
-
-// Option 2: Ceiling division (rounds up)
-let fee = (amount * fee_rate + FEE_DENOMINATOR - 1) / FEE_DENOMINATOR;`
-          });
-        }
-      }
-      if (/(shares?|lp_?tokens?|mint_amount).*[=].*[\/]/.test(line.toLowerCase())) {
-        if (!/(checked_|ceil|floor|round)/.test(line)) {
-          findings.push({
-            id: `SOL008-${counter++}`,
-            pattern: "rounding-share-calculation",
-            severity: "medium",
-            title: "Share calculation may have rounding issues",
-            description: "LP token or share calculations using division may lead to rounding exploits. First depositor attacks and share inflation attacks often exploit rounding in these calculations.",
-            location: {
-              file: file.path,
-              line: lineNum
-            },
-            code: line.trim(),
-            suggestion: `Use safe share calculation patterns:
-// For minting (round down to protect protocol):
-let shares = if total_supply == 0 {
-    deposit_amount
-} else {
-    deposit_amount
-        .checked_mul(total_supply)?
-        .checked_div(total_assets)?
-};
-
-// Consider minimum share requirements for first deposit`
-          });
-        }
-      }
-    }
-  }
-  return findings;
-}
-
-// src/patterns/account-confusion.ts
-function checkAccountConfusion(input) {
-  const rust = input.rust;
-  const findings = [];
-  if (!rust?.files) return findings;
-  let counter = 1;
-  for (const file of rust.files) {
-    const lines = file.content.split("\n");
-    const content = file.content;
-    const structPattern = /#\[derive\(Accounts\)\]\s*pub\s+struct\s+(\w+)[^{]*\{([^}]+)\}/g;
-    let structMatch;
-    while ((structMatch = structPattern.exec(content)) !== null) {
-      const structName = structMatch[1];
-      const structBody = structMatch[2];
-      const structStartLine = content.substring(0, structMatch.index).split("\n").length;
-      const accountPattern = /pub\s+(\w+):\s*Account<'info,\s*(\w+)>/g;
-      const accounts = [];
-      let accountMatch;
-      while ((accountMatch = accountPattern.exec(structBody)) !== null) {
-        const lineOffset = structBody.substring(0, accountMatch.index).split("\n").length;
-        accounts.push({
-          name: accountMatch[1],
-          dataType: accountMatch[2],
-          line: structStartLine + lineOffset
-        });
-      }
-      for (let i = 0; i < accounts.length; i++) {
-        for (let j = i + 1; j < accounts.length; j++) {
-          const a = accounts[i];
-          const b = accounts[j];
-          if (a.dataType === b.dataType && a.name !== b.name) {
-            const hasDiscrimination = new RegExp(
-              `${a.name}.*!=.*${b.name}|${b.name}.*!=.*${a.name}|constraint.*${a.name}.*${b.name}|constraint.*${b.name}.*${a.name}`
-            ).test(structBody);
-            if (!hasDiscrimination) {
-              findings.push({
-                id: `SOL009-${counter++}`,
-                pattern: "account-confusion",
-                severity: "high",
-                title: `Accounts '${a.name}' and '${b.name}' in '${structName}' may be confusable`,
-                description: `Both '${a.name}' and '${b.name}' are of type ${a.dataType} within the same instruction context. An attacker might pass the same account for both, or swap them, leading to unexpected behavior. This is especially dangerous in transfer/swap operations.`,
-                location: {
-                  file: file.path,
-                  line: a.line
-                },
-                suggestion: `Add constraints to ensure accounts are different:
-#[account(
-    constraint = ${a.name}.key() != ${b.name}.key() @ ErrorCode::SameAccount
-)]
-
-Or use different account types/discriminators for different purposes.`
-              });
-            }
-          }
-        }
-      }
-    }
-    const accountInfoPattern = /pub\s+(\w+):\s*(AccountInfo|UncheckedAccount)<'info>/g;
-    let aiMatch;
-    while ((aiMatch = accountInfoPattern.exec(content)) !== null) {
-      const accountName = aiMatch[1];
-      const accountType = aiMatch[2];
-      const lineNum = content.substring(0, aiMatch.index).split("\n").length;
-      if (/system_program|rent|clock|token_program|^_/.test(accountName)) continue;
-      const prevLines = lines.slice(Math.max(0, lineNum - 4), lineNum).join("\n");
-      if (prevLines.includes("CHECK:")) continue;
-      const usagePattern = new RegExp(`${accountName}\\s*\\.\\s*(data|try_borrow_data|deserialize)`);
-      if (usagePattern.test(content)) {
-        findings.push({
-          id: `SOL009-${counter++}`,
-          pattern: "untyped-account-data-access",
-          severity: "high",
-          title: `Untyped account '${accountName}' has data accessed`,
-          description: `The account '${accountName}' is declared as ${accountType} but its data is accessed. Without type validation, an attacker could pass any account with arbitrary data, potentially bypassing security checks.`,
-          location: {
-            file: file.path,
-            line: lineNum
-          },
-          code: lines[lineNum - 1]?.trim() || "",
-          suggestion: `Use a typed Account instead:
-pub ${accountName}: Account<'info, YourDataType>,
-
-Or manually validate the account discriminator:
-let data = ${accountName}.try_borrow_data()?;
-require!(data[..8] == YourDataType::DISCRIMINATOR, ErrorCode::InvalidAccount);`
-        });
-      }
-    }
-  }
-  return findings;
-}
-
-// src/patterns/closing-account.ts
-function checkClosingVulnerabilities(input) {
-  const rust = input.rust;
-  const findings = [];
-  if (!rust?.files) return findings;
-  let counter = 1;
-  for (const file of rust.files) {
-    const lines = file.content.split("\n");
-    const content = file.content;
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const lineNum = i + 1;
-      if (/lamports.*=\s*0|\.sub\(.*lamports\)|transfer.*lamports/.test(line)) {
-        const context = lines.slice(i, Math.min(lines.length, i + 10)).join("\n");
-        if (!/(realloc|data.*=.*\[0|zero|clear|close\s*=)/.test(context)) {
-          findings.push({
-            id: `SOL010-${counter++}`,
-            pattern: "closing-without-zeroing",
-            severity: "critical",
-            title: "Account closed without zeroing data",
-            description: 'Lamports are being removed from an account (closing it) but the data is not being zeroed. An attacker can "revive" the account by sending lamports back before the runtime garbage collects it, potentially reusing stale data for exploits.',
-            location: {
-              file: file.path,
-              line: lineNum
-            },
-            code: line.trim(),
-            suggestion: `Zero the account data before closing:
-// Zero the data
-account.data.borrow_mut().fill(0);
-
-// Or use Anchor's close constraint:
-#[account(mut, close = recipient)]
-pub account_to_close: Account<'info, MyData>,`
-          });
-        }
-      }
-      if (/#\[account\([^)]*close\s*[,\)]/.test(line) && !/#\[account\([^)]*close\s*=/.test(line)) {
-        findings.push({
-          id: `SOL010-${counter++}`,
-          pattern: "close-missing-recipient",
-          severity: "medium",
-          title: "Account close without explicit recipient",
-          description: "The close constraint is used but no recipient is specified for the rent refund. This could lead to funds being sent to an unintended address.",
-          location: {
-            file: file.path,
-            line: lineNum
-          },
-          code: line.trim(),
-          suggestion: `Specify the recipient for the rent refund:
-#[account(mut, close = authority)]
-pub account_to_close: Account<'info, MyData>,`
-        });
-      }
-      if (/#\[account\([^)]*close\s*=\s*(\w+)/.test(line)) {
-        const match = line.match(/close\s*=\s*(\w+)/);
-        if (match) {
-          const recipient = match[1];
-          const recipientPattern = new RegExp(`${recipient}.*Signer|${recipient}.*authority|has_one.*${recipient}`, "i");
-          if (!recipientPattern.test(content)) {
-            findings.push({
-              id: `SOL010-${counter++}`,
-              pattern: "close-to-unvalidated",
-              severity: "high",
-              title: `Account closes to unvalidated recipient '${recipient}'`,
-              description: `The account is closed with rent sent to '${recipient}', but this recipient doesn't appear to be validated. An attacker might be able to specify their own address to receive the rent.`,
-              location: {
-                file: file.path,
-                line: lineNum
-              },
-              code: line.trim(),
-              suggestion: `Ensure the close recipient is validated:
-#[account(
-    mut,
-    close = authority,
-    has_one = authority  // Validate authority owns this account
-)]
-pub account_to_close: Account<'info, MyData>,
-
-pub authority: Signer<'info>,  // Must sign`
-            });
-          }
-        }
-      }
-      if (/realloc\s*\(\s*0/.test(line)) {
-        const context = lines.slice(Math.max(0, i - 5), Math.min(lines.length, i + 5)).join("\n");
-        if (!/close|lamports/.test(context)) {
-          findings.push({
-            id: `SOL010-${counter++}`,
-            pattern: "realloc-zero-incomplete",
-            severity: "medium",
-            title: "Account reallocated to zero size",
-            description: "The account is reallocated to zero size but may not be properly closed. The account will still exist with zero data but non-zero lamports, which could cause confusion.",
-            location: {
-              file: file.path,
-              line: lineNum
-            },
-            code: line.trim(),
-            suggestion: `Use Anchor's close constraint for proper account closure:
-#[account(mut, close = recipient)]
-
-Or manually transfer all lamports after realloc.`
-          });
-        }
-      }
-    }
-  }
-  return findings;
-}
-
-// src/patterns/index.ts
-var patterns = [
-  {
-    id: "SOL001",
-    name: "Missing Owner Check",
-    severity: "critical",
-    run: checkMissingOwner
-  },
-  {
-    id: "SOL002",
-    name: "Missing Signer Check",
-    severity: "critical",
-    run: checkMissingSigner
-  },
-  {
-    id: "SOL003",
-    name: "Integer Overflow",
-    severity: "high",
-    run: checkIntegerOverflow
-  },
-  {
-    id: "SOL004",
-    name: "PDA Validation Gap",
-    severity: "high",
-    run: checkPdaValidation
-  },
-  {
-    id: "SOL005",
-    name: "Authority Bypass",
-    severity: "critical",
-    run: checkAuthorityBypass
-  },
-  {
-    id: "SOL006",
-    name: "Missing Initialization Check",
-    severity: "critical",
-    run: checkMissingInitCheck
-  },
-  {
-    id: "SOL007",
-    name: "CPI Vulnerability",
-    severity: "high",
-    run: checkCpiVulnerabilities
-  },
-  {
-    id: "SOL008",
-    name: "Rounding Error",
-    severity: "medium",
-    run: checkRoundingErrors
-  },
-  {
-    id: "SOL009",
-    name: "Account Confusion",
-    severity: "high",
-    run: checkAccountConfusion
-  },
-  {
-    id: "SOL010",
-    name: "Account Closing Vulnerability",
-    severity: "critical",
-    run: checkClosingVulnerabilities
-  }
-];
-async function runPatterns(input) {
-  const findings = [];
-  for (const pattern of patterns) {
-    try {
-      const patternFindings = pattern.run(input);
-      findings.push(...patternFindings);
-    } catch (error) {
-      console.warn(`Pattern ${pattern.id} failed: ${error}`);
-    }
-  }
-  const severityOrder = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
-  findings.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
-  return findings;
-}
 
 // src/ai/explain.ts
 import Anthropic from "@anthropic-ai/sdk";
@@ -1419,12 +430,277 @@ function listKnownPrograms() {
   console.log(chalk3.dim("  Use: solguard fetch <program-id> to audit\n"));
 }
 
+// src/commands/certificate.ts
+import chalk4 from "chalk";
+import ora3 from "ora";
+import { writeFileSync as writeFileSync2 } from "fs";
+import { join as join3 } from "path";
+
+// src/certificate/metadata.ts
+import { createHash } from "crypto";
+function generateCertificateMetadata(result, programId, imageUri = "https://solguard.dev/certificate.png") {
+  const passed = result.passed;
+  const findingsHash = createHash("sha256").update(JSON.stringify(result.findings)).digest("hex").slice(0, 16);
+  return {
+    name: `SolGuard Audit: ${programId.slice(0, 8)}...`,
+    symbol: "AUDIT",
+    description: passed ? `\u2705 This program passed the SolGuard security audit with no critical or high severity issues.` : `\u26A0\uFE0F This program was audited by SolGuard. ${result.summary.critical} critical and ${result.summary.high} high severity issues were found.`,
+    image: imageUri,
+    external_url: `https://solguard.dev/audit/${programId}`,
+    attributes: [
+      {
+        trait_type: "Status",
+        value: passed ? "PASSED" : "FAILED"
+      },
+      {
+        trait_type: "Critical Issues",
+        value: result.summary.critical
+      },
+      {
+        trait_type: "High Issues",
+        value: result.summary.high
+      },
+      {
+        trait_type: "Medium Issues",
+        value: result.summary.medium
+      },
+      {
+        trait_type: "Low Issues",
+        value: result.summary.low
+      },
+      {
+        trait_type: "Total Findings",
+        value: result.summary.total
+      },
+      {
+        trait_type: "Audit Date",
+        value: result.timestamp.split("T")[0]
+      },
+      {
+        trait_type: "Findings Hash",
+        value: findingsHash
+      },
+      {
+        trait_type: "Auditor",
+        value: "SolGuard AI"
+      },
+      {
+        trait_type: "Version",
+        value: "1.0.0"
+      }
+    ],
+    properties: {
+      files: [
+        {
+          uri: imageUri,
+          type: "image/png"
+        }
+      ],
+      category: "image"
+    }
+  };
+}
+function calculateSeverityScore(result) {
+  const weights = {
+    critical: 40,
+    high: 25,
+    medium: 10,
+    low: 3,
+    info: 1
+  };
+  let score = 0;
+  score += result.summary.critical * weights.critical;
+  score += result.summary.high * weights.high;
+  score += result.summary.medium * weights.medium;
+  score += result.summary.low * weights.low;
+  score += result.summary.info * weights.info;
+  return Math.min(100, score);
+}
+function generateCertificateSvg(programId, passed, summary, timestamp) {
+  const statusColor = passed ? "#10B981" : "#EF4444";
+  const statusText = passed ? "PASSED" : "FAILED";
+  const date = new Date(timestamp).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
+  return `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#18181B"/>
+      <stop offset="100%" style="stop-color:#09090B"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="500" fill="url(#bg)" rx="16"/>
+  
+  <!-- Border -->
+  <rect x="8" y="8" width="384" height="484" fill="none" stroke="${statusColor}" stroke-width="2" rx="12" opacity="0.5"/>
+  
+  <!-- Header -->
+  <text x="200" y="50" text-anchor="middle" fill="#FAFAFA" font-family="system-ui" font-size="24" font-weight="bold">\u{1F6E1}\uFE0F SolGuard</text>
+  <text x="200" y="75" text-anchor="middle" fill="#71717A" font-family="system-ui" font-size="12">Security Audit Certificate</text>
+  
+  <!-- Status Badge -->
+  <rect x="125" y="100" width="150" height="40" fill="${statusColor}" rx="20"/>
+  <text x="200" y="127" text-anchor="middle" fill="#FAFAFA" font-family="system-ui" font-size="18" font-weight="bold">${statusText}</text>
+  
+  <!-- Program ID -->
+  <text x="200" y="180" text-anchor="middle" fill="#A1A1AA" font-family="monospace" font-size="10">Program ID</text>
+  <text x="200" y="200" text-anchor="middle" fill="#FAFAFA" font-family="monospace" font-size="11">${programId.slice(0, 22)}...</text>
+  
+  <!-- Findings Summary -->
+  <text x="200" y="250" text-anchor="middle" fill="#A1A1AA" font-family="system-ui" font-size="12">Findings Summary</text>
+  
+  <g transform="translate(50, 270)">
+    <rect width="70" height="50" fill="#7F1D1D" rx="8"/>
+    <text x="35" y="25" text-anchor="middle" fill="#FCA5A5" font-family="system-ui" font-size="20" font-weight="bold">${summary.critical}</text>
+    <text x="35" y="42" text-anchor="middle" fill="#FCA5A5" font-family="system-ui" font-size="9">Critical</text>
+  </g>
+  
+  <g transform="translate(130, 270)">
+    <rect width="70" height="50" fill="#78350F" rx="8"/>
+    <text x="35" y="25" text-anchor="middle" fill="#FCD34D" font-family="system-ui" font-size="20" font-weight="bold">${summary.high}</text>
+    <text x="35" y="42" text-anchor="middle" fill="#FCD34D" font-family="system-ui" font-size="9">High</text>
+  </g>
+  
+  <g transform="translate(210, 270)">
+    <rect width="70" height="50" fill="#422006" rx="8"/>
+    <text x="35" y="25" text-anchor="middle" fill="#FDE68A" font-family="system-ui" font-size="20" font-weight="bold">${summary.medium}</text>
+    <text x="35" y="42" text-anchor="middle" fill="#FDE68A" font-family="system-ui" font-size="9">Medium</text>
+  </g>
+  
+  <g transform="translate(290, 270)">
+    <rect width="70" height="50" fill="#1E3A5F" rx="8"/>
+    <text x="35" y="25" text-anchor="middle" fill="#93C5FD" font-family="system-ui" font-size="20" font-weight="bold">${summary.low}</text>
+    <text x="35" y="42" text-anchor="middle" fill="#93C5FD" font-family="system-ui" font-size="9">Low</text>
+  </g>
+  
+  <!-- Date -->
+  <text x="200" y="370" text-anchor="middle" fill="#71717A" font-family="system-ui" font-size="11">Audited on ${date}</text>
+  
+  <!-- Footer -->
+  <text x="200" y="450" text-anchor="middle" fill="#52525B" font-family="system-ui" font-size="10">Powered by AI \u2022 solguard.dev</text>
+  <text x="200" y="470" text-anchor="middle" fill="#3F3F46" font-family="system-ui" font-size="8">This certificate is stored on the Solana blockchain</text>
+</svg>
+  `.trim();
+}
+
+// src/commands/certificate.ts
+async function certificateCommand(path, options) {
+  const spinner = ora3("Running audit...").start();
+  try {
+    let result;
+    const originalLog = console.log;
+    let jsonOutput = "";
+    console.log = (msg) => {
+      jsonOutput += msg;
+    };
+    try {
+      const { parseRustFiles: parseRustFiles2 } = await import("./rust-LZBLPUB7.js");
+      const { runPatterns: runPatterns2 } = await import("./patterns-T3TIM56D.js");
+      const { existsSync: existsSync3, statSync: statSync2, readdirSync: readdirSync2 } = await import("fs");
+      if (!existsSync3(path)) {
+        throw new Error(`Path not found: ${path}`);
+      }
+      const isDirectory = statSync2(path).isDirectory();
+      let rustFiles = [];
+      if (isDirectory) {
+        const findRustFiles2 = (dir) => {
+          const files = [];
+          const entries = readdirSync2(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            const fullPath = join3(dir, entry.name);
+            if (entry.isDirectory() && !entry.name.startsWith(".") && entry.name !== "target") {
+              files.push(...findRustFiles2(fullPath));
+            } else if (entry.name.endsWith(".rs")) {
+              files.push(fullPath);
+            }
+          }
+          return files;
+        };
+        const srcDir = join3(path, "src");
+        const programsDir = join3(path, "programs");
+        if (existsSync3(programsDir)) {
+          rustFiles = findRustFiles2(programsDir);
+        } else if (existsSync3(srcDir)) {
+          rustFiles = findRustFiles2(srcDir);
+        } else {
+          rustFiles = findRustFiles2(path);
+        }
+      } else if (path.endsWith(".rs")) {
+        rustFiles = [path];
+      }
+      if (rustFiles.length === 0) {
+        throw new Error("No Rust files found");
+      }
+      spinner.text = "Analyzing code...";
+      const rust = await parseRustFiles2(rustFiles);
+      const findings = await runPatterns2({ idl: null, rust, path });
+      result = {
+        programPath: path,
+        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+        findings,
+        summary: {
+          critical: findings.filter((f) => f.severity === "critical").length,
+          high: findings.filter((f) => f.severity === "high").length,
+          medium: findings.filter((f) => f.severity === "medium").length,
+          low: findings.filter((f) => f.severity === "low").length,
+          info: findings.filter((f) => f.severity === "info").length,
+          total: findings.length
+        },
+        passed: findings.filter((f) => ["critical", "high"].includes(f.severity)).length === 0
+      };
+    } finally {
+      console.log = originalLog;
+    }
+    spinner.text = "Generating certificate...";
+    const programId = options.programId || "Unknown";
+    const severityScore = calculateSeverityScore(result);
+    const metadata = generateCertificateMetadata(result, programId);
+    const svg = generateCertificateSvg(programId, result.passed, result.summary, result.timestamp);
+    const outputDir = options.output || ".";
+    const metadataPath = join3(outputDir, "certificate-metadata.json");
+    const svgPath = join3(outputDir, "certificate.svg");
+    writeFileSync2(metadataPath, JSON.stringify(metadata, null, 2));
+    writeFileSync2(svgPath, svg);
+    spinner.succeed("Certificate generated!");
+    console.log("");
+    console.log(chalk4.bold("  Certificate Summary"));
+    console.log(chalk4.gray("  \u2500".repeat(25)));
+    console.log("");
+    console.log(`  Status: ${result.passed ? chalk4.green("\u2705 PASSED") : chalk4.red("\u274C FAILED")}`);
+    console.log(`  Severity Score: ${chalk4.yellow(severityScore + "/100")} ${severityScore === 0 ? "(Perfect!)" : ""}`);
+    console.log("");
+    console.log(`  Findings:`);
+    console.log(`    ${chalk4.red("Critical:")} ${result.summary.critical}`);
+    console.log(`    ${chalk4.yellow("High:")} ${result.summary.high}`);
+    console.log(`    ${chalk4.blue("Medium:")} ${result.summary.medium}`);
+    console.log(`    ${chalk4.gray("Low:")} ${result.summary.low}`);
+    console.log("");
+    console.log(chalk4.gray(`  Metadata: ${metadataPath}`));
+    console.log(chalk4.gray(`  SVG: ${svgPath}`));
+    console.log("");
+    if (result.passed) {
+      console.log(chalk4.green("  \u{1F389} This program is ready for NFT certificate minting!"));
+    } else {
+      console.log(chalk4.yellow("  \u26A0\uFE0F  Fix the issues above before minting a certificate."));
+    }
+    console.log("");
+  } catch (error) {
+    spinner.fail(`Certificate generation failed: ${error.message}`);
+    process.exit(1);
+  }
+}
+
 // src/index.ts
 var program = new Command();
 var args = process.argv.slice(2);
 var isJsonOutput = args.includes("--output") && args[args.indexOf("--output") + 1] === "json";
 if (!isJsonOutput) {
-  console.log(chalk4.cyan(`
+  console.log(chalk5.cyan(`
 \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557
 \u2551  \u{1F6E1}\uFE0F  SolGuard - Smart Contract Auditor    \u2551
 \u2551     AI-Powered Security for Solana        \u2551
@@ -1440,4 +716,5 @@ program.command("parse").description("Parse an Anchor IDL file").argument("<idl>
 });
 program.command("fetch").description("Fetch and audit a program by its on-chain program ID").argument("<program-id>", "Solana program ID (base58)").option("-r, --rpc <url>", "RPC endpoint URL").option("-o, --output <format>", "Output format: terminal, json, markdown", "terminal").option("--no-ai", "Skip AI explanations").option("-v, --verbose", "Show detailed output").action(fetchAndAuditCommand);
 program.command("programs").description("List known Solana programs").action(listKnownPrograms);
+program.command("certificate").description("Generate an audit certificate (metadata + SVG)").argument("<path>", "Path to program directory or Rust file").option("-o, --output <dir>", "Output directory", ".").option("-p, --program-id <id>", "Program ID for the certificate").action(certificateCommand);
 program.parse();
