@@ -602,16 +602,16 @@ async function certificateCommand(path, options) {
     try {
       const { parseRustFiles: parseRustFiles2 } = await import("./rust-LZBLPUB7.js");
       const { runPatterns: runPatterns2 } = await import("./patterns-7NVPT5DP.js");
-      const { existsSync: existsSync4, statSync: statSync3, readdirSync: readdirSync3 } = await import("fs");
-      if (!existsSync4(path)) {
+      const { existsSync: existsSync5, statSync: statSync4, readdirSync: readdirSync4 } = await import("fs");
+      if (!existsSync5(path)) {
         throw new Error(`Path not found: ${path}`);
       }
-      const isDirectory = statSync3(path).isDirectory();
+      const isDirectory = statSync4(path).isDirectory();
       let rustFiles = [];
       if (isDirectory) {
         const findRustFiles3 = (dir) => {
           const files = [];
-          const entries = readdirSync3(dir, { withFileTypes: true });
+          const entries = readdirSync4(dir, { withFileTypes: true });
           for (const entry of entries) {
             const fullPath = join3(dir, entry.name);
             if (entry.isDirectory() && !entry.name.startsWith(".") && entry.name !== "target") {
@@ -624,9 +624,9 @@ async function certificateCommand(path, options) {
         };
         const srcDir = join3(path, "src");
         const programsDir = join3(path, "programs");
-        if (existsSync4(programsDir)) {
+        if (existsSync5(programsDir)) {
           rustFiles = findRustFiles3(programsDir);
-        } else if (existsSync4(srcDir)) {
+        } else if (existsSync5(srcDir)) {
           rustFiles = findRustFiles3(srcDir);
         } else {
           rustFiles = findRustFiles3(path);
@@ -1053,6 +1053,202 @@ function formatGithubAuditResult(result, format = "text") {
   return lines.join("\n");
 }
 
+// src/commands/ci.ts
+import { readFileSync, existsSync as existsSync4, readdirSync as readdirSync3, statSync as statSync3, writeFileSync as writeFileSync3 } from "fs";
+import { join as join6 } from "path";
+async function ciCommand(path, options) {
+  const startTime = Date.now();
+  if (!existsSync4(path)) {
+    console.error(`::error::Path not found: ${path}`);
+    process.exit(1);
+  }
+  const isDirectory = statSync3(path).isDirectory();
+  let rustFiles = [];
+  let idlPath = null;
+  if (isDirectory) {
+    rustFiles = findRustFilesRecursive(path);
+    const idlDir = join6(path, "target", "idl");
+    if (existsSync4(idlDir)) {
+      const idlFiles = readdirSync3(idlDir).filter((f) => f.endsWith(".json"));
+      if (idlFiles.length > 0) {
+        idlPath = join6(idlDir, idlFiles[0]);
+      }
+    }
+  } else if (path.endsWith(".rs")) {
+    rustFiles = [path];
+  }
+  if (rustFiles.length === 0) {
+    console.log("::warning::No Rust files found to audit");
+    process.exit(0);
+  }
+  let idl = null;
+  if (idlPath) {
+    try {
+      idl = parseIdl(readFileSync(idlPath, "utf-8"));
+    } catch {
+      console.log("::warning::Failed to parse IDL");
+    }
+  }
+  const parsedRust = parseRustFiles(rustFiles);
+  const allFindings = [];
+  for (const file of parsedRust.files) {
+    const findings = await runPatterns({
+      path: file.path,
+      rust: {
+        files: [file],
+        functions: parsedRust.functions.filter((f) => f.file === file.path),
+        structs: parsedRust.structs.filter((s) => s.file === file.path),
+        implBlocks: parsedRust.implBlocks.filter((i) => i.file === file.path),
+        content: file.content
+      },
+      idl
+    });
+    allFindings.push(...findings);
+  }
+  const duration = Date.now() - startTime;
+  for (const finding of allFindings) {
+    const level = finding.severity === "critical" || finding.severity === "high" ? "error" : finding.severity === "medium" ? "warning" : "notice";
+    const location = typeof finding.location === "string" ? finding.location : `${finding.location.file}:${finding.location.line || 1}`;
+    const [file, line] = location.split(":");
+    console.log(`::${level} file=${file},line=${line || 1},title=[${finding.pattern}] ${finding.title}::${finding.description}`);
+  }
+  const counts = {
+    critical: allFindings.filter((f) => f.severity === "critical").length,
+    high: allFindings.filter((f) => f.severity === "high").length,
+    medium: allFindings.filter((f) => f.severity === "medium").length,
+    low: allFindings.filter((f) => f.severity === "low").length,
+    info: allFindings.filter((f) => f.severity === "info").length
+  };
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY || options.summary;
+  if (summaryPath) {
+    const summaryLines = [
+      "## \u{1F6E1}\uFE0F SolGuard Security Audit",
+      "",
+      `| Severity | Count |`,
+      `|----------|-------|`,
+      `| \u{1F534} Critical | ${counts.critical} |`,
+      `| \u{1F7E0} High | ${counts.high} |`,
+      `| \u{1F7E1} Medium | ${counts.medium} |`,
+      `| \u{1F535} Low | ${counts.low} |`,
+      `| \u26AA Info | ${counts.info} |`,
+      "",
+      `**Files scanned:** ${rustFiles.length}`,
+      `**Duration:** ${duration}ms`,
+      `**Patterns:** ${listPatterns().length}`,
+      ""
+    ];
+    if (allFindings.length > 0) {
+      summaryLines.push("### Findings");
+      summaryLines.push("");
+      for (const f of allFindings.slice(0, 20)) {
+        const emoji = { critical: "\u{1F534}", high: "\u{1F7E0}", medium: "\u{1F7E1}", low: "\u{1F535}", info: "\u26AA" }[f.severity] || "";
+        summaryLines.push(`- ${emoji} **[${f.pattern}]** ${f.title}`);
+        summaryLines.push(`  - ${f.description}`);
+      }
+      if (allFindings.length > 20) {
+        summaryLines.push(`- ... and ${allFindings.length - 20} more`);
+      }
+    } else {
+      summaryLines.push("\u2705 **No vulnerabilities detected!**");
+    }
+    writeFileSync3(summaryPath, summaryLines.join("\n"), { flag: "a" });
+  }
+  if (options.sarif) {
+    const sarif = generateSarif(allFindings, path);
+    writeFileSync3(options.sarif, JSON.stringify(sarif, null, 2));
+    console.log(`::notice::SARIF report written to ${options.sarif}`);
+  }
+  console.log("\n--- SolGuard CI Summary ---");
+  console.log(`Files: ${rustFiles.length} | Findings: ${allFindings.length} | Duration: ${duration}ms`);
+  console.log(`Critical: ${counts.critical} | High: ${counts.high} | Medium: ${counts.medium} | Low: ${counts.low}`);
+  const failOn = options.failOn || "critical";
+  let shouldFail = false;
+  switch (failOn) {
+    case "any":
+      shouldFail = allFindings.length > 0;
+      break;
+    case "low":
+      shouldFail = counts.critical + counts.high + counts.medium + counts.low > 0;
+      break;
+    case "medium":
+      shouldFail = counts.critical + counts.high + counts.medium > 0;
+      break;
+    case "high":
+      shouldFail = counts.critical + counts.high > 0;
+      break;
+    case "critical":
+    default:
+      shouldFail = counts.critical > 0;
+      break;
+  }
+  if (shouldFail) {
+    console.log(`
+::error::Audit failed: found ${failOn} or higher severity issues`);
+    process.exit(1);
+  }
+  console.log("\n\u2713 Audit passed");
+  process.exit(0);
+}
+function generateSarif(findings, basePath) {
+  const rules = listPatterns().map((p) => ({
+    id: p.id,
+    name: p.name,
+    shortDescription: { text: p.name },
+    defaultConfiguration: {
+      level: p.severity === "critical" || p.severity === "high" ? "error" : p.severity === "medium" ? "warning" : "note"
+    }
+  }));
+  const results = findings.map((f) => {
+    const location = typeof f.location === "string" ? f.location : f.location.file;
+    const [file, lineStr] = location.split(":");
+    const line = parseInt(lineStr) || 1;
+    return {
+      ruleId: f.pattern,
+      level: f.severity === "critical" || f.severity === "high" ? "error" : f.severity === "medium" ? "warning" : "note",
+      message: { text: `${f.title}: ${f.description}` },
+      locations: [{
+        physicalLocation: {
+          artifactLocation: { uri: file },
+          region: { startLine: line }
+        }
+      }]
+    };
+  });
+  return {
+    $schema: "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+    version: "2.1.0",
+    runs: [{
+      tool: {
+        driver: {
+          name: "SolGuard",
+          version: "0.1.0",
+          informationUri: "https://github.com/oh-ashen-one/solguard",
+          rules
+        }
+      },
+      results
+    }]
+  };
+}
+function findRustFilesRecursive(dir) {
+  const files = [];
+  function scan(currentDir) {
+    const entries = readdirSync3(currentDir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = join6(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        if (!["node_modules", "target", ".git", "dist", "build"].includes(entry.name)) {
+          scan(fullPath);
+        }
+      } else if (entry.name.endsWith(".rs")) {
+        files.push(fullPath);
+      }
+    }
+  }
+  scan(dir);
+  return files;
+}
+
 // src/index.ts
 var program = new Command();
 var args = process.argv.slice(2);
@@ -1095,4 +1291,5 @@ program.command("github").description("Audit a Solana program directly from GitH
     process.exit(1);
   }
 });
+program.command("ci").description("Run audit in CI mode (GitHub Actions, etc.)").argument("<path>", "Path to program directory").option("--fail-on <level>", "Fail on severity level: critical, high, medium, low, any", "critical").option("--sarif <file>", "Output SARIF report for GitHub Code Scanning").option("--summary <file>", "Write markdown summary to file").action(ciCommand);
 program.parse();

@@ -1,0 +1,52 @@
+# SolGuard Security Audit
+# Add this workflow to your Solana project to automatically audit on every push/PR
+
+name: Security Audit
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - '**.rs'
+      - '**/Cargo.toml'
+  pull_request:
+    branches: [main, master]
+    paths:
+      - '**.rs'
+      - '**/Cargo.toml'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    name: SolGuard Security Audit
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install SolGuard
+        run: npm install -g @solguard/cli
+        
+      - name: Run Security Audit
+        run: |
+          solguard ci . \
+            --fail-on high \
+            --sarif results.sarif
+            
+      - name: Upload SARIF to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: results.sarif
+          
+      - name: Add Audit Summary
+        if: always()
+        run: |
+          echo "## 🛡️ SolGuard Audit Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "See the Security tab for detailed findings." >> $GITHUB_STEP_SUMMARY

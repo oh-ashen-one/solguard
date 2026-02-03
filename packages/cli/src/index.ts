@@ -7,6 +7,7 @@ import { certificateCommand } from './commands/certificate.js';
 import { watchCommand } from './commands/watch.js';
 import { statsCommand } from './commands/stats.js';
 import { auditGithub, formatGithubAuditResult } from './commands/github.js';
+import { ciCommand } from './commands/ci.js';
 
 const program = new Command();
 
@@ -111,5 +112,14 @@ program
       process.exit(1);
     }
   });
+
+program
+  .command('ci')
+  .description('Run audit in CI mode (GitHub Actions, etc.)')
+  .argument('<path>', 'Path to program directory')
+  .option('--fail-on <level>', 'Fail on severity level: critical, high, medium, low, any', 'critical')
+  .option('--sarif <file>', 'Output SARIF report for GitHub Code Scanning')
+  .option('--summary <file>', 'Write markdown summary to file')
+  .action(ciCommand);
 
 program.parse();

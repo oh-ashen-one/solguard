@@ -16,7 +16,7 @@ SolGuard is an autonomous smart contract auditing system that:
 
 **The pitch:** Manual audits cost $10K-$100K and take weeks. We do it in seconds for free (beta).
 
-## 🔍 Vulnerability Patterns (10)
+## 🔍 Vulnerability Patterns (15)
 
 | ID | Pattern | Severity | Description |
 |----|---------|----------|-------------|
@@ -30,24 +30,44 @@ SolGuard is an autonomous smart contract auditing system that:
 | SOL008 | Rounding Error | Medium | Precision loss in calculations |
 | SOL009 | Account Confusion | High | Swappable same-type accounts |
 | SOL010 | Closing Vulnerability | Critical | Account revival attacks |
+| SOL011 | Cross-Program Reentrancy | High | State changes after CPI calls |
+| SOL012 | Arbitrary CPI | Critical | Unconstrained program ID in invokes |
+| SOL013 | Duplicate Mutable Accounts | High | Same account passed as multiple params |
+| SOL014 | Missing Rent Exemption | Medium | Accounts below rent threshold |
+| SOL015 | Type Cosplay | Critical | Missing discriminator validation |
 
 ## 🚀 Quick Start
 
 ### CLI
 
 ```bash
-# Install
-cd packages/cli
-pnpm install
-pnpm build
+# Install globally
+npm install -g @solguard/cli
+
+# Or build from source
+cd packages/cli && pnpm install && pnpm build
 
 # Audit a program
-node dist/index.js audit ./path/to/program
+solguard audit ./path/to/program
 
-# Options
-node dist/index.js audit ./program --output json
-node dist/index.js audit ./program --output markdown
-node dist/index.js audit ./program --no-ai  # Skip AI explanations
+# Audit from GitHub directly
+solguard github coral-xyz/anchor
+solguard github https://github.com/user/repo --pr 123
+
+# Fetch and audit on-chain programs
+solguard fetch <PROGRAM_ID> --rpc https://api.mainnet-beta.solana.com
+
+# Watch mode for development
+solguard watch ./program
+
+# Generate audit certificate
+solguard certificate ./program --program-id <PUBKEY>
+
+# CI mode for GitHub Actions
+solguard ci . --fail-on high --sarif results.sarif
+
+# Show stats
+solguard stats
 ```
 
 ### Web UI
@@ -57,6 +77,22 @@ cd packages/web
 pnpm install
 pnpm dev
 # Open http://localhost:3000
+```
+
+### GitHub Actions Integration
+
+```yaml
+# .github/workflows/audit.yml
+- name: Install SolGuard
+  run: npm install -g @solguard/cli
+  
+- name: Run Security Audit
+  run: solguard ci . --fail-on high --sarif results.sarif
+  
+- name: Upload SARIF
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: results.sarif
 ```
 
 ## 📁 Project Structure
@@ -145,10 +181,12 @@ New Exploit → Researcher Extracts Pattern → DB Updated → Re-scan Programs
 
 ## 🏆 Hackathon Goals
 
-- [x] 10+ vulnerability patterns
-- [x] Working CLI auditor
-- [x] Web UI with paste-to-audit
-- [x] On-chain audit registry (Anchor)
+- [x] **15 vulnerability patterns** (SOL001-SOL015)
+- [x] **9 CLI commands** (audit, fetch, github, ci, watch, certificate, stats, programs, parse)
+- [x] **GitHub integration** — audit repos and PRs directly
+- [x] **CI mode** — GitHub Actions with SARIF code scanning
+- [x] **Web UI** with paste-to-audit
+- [x] **On-chain audit registry** (Anchor scaffold)
 - [ ] NFT audit certificates
 - [ ] Deploy to devnet
 - [ ] Audit 5 real programs publicly
