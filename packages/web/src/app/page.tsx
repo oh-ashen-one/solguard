@@ -98,7 +98,7 @@ export default function Home() {
       <section className="max-w-6xl mx-auto px-4 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="text-center">
-            <div className="text-4xl font-bold text-emerald-400">75</div>
+            <div className="text-4xl font-bold text-emerald-400">80</div>
             <div className="text-zinc-500">Vuln Patterns</div>
           </div>
           <div className="text-center">

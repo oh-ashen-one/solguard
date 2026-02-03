@@ -76,6 +76,11 @@ import { checkAtaSecurity } from './ata-security.js';
 import { checkSystemProgramAbuse } from './system-program-abuse.js';
 import { checkWrappedSol } from './wrapped-sol.js';
 import { checkAccountRevival } from './account-revival.js';
+import { checkCrossInstance } from './cross-instance.js';
+import { checkProgramDataAuthority } from './program-data-authority.js';
+import { checkMintAuthority } from './mint-authority.js';
+import { checkDiscriminator } from './discriminator.js';
+import { checkTimestampManipulation } from './timestamp-manipulation.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -541,6 +546,36 @@ const patterns: Pattern[] = [
     name: 'Account Revival Attack',
     severity: 'critical',
     run: checkAccountRevival,
+  },
+  {
+    id: 'SOL076',
+    name: 'Cross-Instance Confusion',
+    severity: 'medium',
+    run: checkCrossInstance,
+  },
+  {
+    id: 'SOL077',
+    name: 'Program Data Authority',
+    severity: 'critical',
+    run: checkProgramDataAuthority,
+  },
+  {
+    id: 'SOL078',
+    name: 'Token Mint Authority Security',
+    severity: 'critical',
+    run: checkMintAuthority,
+  },
+  {
+    id: 'SOL079',
+    name: 'Account Discriminator Security',
+    severity: 'critical',
+    run: checkDiscriminator,
+  },
+  {
+    id: 'SOL080',
+    name: 'Timestamp Manipulation',
+    severity: 'high',
+    run: checkTimestampManipulation,
   },
 ];
 

@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-19%20passing-brightgreen.svg)](#)
-[![Patterns](https://img.shields.io/badge/patterns-75-blue.svg)](#vulnerability-patterns)
+[![Patterns](https://img.shields.io/badge/patterns-80-blue.svg)](#vulnerability-patterns)
 [![Commands](https://img.shields.io/badge/CLI%20commands-7-purple.svg)](#cli)
 
 **AI-Powered Smart Contract Auditor for Solana**
@@ -14,14 +14,14 @@
 SolGuard is an autonomous smart contract auditing system that:
 
 1. **Parses** Anchor IDL + Rust source code
-2. **Detects** vulnerabilities using **75 specialized patterns**
+2. **Detects** vulnerabilities using **80 specialized patterns**
 3. **Generates** AI-powered explanations + fix suggestions  
 4. **Stores** audit results on-chain for verification
 5. **Mints** NFT certificates for passed audits
 
 **The pitch:** Manual audits cost $10K-$100K and take weeks. We do it in seconds for free (beta).
 
-## 🔍 Vulnerability Patterns (75)
+## 🔍 Vulnerability Patterns (80)
 
 ### Critical Severity (10)
 | ID | Pattern | Description |
