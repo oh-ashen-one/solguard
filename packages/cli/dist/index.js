@@ -7,7 +7,7 @@ import {
 
 // src/index.ts
 import { Command } from "commander";
-import chalk3 from "chalk";
+import chalk4 from "chalk";
 
 // src/commands/audit.ts
 import chalk2 from "chalk";
@@ -1325,12 +1325,106 @@ function findRustFiles(dir) {
   return files;
 }
 
+// src/commands/fetch.ts
+import chalk3 from "chalk";
+import ora2 from "ora";
+import { Connection, PublicKey } from "@solana/web3.js";
+import { writeFileSync, mkdirSync, existsSync as existsSync2 } from "fs";
+import { join as join2 } from "path";
+var DEFAULT_RPC = "https://api.mainnet-beta.solana.com";
+async function fetchAndAuditCommand(programId, options) {
+  const spinner = ora2("Connecting to Solana...").start();
+  try {
+    let pubkey;
+    try {
+      pubkey = new PublicKey(programId);
+    } catch {
+      spinner.fail("Invalid program ID");
+      process.exit(1);
+    }
+    const rpcUrl = options.rpc || process.env.SOLANA_RPC_URL || DEFAULT_RPC;
+    const connection = new Connection(rpcUrl, "confirmed");
+    spinner.text = "Checking program account...";
+    const accountInfo = await connection.getAccountInfo(pubkey);
+    if (!accountInfo) {
+      spinner.fail(`Program not found: ${programId}`);
+      process.exit(1);
+    }
+    if (!accountInfo.executable) {
+      spinner.fail(`Account is not a program: ${programId}`);
+      process.exit(1);
+    }
+    spinner.text = "Fetching IDL...";
+    const [idlAddress] = PublicKey.findProgramAddressSync(
+      [Buffer.from("anchor:idl"), pubkey.toBuffer()],
+      pubkey
+    );
+    const idlAccount = await connection.getAccountInfo(idlAddress);
+    if (!idlAccount) {
+      spinner.warn("No Anchor IDL found on-chain");
+      console.log(chalk3.yellow("\n  This program may not be an Anchor program, or IDL was not published."));
+      console.log(chalk3.yellow("  Try auditing the source code directly instead.\n"));
+      process.exit(1);
+    }
+    const idlData = idlAccount.data.slice(12);
+    let idlJson;
+    try {
+      idlJson = idlData.toString("utf8");
+      JSON.parse(idlJson);
+    } catch {
+      spinner.fail("IDL appears to be compressed. Decompression not yet supported.");
+      process.exit(1);
+    }
+    const tempDir = join2(process.cwd(), ".solguard-temp");
+    if (!existsSync2(tempDir)) {
+      mkdirSync(tempDir, { recursive: true });
+    }
+    const idlPath = join2(tempDir, `${programId}.json`);
+    writeFileSync(idlPath, idlJson);
+    spinner.succeed(`IDL fetched for ${programId}`);
+    console.log(chalk3.gray(`  Saved to: ${idlPath}
+`));
+    await auditCommand(idlPath, {
+      output: options.output || "terminal",
+      ai: options.ai !== false,
+      verbose: options.verbose || false
+    });
+  } catch (error) {
+    spinner.fail(`Failed to fetch program: ${error.message}`);
+    if (options.verbose) {
+      console.error(error);
+    }
+    process.exit(1);
+  }
+}
+function listKnownPrograms() {
+  const programs = [
+    { name: "Token Program", id: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
+    { name: "Token 2022", id: "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb" },
+    { name: "Associated Token", id: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" },
+    { name: "Metaplex Token Metadata", id: "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s" },
+    { name: "Metaplex Bubblegum", id: "BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY" },
+    { name: "Marinade Finance", id: "MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD" },
+    { name: "Raydium AMM", id: "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8" },
+    { name: "Orca Whirlpools", id: "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc" },
+    { name: "Jupiter Aggregator", id: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4" },
+    { name: "Squads V3", id: "SMPLecH534NA9acpos4G6x7uf3LWbCAwZQE9e8ZekMu" }
+  ];
+  console.log(chalk3.bold("\n  Known Solana Programs:\n"));
+  for (const program2 of programs) {
+    console.log(chalk3.cyan(`  ${program2.name}`));
+    console.log(chalk3.gray(`    ${program2.id}
+`));
+  }
+  console.log(chalk3.dim("  Use: solguard fetch <program-id> to audit\n"));
+}
+
 // src/index.ts
 var program = new Command();
 var args = process.argv.slice(2);
 var isJsonOutput = args.includes("--output") && args[args.indexOf("--output") + 1] === "json";
 if (!isJsonOutput) {
-  console.log(chalk3.cyan(`
+  console.log(chalk4.cyan(`
 \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557
 \u2551  \u{1F6E1}\uFE0F  SolGuard - Smart Contract Auditor    \u2551
 \u2551     AI-Powered Security for Solana        \u2551
@@ -1344,4 +1438,6 @@ program.command("parse").description("Parse an Anchor IDL file").argument("<idl>
   const result = await parseIdl2(idlPath);
   console.log(JSON.stringify(result, null, 2));
 });
+program.command("fetch").description("Fetch and audit a program by its on-chain program ID").argument("<program-id>", "Solana program ID (base58)").option("-r, --rpc <url>", "RPC endpoint URL").option("-o, --output <format>", "Output format: terminal, json, markdown", "terminal").option("--no-ai", "Skip AI explanations").option("-v, --verbose", "Show detailed output").action(fetchAndAuditCommand);
+program.command("programs").description("List known Solana programs").action(listKnownPrograms);
 program.parse();

@@ -2,6 +2,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { auditCommand } from './commands/audit.js';
+import { fetchAndAuditCommand, listKnownPrograms } from './commands/fetch.js';
 
 const program = new Command();
 
@@ -40,5 +41,20 @@ program
     const result = await parseIdl(idlPath);
     console.log(JSON.stringify(result, null, 2));
   });
+
+program
+  .command('fetch')
+  .description('Fetch and audit a program by its on-chain program ID')
+  .argument('<program-id>', 'Solana program ID (base58)')
+  .option('-r, --rpc <url>', 'RPC endpoint URL')
+  .option('-o, --output <format>', 'Output format: terminal, json, markdown', 'terminal')
+  .option('--no-ai', 'Skip AI explanations')
+  .option('-v, --verbose', 'Show detailed output')
+  .action(fetchAndAuditCommand);
+
+program
+  .command('programs')
+  .description('List known Solana programs')
+  .action(listKnownPrograms);
 
 program.parse();
