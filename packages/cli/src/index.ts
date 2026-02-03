@@ -12,6 +12,7 @@ import { generateHtmlReport, saveHtmlReport } from './commands/report.js';
 import { checkCommand } from './commands/check.js';
 import { generateExampleConfig } from './config.js';
 import { compareCommand } from './commands/compare.js';
+import { listCommand } from './commands/list.js';
 
 const program = new Command();
 
@@ -125,6 +126,13 @@ program
   .option('--sarif <file>', 'Output SARIF report for GitHub Code Scanning')
   .option('--summary <file>', 'Write markdown summary to file')
   .action(ciCommand);
+
+program
+  .command('list')
+  .description('List all vulnerability patterns with details')
+  .option('-s, --severity <level>', 'Filter by severity: critical, high, medium')
+  .option('-o, --output <format>', 'Output format: terminal, json, markdown', 'terminal')
+  .action(listCommand);
 
 program
   .command('compare')

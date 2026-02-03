@@ -12,7 +12,7 @@ import {
 
 // src/index.ts
 import { Command } from "commander";
-import chalk8 from "chalk";
+import chalk9 from "chalk";
 
 // src/commands/audit.ts
 import chalk2 from "chalk";
@@ -826,11 +826,12 @@ function statsCommand() {
   console.log(chalk6.green("  \u2713"), "Config file support");
   console.log(chalk6.green("  \u2713"), "JSON/Markdown/Terminal output");
   console.log("");
-  console.log(chalk6.bold("  Available Commands (12):"));
+  console.log(chalk6.bold("  Available Commands (13):"));
   console.log("");
   console.log(chalk6.cyan("  solguard audit <path>"), "       Audit a program");
   console.log(chalk6.cyan("  solguard fetch <id>"), "         Fetch and audit on-chain");
   console.log(chalk6.cyan("  solguard github <repo>"), "      Audit GitHub repo/PR");
+  console.log(chalk6.cyan("  solguard compare <a> <b>"), "    Compare two versions");
   console.log(chalk6.cyan("  solguard check <path>"), "       Quick pass/fail check");
   console.log(chalk6.cyan("  solguard ci <path>"), "          CI mode with SARIF");
   console.log(chalk6.cyan("  solguard watch <path>"), "       Watch and auto-audit");
@@ -1870,12 +1871,131 @@ function formatDiffMarkdown(diff) {
   return lines.join("\n");
 }
 
+// src/commands/list.ts
+import chalk8 from "chalk";
+var PATTERN_DESCRIPTIONS = {
+  SOL001: "Detects accounts accessed without validating the owner field. An attacker could pass a fake account owned by a different program.",
+  SOL002: "Detects authority/admin accounts that are not declared as Signers. Without signer verification, anyone can claim to be the authority.",
+  SOL003: "Detects arithmetic operations without overflow protection. Rust integers wrap on overflow, leading to unexpected behavior.",
+  SOL004: "Detects Program Derived Addresses used without validating the bump seed. Attackers could use a different bump to bypass validation.",
+  SOL005: "Detects sensitive operations (transfers, state changes) without proper authority checks.",
+  SOL006: "Detects accounts used without checking if they are initialized. Uninitialized accounts may contain garbage or be controlled by attackers.",
+  SOL007: "Detects Cross-Program Invocations without proper verification of the target program or account constraints.",
+  SOL008: "Detects division operations that may lose precision. In financial calculations, this can be exploited for profit.",
+  SOL009: "Detects when multiple accounts of the same type lack constraints ensuring they are different accounts.",
+  SOL010: "Detects improper account closing that allows account revival or rent theft.",
+  SOL011: "Detects state changes after CPI calls where a callback could manipulate state.",
+  SOL012: "Detects invoke() calls where the program_id is user-controlled without validation.",
+  SOL013: "Detects when the same account could be passed as multiple mutable parameters.",
+  SOL014: "Detects account operations that may leave accounts below rent-exempt minimum.",
+  SOL015: "Detects account deserialization without type discriminator validation, allowing type confusion attacks."
+};
+var PATTERN_EXAMPLES = {
+  SOL002: {
+    vulnerable: `// VULNERABLE
+pub authority: AccountInfo<'info>,`,
+    safe: `// SAFE
+pub authority: Signer<'info>,`
+  },
+  SOL003: {
+    vulnerable: `// VULNERABLE
+vault.balance = vault.balance + amount;`,
+    safe: `// SAFE
+vault.balance = vault.balance.checked_add(amount).unwrap();`
+  }
+};
+function listCommand(options = {}) {
+  const patterns = listPatterns();
+  const format = options.output || "terminal";
+  let filtered = patterns;
+  if (options.severity) {
+    filtered = patterns.filter((p) => p.severity === options.severity);
+  }
+  if (format === "json") {
+    const data = filtered.map((p) => ({
+      ...p,
+      description: PATTERN_DESCRIPTIONS[p.id] || "",
+      run: void 0
+    }));
+    console.log(JSON.stringify(data, null, 2));
+    return;
+  }
+  if (format === "markdown") {
+    console.log("# SolGuard Vulnerability Patterns\n");
+    console.log(`Total: ${filtered.length} patterns
+`);
+    for (const p of filtered) {
+      const emoji = p.severity === "critical" ? "\u{1F534}" : p.severity === "high" ? "\u{1F7E0}" : "\u{1F7E1}";
+      console.log(`## ${emoji} ${p.id}: ${p.name}
+`);
+      console.log(`**Severity:** ${p.severity}
+`);
+      console.log(PATTERN_DESCRIPTIONS[p.id] || "No description available.\n");
+      const example = PATTERN_EXAMPLES[p.id];
+      if (example) {
+        console.log("\n**Example:**\n");
+        console.log("```rust");
+        console.log(example.vulnerable);
+        console.log("```\n");
+        console.log("**Fix:**\n");
+        console.log("```rust");
+        console.log(example.safe);
+        console.log("```\n");
+      }
+    }
+    return;
+  }
+  console.log("");
+  console.log(chalk8.bold("  \u{1F6E1}\uFE0F SolGuard Vulnerability Patterns"));
+  console.log(chalk8.gray("  \u2500".repeat(30)));
+  console.log("");
+  const bySeverity = {
+    critical: filtered.filter((p) => p.severity === "critical"),
+    high: filtered.filter((p) => p.severity === "high"),
+    medium: filtered.filter((p) => p.severity === "medium")
+  };
+  if (bySeverity.critical.length > 0) {
+    console.log(chalk8.red.bold("  \u{1F534} CRITICAL"));
+    console.log("");
+    for (const p of bySeverity.critical) {
+      console.log(chalk8.white(`  ${p.id}: ${p.name}`));
+      console.log(chalk8.gray(`     ${truncate(PATTERN_DESCRIPTIONS[p.id] || "", 60)}`));
+      console.log("");
+    }
+  }
+  if (bySeverity.high.length > 0) {
+    console.log(chalk8.yellow.bold("  \u{1F7E0} HIGH"));
+    console.log("");
+    for (const p of bySeverity.high) {
+      console.log(chalk8.white(`  ${p.id}: ${p.name}`));
+      console.log(chalk8.gray(`     ${truncate(PATTERN_DESCRIPTIONS[p.id] || "", 60)}`));
+      console.log("");
+    }
+  }
+  if (bySeverity.medium.length > 0) {
+    console.log(chalk8.blue.bold("  \u{1F7E1} MEDIUM"));
+    console.log("");
+    for (const p of bySeverity.medium) {
+      console.log(chalk8.white(`  ${p.id}: ${p.name}`));
+      console.log(chalk8.gray(`     ${truncate(PATTERN_DESCRIPTIONS[p.id] || "", 60)}`));
+      console.log("");
+    }
+  }
+  console.log(chalk8.gray("  \u2500".repeat(30)));
+  console.log(chalk8.dim(`  Total: ${filtered.length} patterns`));
+  console.log("");
+}
+function truncate(str, len) {
+  if (str.length <= len) return str;
+  return str.slice(0, len - 3) + "...";
+}
+
 // src/index.ts
 var program = new Command();
 var args = process.argv.slice(2);
 var isJsonOutput = args.includes("--output") && args[args.indexOf("--output") + 1] === "json";
 if (!isJsonOutput) {
-  console.log(chalk8.cyan(`
+  console.log(chalk9.cyan(`
 \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557
 \u2551  \u{1F6E1}\uFE0F  SolGuard - Smart Contract Auditor    \u2551
 \u2551     AI-Powered Security for Solana        \u2551
@@ -1908,23 +2028,24 @@ program.command("github").description("Audit a Solana program directly from GitH
       process.exit(1);
     }
   } catch (error) {
-    console.error(chalk8.red(`Error: ${error.message}`));
+    console.error(chalk9.red(`Error: ${error.message}`));
     process.exit(1);
   }
 });
 program.command("ci").description("Run audit in CI mode (GitHub Actions, etc.)").argument("<path>", "Path to program directory").option("--fail-on <level>", "Fail on severity level: critical, high, medium, low, any", "critical").option("--sarif <file>", "Output SARIF report for GitHub Code Scanning").option("--summary <file>", "Write markdown summary to file").action(ciCommand);
+program.command("list").description("List all vulnerability patterns with details").option("-s, --severity <level>", "Filter by severity: critical, high, medium").option("-o, --output <format>", "Output format: terminal, json, markdown", "terminal").action(listCommand);
 program.command("compare").description("Compare security between two program versions").argument("<pathA>", "First version (baseline)").argument("<pathB>", "Second version (new)").option("-o, --output <format>", "Output format: terminal, json, markdown", "terminal").action(compareCommand);
 program.command("init").description("Initialize SolGuard in a project").option("-f, --force", "Overwrite existing config").action(async (options) => {
   const { existsSync: existsSync7, writeFileSync: writeFileSync5 } = await import("fs");
   const configPath = "solguard.config.json";
   if (existsSync7(configPath) && !options.force) {
-    console.log(chalk8.yellow(`Config already exists: ${configPath}`));
-    console.log(chalk8.dim("Use --force to overwrite"));
+    console.log(chalk9.yellow(`Config already exists: ${configPath}`));
+    console.log(chalk9.dim("Use --force to overwrite"));
     return;
   }
   writeFileSync5(configPath, generateExampleConfig());
-  console.log(chalk8.green(`\u2713 Created ${configPath}`));
-  console.log(chalk8.dim("Edit the file to customize SolGuard behavior"));
+  console.log(chalk9.green(`\u2713 Created ${configPath}`));
+  console.log(chalk9.dim("Edit the file to customize SolGuard behavior"));
 });
 program.command("check").description("Quick pass/fail check for scripts and pre-commit hooks").argument("<path>", "Path to program directory or Rust file").option("--fail-on <level>", "Fail on severity: critical, high, medium, low, any", "critical").option("-q, --quiet", "Suppress output, only use exit code").action(checkCommand);
 program.command("report").description("Generate HTML audit report").argument("<path>", "Path to program directory").option("-o, --output <file>", "Output HTML file", "solguard-report.html").option("-n, --name <name>", "Program name for report").action(async (path, options) => {
@@ -1934,7 +2055,7 @@ program.command("report").description("Generate HTML audit report").argument("<p
   const { parseIdl: parseIdl2 } = await import("./idl-YYKIXDKT.js");
   const { runPatterns: runPatterns2 } = await import("./patterns-7NVPT5DP.js");
   if (!existsSync7(path)) {
-    console.error(chalk8.red(`Path not found: ${path}`));
+    console.error(chalk9.red(`Path not found: ${path}`));
     process.exit(1);
   }
   const startTime = Date.now();
@@ -1956,10 +2077,10 @@ program.command("report").description("Generate HTML audit report").argument("<p
   }
   const rustFiles = statSync6(path).isDirectory() ? findRustFiles5(path) : [path];
   if (rustFiles.length === 0) {
-    console.error(chalk8.red("No Rust files found"));
+    console.error(chalk9.red("No Rust files found"));
     process.exit(1);
   }
-  console.log(chalk8.cyan(`Scanning ${rustFiles.length} files...`));
+  console.log(chalk9.cyan(`Scanning ${rustFiles.length} files...`));
   const parsed = await parseRustFiles2(rustFiles);
   const allFindings = [];
   if (parsed && parsed.files) {
@@ -1996,7 +2117,7 @@ program.command("report").description("Generate HTML audit report").argument("<p
     passed: summary.critical === 0 && summary.high === 0,
     duration
   }, options.output);
-  console.log(chalk8.green(`\u2713 Report saved to ${options.output}`));
-  console.log(chalk8.dim(`  ${summary.total} findings | ${duration}ms`));
+  console.log(chalk9.green(`\u2713 Report saved to ${options.output}`));
+  console.log(chalk9.dim(`  ${summary.total} findings | ${duration}ms`));
 });
 program.parse();
