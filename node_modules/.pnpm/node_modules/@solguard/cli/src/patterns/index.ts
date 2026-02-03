@@ -36,6 +36,11 @@ import { checkTimeLock } from './time-lock.js';
 import { checkSignatureReplay } from './signature-replay.js';
 import { checkStorageCollision } from './storage-collision.js';
 import { checkDenialOfService } from './denial-of-service.js';
+import { checkInputValidation } from './input-validation.js';
+import { checkStateInitialization } from './state-initialization.js';
+import { checkToken2022 } from './token-2022.js';
+import { checkMemoLogging } from './memo-logging.js';
+import { checkCpiGuard } from './cpi-guard.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -261,6 +266,36 @@ const patterns: Pattern[] = [
     name: 'Denial of Service',
     severity: 'high',
     run: checkDenialOfService,
+  },
+  {
+    id: 'SOL036',
+    name: 'Input Validation Issues',
+    severity: 'medium',
+    run: checkInputValidation,
+  },
+  {
+    id: 'SOL037',
+    name: 'State Initialization Issues',
+    severity: 'medium',
+    run: checkStateInitialization,
+  },
+  {
+    id: 'SOL038',
+    name: 'Token-2022 Compatibility',
+    severity: 'medium',
+    run: checkToken2022,
+  },
+  {
+    id: 'SOL039',
+    name: 'Memo and Logging Issues',
+    severity: 'medium',
+    run: checkMemoLogging,
+  },
+  {
+    id: 'SOL040',
+    name: 'CPI Guard Vulnerability',
+    severity: 'high',
+    run: checkCpiGuard,
   },
 ];
 
