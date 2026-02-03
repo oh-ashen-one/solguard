@@ -1,12 +1,35 @@
 {
   "name": "@solguard/cli",
   "version": "0.1.0",
-  "description": "SolGuard CLI - Smart Contract Auditor for Solana",
+  "description": "SolGuard CLI - AI-Powered Smart Contract Auditor for Solana",
+  "author": "Midir <midir@clawd.bot>",
+  "license": "MIT",
+  "homepage": "https://github.com/oh-ashen-one/solguard",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oh-ashen-one/solguard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oh-ashen-one/solguard/issues"
+  },
+  "keywords": [
+    "solana",
+    "anchor",
+    "smart-contract",
+    "security",
+    "audit",
+    "vulnerability",
+    "cli"
+  ],
   "type": "module",
   "main": "dist/index.js",
   "bin": {
     "solguard": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsup src/index.ts --format esm --dts",
