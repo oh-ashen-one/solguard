@@ -51,6 +51,11 @@ import { checkVault } from './vault.js';
 import { checkMerkle } from './merkle.js';
 import { checkCompression } from './compression.js';
 import { checkProgramDerived } from './program-derived.js';
+import { checkAccountSize } from './account-size.js';
+import { checkClockDependency } from './clock-dependency.js';
+import { checkAccountOrder } from './account-order.js';
+import { checkSerialization } from './serialization.js';
+import { checkProgramId } from './program-id.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -366,6 +371,36 @@ const patterns: Pattern[] = [
     name: 'Program-Derived Signing Issue',
     severity: 'high',
     run: checkProgramDerived,
+  },
+  {
+    id: 'SOL051',
+    name: 'Account Size Vulnerability',
+    severity: 'medium',
+    run: checkAccountSize,
+  },
+  {
+    id: 'SOL052',
+    name: 'Clock Dependency Issue',
+    severity: 'medium',
+    run: checkClockDependency,
+  },
+  {
+    id: 'SOL053',
+    name: 'Account Order Dependency',
+    severity: 'medium',
+    run: checkAccountOrder,
+  },
+  {
+    id: 'SOL054',
+    name: 'Serialization Vulnerability',
+    severity: 'medium',
+    run: checkSerialization,
+  },
+  {
+    id: 'SOL055',
+    name: 'Program ID Vulnerability',
+    severity: 'critical',
+    run: checkProgramId,
   },
 ];
 
