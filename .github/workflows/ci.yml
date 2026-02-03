@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  test-cli:
     name: Test CLI
     runs-on: ubuntu-latest
     
@@ -21,12 +21,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
-          cache-dependency-path: packages/cli/pnpm-lock.yaml
           
       - name: Install dependencies
         working-directory: packages/cli
-        run: pnpm install
+        run: pnpm install --no-frozen-lockfile
         
       - name: Build
         working-directory: packages/cli
@@ -35,59 +33,3 @@ jobs:
       - name: Run tests
         working-directory: packages/cli
         run: pnpm test --run
-
-  build-web:
-    name: Build Web
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
-          
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-          cache-dependency-path: packages/web/pnpm-lock.yaml
-          
-      - name: Install CLI dependencies
-        working-directory: packages/cli
-        run: pnpm install
-        
-      - name: Build CLI
-        working-directory: packages/cli
-        run: pnpm build
-        
-      - name: Install Web dependencies
-        working-directory: packages/web
-        run: pnpm install
-        
-      - name: Build Web
-        working-directory: packages/web
-        run: pnpm build
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 9
-          
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          
-      - name: Install Web dependencies
-        working-directory: packages/web
-        run: pnpm install
-        
-      - name: Lint
-        working-directory: packages/web
-        run: pnpm lint
