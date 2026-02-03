@@ -11,7 +11,7 @@ describe('CLI Integration', () => {
       const { listPatterns } = await import('../patterns/index.js');
       const patterns = listPatterns();
       
-      expect(patterns.length).toBe(120);
+      expect(patterns.length).toBe(125);
       
       // Check all pattern IDs exist
       const ids = patterns.map(p => p.id);

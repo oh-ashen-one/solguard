@@ -121,6 +121,11 @@ import { checkTokenFreeze } from './token-freeze.js';
 import { checkZeroCopyAccount } from './zero-copy-account.js';
 import { checkProgramUpgrade } from './program-upgrade.js';
 import { checkAccountConstraintCombo } from './account-constraint-combo.js';
+import { checkCpiDepth } from './cpi-depth.js';
+import { checkAccountCloseDestination } from './account-close-destination.js';
+import { checkTokenAccountClosure } from './token-account-closure.js';
+import { checkAccountDataInit } from './account-data-init.js';
+import { checkProgramSigner } from './program-signer.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -856,6 +861,36 @@ const patterns: Pattern[] = [
     name: 'Account Constraint Combinations',
     severity: 'high',
     run: checkAccountConstraintCombo,
+  },
+  {
+    id: 'SOL121',
+    name: 'CPI Depth Management',
+    severity: 'medium',
+    run: checkCpiDepth,
+  },
+  {
+    id: 'SOL122',
+    name: 'Account Close Destination',
+    severity: 'high',
+    run: checkAccountCloseDestination,
+  },
+  {
+    id: 'SOL123',
+    name: 'Token Account Closure',
+    severity: 'high',
+    run: checkTokenAccountClosure,
+  },
+  {
+    id: 'SOL124',
+    name: 'Account Data Initialization',
+    severity: 'high',
+    run: checkAccountDataInit,
+  },
+  {
+    id: 'SOL125',
+    name: 'Program as Signer',
+    severity: 'medium',
+    run: checkProgramSigner,
   },
 ];
 
