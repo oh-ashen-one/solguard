@@ -1,0 +1,14 @@
+# SolGuard Code Owners
+# These owners will be requested for review when PRs touch these files
+
+# Default owner for everything
+* @oh-ashen-one
+
+# Patterns require security review
+/packages/cli/src/patterns/ @oh-ashen-one
+
+# Anchor program changes
+/packages/program/ @oh-ashen-one
+
+# Documentation
+*.md @oh-ashen-one
