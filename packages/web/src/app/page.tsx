@@ -187,11 +187,143 @@ $ solguard watch ./program
         <h2 className="text-3xl font-bold text-center mb-4">Try It Now</h2>
         <p className="text-zinc-400 text-center mb-8">Paste your Rust/Anchor code below for instant security analysis</p>
         
+        {/* Example Buttons */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <span className="text-sm text-zinc-500 py-1">Load example:</span>
+          <button
+            type="button"
+            onClick={() => setCode(`use anchor_lang::prelude::*;
+
+declare_id!("Vuln111111111111111111111111111111111111111");
+
+#[program]
+pub mod vulnerable_vault {
+    use super::*;
+
+    // ❌ Missing signer check - anyone can call withdraw!
+    pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+        let vault = &mut ctx.accounts.vault;
+        
+        // ❌ No authority verification
+        // ❌ Integer overflow possible
+        vault.balance = vault.balance - amount;
+        
+        // Transfer funds without checking who's calling
+        **ctx.accounts.vault_account.try_borrow_mut_lamports()? -= amount;
+        **ctx.accounts.recipient.try_borrow_mut_lamports()? += amount;
+        
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct Withdraw<'info> {
+    #[account(mut)]
+    pub vault: Account<'info, Vault>,
+    
+    /// CHECK: ❌ No signer constraint!
+    pub authority: AccountInfo<'info>,
+    
+    /// CHECK: Recipient
+    #[account(mut)]
+    pub recipient: AccountInfo<'info>,
+    
+    /// CHECK: Vault token account
+    #[account(mut)]
+    pub vault_account: AccountInfo<'info>,
+}
+
+#[account]
+pub struct Vault {
+    pub authority: Pubkey,
+    pub balance: u64,
+}`)}
+            className="px-3 py-1 text-sm bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded-lg transition border border-red-500/30"
+          >
+            🔓 Vulnerable Vault
+          </button>
+          <button
+            type="button"
+            onClick={() => setCode(`use anchor_lang::prelude::*;
+
+declare_id!("Safe1111111111111111111111111111111111111111");
+
+#[program]
+pub mod secure_vault {
+    use super::*;
+
+    pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+        let vault = &mut ctx.accounts.vault;
+        
+        // ✅ Authority check
+        require!(
+            ctx.accounts.authority.key() == vault.authority,
+            VaultError::Unauthorized
+        );
+        
+        // ✅ Checked arithmetic
+        vault.balance = vault.balance
+            .checked_sub(amount)
+            .ok_or(VaultError::InsufficientFunds)?;
+        
+        // Safe transfer
+        **ctx.accounts.vault_account.try_borrow_mut_lamports()? -= amount;
+        **ctx.accounts.recipient.try_borrow_mut_lamports()? += amount;
+        
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct Withdraw<'info> {
+    #[account(mut)]
+    pub vault: Account<'info, Vault>,
+    
+    // ✅ Signer constraint
+    pub authority: Signer<'info>,
+    
+    /// CHECK: Recipient
+    #[account(mut)]
+    pub recipient: AccountInfo<'info>,
+    
+    /// CHECK: Vault token account
+    #[account(mut)]
+    pub vault_account: AccountInfo<'info>,
+}
+
+#[account]
+pub struct Vault {
+    pub authority: Pubkey,
+    pub balance: u64,
+}
+
+#[error_code]
+pub enum VaultError {
+    #[msg("Unauthorized")]
+    Unauthorized,
+    #[msg("Insufficient funds")]
+    InsufficientFunds,
+}`)}
+            className="px-3 py-1 text-sm bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded-lg transition border border-emerald-500/30"
+          >
+            ✅ Secure Vault
+          </button>
+          <button
+            type="button"
+            onClick={() => setCode('')}
+            className="px-3 py-1 text-sm text-zinc-400 hover:text-white transition"
+          >
+            Clear
+          </button>
+        </div>
+        
         <form onSubmit={handleAudit} className="space-y-4">
           <textarea
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder={`// Paste your Anchor program code here...
+// Or click "Vulnerable Vault" above to see a demo!
+
 use anchor_lang::prelude::*;
 
 #[program]
