@@ -35,7 +35,7 @@ program
   .option('-V, --verbose-version', 'Show detailed version info')
   .on('option:verbose-version', () => {
     console.log(`SolGuard v0.1.0`);
-    console.log(`  Patterns: 15`);
+    console.log(`  Patterns: 130`);
     console.log(`  Commands: 14`);
     console.log(`  Built: 2026-02-02`);
     console.log(`  Node: ${process.version}`);
