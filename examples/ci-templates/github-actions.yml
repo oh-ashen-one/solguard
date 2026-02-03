@@ -32,7 +32,9 @@ jobs:
           node-version: 20
 
       - name: Install SolGuard
-        run: npm install -g @solguard/cli
+        run: |
+          git clone https://github.com/oh-ashen-one/solguard.git /tmp/solguard
+          cd /tmp/solguard/packages/cli && npm install && npm run build && npm link
 
       - name: Run Security Audit
         run: solguard ci . --fail-on high --sarif results.sarif
@@ -69,7 +71,9 @@ jobs:
           node-version: 20
 
       - name: Install SolGuard
-        run: npm install -g @solguard/cli
+        run: |
+          git clone https://github.com/oh-ashen-one/solguard.git /tmp/solguard
+          cd /tmp/solguard/packages/cli && npm install && npm run build && npm link
 
       - name: Generate Markdown Report
         run: solguard audit . --format markdown > report.md

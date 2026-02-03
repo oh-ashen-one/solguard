@@ -63,7 +63,9 @@ Other programs can verify audit status via CPI before interacting with unaudited
 ### How do I audit my program?
 ```bash
 # Install
-npm install -g @solguard/cli
+# From source (npm package coming soon)
+git clone https://github.com/oh-ashen-one/solguard.git
+cd solguard/packages/cli && npm install && npm run build && npm link
 
 # Audit
 solguard audit ./path/to/program

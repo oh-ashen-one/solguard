@@ -11,8 +11,10 @@ Click → Wait 60s → Web UI opens → Paste code → Audit!
 ## Option 2: CLI
 
 ```bash
-# Install
-npm install -g @solguard/cli
+# Install from source
+git clone https://github.com/oh-ashen-one/solguard.git
+cd solguard/packages/cli
+npm install && npm run build && npm link
 
 # Audit your program
 solguard audit ./my-program

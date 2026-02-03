@@ -29,7 +29,9 @@ nvm install 20
 nvm use 20
 
 # Now install without sudo
-npm install -g @solguard/cli
+# From source (npm package coming soon)
+git clone https://github.com/oh-ashen-one/solguard.git
+cd solguard/packages/cli && npm install && npm run build && npm link
 ```
 
 ---

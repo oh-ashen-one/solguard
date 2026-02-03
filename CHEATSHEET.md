@@ -7,7 +7,10 @@ Quick reference for all commands and options.
 ## Installation
 
 ```bash
-npm install -g @solguard/cli
+# From source (npm package coming soon)
+git clone https://github.com/oh-ashen-one/solguard.git
+cd solguard/packages/cli
+npm install && npm run build && npm link
 ```
 
 ---

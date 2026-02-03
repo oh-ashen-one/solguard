@@ -116,7 +116,9 @@ solguard audit ./programs --recursive
 
 ```bash
 # Install
-npm install -g @solguard/cli
+# From source (npm package coming soon)
+git clone https://github.com/oh-ashen-one/solguard.git
+cd solguard/packages/cli && npm install && npm run build && npm link
 
 # Time an audit
 time solguard audit ./your-program

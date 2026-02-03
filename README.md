@@ -107,8 +107,10 @@ SolGuard is an autonomous smart contract auditing system that:
 ### CLI
 
 ```bash
-# Install globally
-npm install -g @solguard/cli
+# Install from source (npm package coming soon)
+git clone https://github.com/oh-ashen-one/solguard.git
+cd solguard/packages/cli
+npm install && npm run build && npm link
 
 # Audit a program
 solguard audit ./path/to/program
@@ -150,7 +152,9 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Install SolGuard
-        run: npm install -g @solguard/cli
+        run: |
+          git clone https://github.com/oh-ashen-one/solguard.git /tmp/solguard
+          cd /tmp/solguard/packages/cli && npm install && npm run build && npm link
         
       - name: Run Security Audit
         run: solguard ci . --fail-on high --sarif results.sarif
