@@ -31,6 +31,11 @@ import { checkErrorHandling } from './error-handling.js';
 import { checkEventEmission } from './event-emission.js';
 import { checkInstructionIntrospection } from './instruction-introspection.js';
 import { checkAnchorMacros } from './anchor-macros.js';
+import { checkAccessControl } from './access-control.js';
+import { checkTimeLock } from './time-lock.js';
+import { checkSignatureReplay } from './signature-replay.js';
+import { checkStorageCollision } from './storage-collision.js';
+import { checkDenialOfService } from './denial-of-service.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -226,6 +231,36 @@ const patterns: Pattern[] = [
     name: 'Anchor Macro Misuse',
     severity: 'medium',
     run: checkAnchorMacros,
+  },
+  {
+    id: 'SOL031',
+    name: 'Access Control Vulnerability',
+    severity: 'critical',
+    run: checkAccessControl,
+  },
+  {
+    id: 'SOL032',
+    name: 'Missing Time Lock',
+    severity: 'medium',
+    run: checkTimeLock,
+  },
+  {
+    id: 'SOL033',
+    name: 'Signature Replay Vulnerability',
+    severity: 'critical',
+    run: checkSignatureReplay,
+  },
+  {
+    id: 'SOL034',
+    name: 'Storage/Discriminator Collision',
+    severity: 'high',
+    run: checkStorageCollision,
+  },
+  {
+    id: 'SOL035',
+    name: 'Denial of Service',
+    severity: 'high',
+    run: checkDenialOfService,
   },
 ];
 
