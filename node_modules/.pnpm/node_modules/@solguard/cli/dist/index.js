@@ -11,7 +11,7 @@ import {
 
 // src/index.ts
 import { Command } from "commander";
-import chalk5 from "chalk";
+import chalk6 from "chalk";
 
 // src/commands/audit.ts
 import chalk2 from "chalk";
@@ -601,16 +601,16 @@ async function certificateCommand(path, options) {
     try {
       const { parseRustFiles: parseRustFiles2 } = await import("./rust-LZBLPUB7.js");
       const { runPatterns: runPatterns2 } = await import("./patterns-T3TIM56D.js");
-      const { existsSync: existsSync3, statSync: statSync2, readdirSync: readdirSync2 } = await import("fs");
-      if (!existsSync3(path)) {
+      const { existsSync: existsSync4, statSync: statSync3, readdirSync: readdirSync3 } = await import("fs");
+      if (!existsSync4(path)) {
         throw new Error(`Path not found: ${path}`);
       }
-      const isDirectory = statSync2(path).isDirectory();
+      const isDirectory = statSync3(path).isDirectory();
       let rustFiles = [];
       if (isDirectory) {
         const findRustFiles2 = (dir) => {
           const files = [];
-          const entries = readdirSync2(dir, { withFileTypes: true });
+          const entries = readdirSync3(dir, { withFileTypes: true });
           for (const entry of entries) {
             const fullPath = join3(dir, entry.name);
             if (entry.isDirectory() && !entry.name.startsWith(".") && entry.name !== "target") {
@@ -623,9 +623,9 @@ async function certificateCommand(path, options) {
         };
         const srcDir = join3(path, "src");
         const programsDir = join3(path, "programs");
-        if (existsSync3(programsDir)) {
+        if (existsSync4(programsDir)) {
           rustFiles = findRustFiles2(programsDir);
-        } else if (existsSync3(srcDir)) {
+        } else if (existsSync4(srcDir)) {
           rustFiles = findRustFiles2(srcDir);
         } else {
           rustFiles = findRustFiles2(path);
@@ -695,12 +695,90 @@ async function certificateCommand(path, options) {
   }
 }
 
+// src/commands/watch.ts
+import chalk5 from "chalk";
+import { watch } from "fs";
+import { join as join4, relative } from "path";
+import { readdirSync as readdirSync2, statSync as statSync2, existsSync as existsSync3 } from "fs";
+async function watchCommand(path, options) {
+  console.log(chalk5.cyan("\n  \u{1F50D} SolGuard Watch Mode\n"));
+  console.log(chalk5.gray(`  Watching: ${path}`));
+  console.log(chalk5.gray("  Press Ctrl+C to stop\n"));
+  if (!existsSync3(path)) {
+    console.error(chalk5.red(`  Error: Path not found: ${path}`));
+    process.exit(1);
+  }
+  const dirsToWatch = /* @__PURE__ */ new Set();
+  function findDirs(dir) {
+    dirsToWatch.add(dir);
+    try {
+      const entries = readdirSync2(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (entry.isDirectory() && !entry.name.startsWith(".") && entry.name !== "target" && entry.name !== "node_modules") {
+          findDirs(join4(dir, entry.name));
+        }
+      }
+    } catch {
+    }
+  }
+  if (statSync2(path).isDirectory()) {
+    findDirs(path);
+  } else {
+    dirsToWatch.add(path);
+  }
+  let debounceTimer = null;
+  let lastAuditTime = 0;
+  const DEBOUNCE_MS = 1e3;
+  async function runAudit() {
+    const now = Date.now();
+    if (now - lastAuditTime < DEBOUNCE_MS) {
+      return;
+    }
+    lastAuditTime = now;
+    console.log(chalk5.yellow("\n  \u2500".repeat(30)));
+    console.log(chalk5.yellow(`  \u{1F504} Re-auditing at ${(/* @__PURE__ */ new Date()).toLocaleTimeString()}`));
+    console.log(chalk5.yellow("  \u2500".repeat(30)));
+    try {
+      await auditCommand(path, {
+        output: options.output || "terminal",
+        ai: options.ai !== false,
+        verbose: false
+      });
+    } catch (error) {
+    }
+  }
+  console.log(chalk5.green("  Running initial audit...\n"));
+  await runAudit();
+  for (const dir of dirsToWatch) {
+    try {
+      watch(dir, { recursive: false }, (eventType, filename) => {
+        if (!filename) return;
+        if (!filename.endsWith(".rs")) return;
+        if (filename.startsWith(".")) return;
+        console.log(chalk5.blue(`
+  \u{1F4DD} Changed: ${relative(path, join4(dir, filename))}`));
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
+        debounceTimer = setTimeout(runAudit, 500);
+      });
+    } catch (error) {
+    }
+  }
+  process.on("SIGINT", () => {
+    console.log(chalk5.gray("\n\n  \u{1F44B} Watch mode stopped\n"));
+    process.exit(0);
+  });
+  await new Promise(() => {
+  });
+}
+
 // src/index.ts
 var program = new Command();
 var args = process.argv.slice(2);
 var isJsonOutput = args.includes("--output") && args[args.indexOf("--output") + 1] === "json";
 if (!isJsonOutput) {
-  console.log(chalk5.cyan(`
+  console.log(chalk6.cyan(`
 \u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557
 \u2551  \u{1F6E1}\uFE0F  SolGuard - Smart Contract Auditor    \u2551
 \u2551     AI-Powered Security for Solana        \u2551
@@ -717,4 +795,5 @@ program.command("parse").description("Parse an Anchor IDL file").argument("<idl>
 program.command("fetch").description("Fetch and audit a program by its on-chain program ID").argument("<program-id>", "Solana program ID (base58)").option("-r, --rpc <url>", "RPC endpoint URL").option("-o, --output <format>", "Output format: terminal, json, markdown", "terminal").option("--no-ai", "Skip AI explanations").option("-v, --verbose", "Show detailed output").action(fetchAndAuditCommand);
 program.command("programs").description("List known Solana programs").action(listKnownPrograms);
 program.command("certificate").description("Generate an audit certificate (metadata + SVG)").argument("<path>", "Path to program directory or Rust file").option("-o, --output <dir>", "Output directory", ".").option("-p, --program-id <id>", "Program ID for the certificate").action(certificateCommand);
+program.command("watch").description("Watch for file changes and auto-audit").argument("<path>", "Path to program directory").option("-o, --output <format>", "Output format: terminal, json, markdown", "terminal").option("--no-ai", "Skip AI explanations").action(watchCommand);
 program.parse();

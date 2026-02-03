@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import { auditCommand } from './commands/audit.js';
 import { fetchAndAuditCommand, listKnownPrograms } from './commands/fetch.js';
 import { certificateCommand } from './commands/certificate.js';
+import { watchCommand } from './commands/watch.js';
 
 const program = new Command();
 
@@ -65,5 +66,13 @@ program
   .option('-o, --output <dir>', 'Output directory', '.')
   .option('-p, --program-id <id>', 'Program ID for the certificate')
   .action(certificateCommand);
+
+program
+  .command('watch')
+  .description('Watch for file changes and auto-audit')
+  .argument('<path>', 'Path to program directory')
+  .option('-o, --output <format>', 'Output format: terminal, json, markdown', 'terminal')
+  .option('--no-ai', 'Skip AI explanations')
+  .action(watchCommand);
 
 program.parse();
