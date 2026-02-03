@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 
 const patterns = [
@@ -115,7 +116,7 @@ const patterns = [
   { id: 'SOL099', name: 'Atomic Operations', severity: 'high', category: 'Operations' },
   { id: 'SOL100', name: 'Init Order', severity: 'high', category: 'Account Safety' },
   
-  // Latest patterns (101-120)
+  // Latest patterns (101-130)
   { id: 'SOL101', name: 'Program Cache', severity: 'low', category: 'Performance' },
   { id: 'SOL102', name: 'Instruction Data', severity: 'high', category: 'Code Quality' },
   { id: 'SOL103', name: 'Anchor CPI Safety', severity: 'high', category: 'Anchor' },
@@ -155,9 +156,41 @@ const severityColors: Record<string, string> = {
   low: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
 };
 
+const severityBgColors: Record<string, string> = {
+  critical: 'bg-red-500/10 border-red-500/20 hover:bg-red-500/20',
+  high: 'bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20',
+  medium: 'bg-yellow-500/10 border-yellow-500/20 hover:bg-yellow-500/20',
+  low: 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20',
+};
+
 const categories = [...new Set(patterns.map(p => p.category))].sort();
+const severities = ['critical', 'high', 'medium', 'low'];
 
 export default function PatternsPage() {
+  const [search, setSearch] = useState('');
+  const [selectedSeverity, setSelectedSeverity] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const filteredPatterns = useMemo(() => {
+    return patterns.filter(p => {
+      const matchesSearch = search === '' || 
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.id.toLowerCase().includes(search.toLowerCase()) ||
+        p.category.toLowerCase().includes(search.toLowerCase());
+      const matchesSeverity = !selectedSeverity || p.severity === selectedSeverity;
+      const matchesCategory = !selectedCategory || p.category === selectedCategory;
+      return matchesSearch && matchesSeverity && matchesCategory;
+    });
+  }, [search, selectedSeverity, selectedCategory]);
+
+  const clearFilters = () => {
+    setSearch('');
+    setSelectedSeverity(null);
+    setSelectedCategory(null);
+  };
+
+  const hasFilters = search || selectedSeverity || selectedCategory;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-black text-white">
       <header className="border-b border-zinc-800">
@@ -180,64 +213,139 @@ export default function PatternsPage() {
           130 security patterns covering Solana smart contract vulnerabilities
         </p>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-red-400">
-              {patterns.filter(p => p.severity === 'critical').length}
-            </div>
-            <div className="text-sm text-zinc-400">Critical</div>
+        {/* Search & Filters */}
+        <div className="mb-8 space-y-4">
+          {/* Search Input */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search patterns by name, ID, or category..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full px-4 py-3 pl-10 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition"
+            />
+            <svg className="absolute left-3 top-3.5 w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-orange-400">
-              {patterns.filter(p => p.severity === 'high').length}
-            </div>
-            <div className="text-sm text-zinc-400">High</div>
+
+          {/* Severity Filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-zinc-500 mr-2">Severity:</span>
+            {severities.map(sev => (
+              <button
+                key={sev}
+                onClick={() => setSelectedSeverity(selectedSeverity === sev ? null : sev)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition ${
+                  selectedSeverity === sev 
+                    ? severityColors[sev] + ' border-current' 
+                    : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'
+                }`}
+              >
+                {sev.charAt(0).toUpperCase() + sev.slice(1)}
+                <span className="ml-1 opacity-60">
+                  ({patterns.filter(p => p.severity === sev).length})
+                </span>
+              </button>
+            ))}
           </div>
-          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-400">
-              {patterns.filter(p => p.severity === 'medium').length}
-            </div>
-            <div className="text-sm text-zinc-400">Medium</div>
-          </div>
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-blue-400">
-              {patterns.filter(p => p.severity === 'low').length}
-            </div>
-            <div className="text-sm text-zinc-400">Low</div>
+
+          {/* Category Filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-zinc-500 mr-2">Category:</span>
+            <select
+              value={selectedCategory || ''}
+              onChange={(e) => setSelectedCategory(e.target.value || null)}
+              className="px-3 py-1.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-300 focus:outline-none focus:border-emerald-500"
+            >
+              <option value="">All Categories</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>
+                  {cat} ({patterns.filter(p => p.category === cat).length})
+                </option>
+              ))}
+            </select>
+            
+            {hasFilters && (
+              <button
+                onClick={clearFilters}
+                className="px-3 py-1.5 text-sm text-zinc-400 hover:text-white transition"
+              >
+                Clear filters ×
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Categories */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-3">Categories</h2>
-          <div className="flex flex-wrap gap-2">
-            {categories.map(cat => (
-              <span key={cat} className="px-3 py-1 bg-zinc-800 rounded-full text-sm text-zinc-300">
-                {cat} ({patterns.filter(p => p.category === cat).length})
-              </span>
-            ))}
-          </div>
+        {/* Results Count */}
+        {hasFilters && (
+          <p className="text-sm text-zinc-500 mb-4">
+            Showing {filteredPatterns.length} of {patterns.length} patterns
+          </p>
+        )}
+
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-4 mb-8">
+          {severities.map(sev => {
+            const count = (hasFilters ? filteredPatterns : patterns).filter(p => p.severity === sev).length;
+            return (
+              <button
+                key={sev}
+                onClick={() => setSelectedSeverity(selectedSeverity === sev ? null : sev)}
+                className={`border rounded-lg p-4 text-center transition ${severityBgColors[sev]} ${
+                  selectedSeverity === sev ? 'ring-2 ring-offset-2 ring-offset-zinc-900' : ''
+                }`}
+                style={{ ['--tw-ring-color' as any]: sev === 'critical' ? 'rgb(239 68 68 / 0.5)' : sev === 'high' ? 'rgb(249 115 22 / 0.5)' : sev === 'medium' ? 'rgb(234 179 8 / 0.5)' : 'rgb(59 130 246 / 0.5)' }}
+              >
+                <div className={`text-2xl font-bold ${
+                  sev === 'critical' ? 'text-red-400' : 
+                  sev === 'high' ? 'text-orange-400' : 
+                  sev === 'medium' ? 'text-yellow-400' : 'text-blue-400'
+                }`}>
+                  {count}
+                </div>
+                <div className="text-sm text-zinc-400 capitalize">{sev}</div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Pattern Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {patterns.map(pattern => (
-            <div 
-              key={pattern.id}
-              className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 hover:border-zinc-600 transition"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-mono text-emerald-400">{pattern.id}</span>
-                <span className={`px-2 py-0.5 rounded text-xs border ${severityColors[pattern.severity]}`}>
-                  {pattern.severity}
-                </span>
+        {filteredPatterns.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredPatterns.map(pattern => (
+              <div 
+                key={pattern.id}
+                className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 hover:border-zinc-600 transition cursor-pointer"
+                onClick={() => {
+                  if (selectedCategory !== pattern.category) {
+                    setSelectedCategory(pattern.category);
+                  }
+                }}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-mono text-emerald-400">{pattern.id}</span>
+                  <span className={`px-2 py-0.5 rounded text-xs border ${severityColors[pattern.severity]}`}>
+                    {pattern.severity}
+                  </span>
+                </div>
+                <div className="font-medium">{pattern.name}</div>
+                <div className="text-xs text-zinc-500 mt-1">{pattern.category}</div>
               </div>
-              <div className="font-medium">{pattern.name}</div>
-              <div className="text-xs text-zinc-500 mt-1">{pattern.category}</div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-4xl mb-4">🔍</div>
+            <p className="text-zinc-400">No patterns match your filters</p>
+            <button
+              onClick={clearFilters}
+              className="mt-4 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-black rounded-lg font-medium transition"
+            >
+              Clear filters
+            </button>
+          </div>
+        )}
       </main>
 
       <footer className="border-t border-zinc-800 py-8 text-center text-zinc-500">
