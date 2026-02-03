@@ -1,0 +1,11 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["solguard.config.json", ".solguardrc", ".solguardrc.json"],
+      "url": "./schemas/solguard.schema.json"
+    }
+  ],
+  "files.associations": {
+    ".solguardrc": "json"
+  }
+}
