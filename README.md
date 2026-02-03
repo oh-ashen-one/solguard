@@ -24,7 +24,10 @@ SolGuard is an autonomous smart contract auditing system that:
 
 ## 🔍 Vulnerability Patterns (130)
 
-### Critical Severity (10)
+> **130 patterns** covering Core Security, CPI, DeFi, NFT, Token, PDA, Anchor, and more.
+> See [patterns page](packages/web/src/app/patterns/page.tsx) for the complete list.
+
+### Sample Critical Patterns
 | ID | Pattern | Description |
 |----|---------|-------------|
 | SOL001 | Missing Owner Check | Accounts without ownership validation |
@@ -38,7 +41,7 @@ SolGuard is an autonomous smart contract auditing system that:
 | SOL031 | Access Control | Missing privilege checks |
 | SOL033 | Signature Replay | Missing nonce/domain separation |
 
-### High Severity (16)
+### Sample High Severity Patterns
 | ID | Pattern | Description |
 |----|---------|-------------|
 | SOL002 | Missing Signer Check | Authority without cryptographic proof |
@@ -59,7 +62,7 @@ SolGuard is an autonomous smart contract auditing system that:
 | SOL035 | Denial of Service | Unbounded loops, amplification |
 | SOL040 | CPI Guard | User-controlled CPI accounts |
 
-### Medium Severity (11)
+### Sample Medium Severity Patterns
 | ID | Pattern | Description |
 |----|---------|-------------|
 | SOL008 | Rounding Error | Precision loss in calculations |
@@ -75,7 +78,7 @@ SolGuard is an autonomous smart contract auditing system that:
 | SOL038 | Token-2022 Compatibility | Extension handling |
 | SOL039 | Memo and Logging | Sensitive data in logs |
 
-### Low/Info Severity (3)
+### Sample Low Severity Patterns
 | ID | Pattern | Description |
 |----|---------|-------------|
 | SOL028 | Event Emission | Missing events for indexing |
@@ -155,9 +158,9 @@ solguard/
 ├── packages/
 │   ├── cli/              # Command-line auditor
 │   │   └── src/
-│   │       ├── patterns/ # 40 vulnerability detectors
+│   │       ├── patterns/ # 130 vulnerability detectors
 │   │       ├── parsers/  # IDL + Rust parsing
-│   │       └── commands/ # 14 CLI commands
+│   │       └── commands/ # 7 CLI commands
 │   │
 │   ├── web/              # Next.js frontend
 │   │   └── src/app/
@@ -218,18 +221,22 @@ require!(audit_passed, ErrorCode::NotAudited);
         pub authority: Signer<'info>,
 ```
 
-## 🏆 Hackathon Achievements
+## 🏆 What We Built
 
-- [x] **40 vulnerability patterns** (SOL001-SOL040)
-- [x] **14 CLI commands** (audit, fetch, github, compare, list, check, ci, watch, report, certificate, init, stats, programs, parse)
+- [x] **130 vulnerability patterns** (SOL001-SOL130) covering all major Solana security risks
+- [x] **7 CLI commands** (audit, fetch, github, watch, ci, stats, list)
 - [x] **GitHub integration** — audit repos and PRs directly
 - [x] **CI mode** — GitHub Actions with SARIF code scanning
-- [x] **Web UI** with paste-to-audit
-- [x] **On-chain audit registry** (Anchor scaffold)
-- [x] **VSCode integration** — tasks, settings, Git hooks
-- [x] **Full documentation** — cheatsheet, contributing guide
-- [ ] NFT audit certificates (in progress)
-- [ ] Deploy to devnet
+- [x] **Web UI** with paste-to-audit, search/filter, example code
+- [x] **On-chain audit registry** — full Anchor program with disputes, history
+- [x] **API endpoint** — REST API for programmatic audits
+- [x] **19 tests** — all passing, CI/CD pipeline
+
+### 🚀 Roadmap (Post-Hackathon)
+- [ ] Deploy Anchor program to devnet/mainnet
+- [ ] NFT audit certificates via Metaplex
+- [ ] VS Code extension
+- [ ] GitHub App for auto-PR audits
 
 ## 🐉 Built By
 
