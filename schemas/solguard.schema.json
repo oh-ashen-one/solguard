@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://solguard.io/schemas/config.json",
+  "title": "SolGuard Configuration",
+  "description": "Configuration file for SolGuard smart contract auditor",
+  "type": "object",
+  "properties": {
+    "disable": {
+      "type": "array",
+      "description": "Pattern IDs to disable (e.g., ['SOL001', 'SOL002'])",
+      "items": {
+        "type": "string",
+        "pattern": "^SOL[0-9]{3}$"
+      },
+      "examples": [["SOL001", "SOL008"]]
+    },
+    "minSeverity": {
+      "type": "string",
+      "description": "Minimum severity level to report",
+      "enum": ["critical", "high", "medium", "low", "info"],
+      "default": "low"
+    },
+    "ignore": {
+      "type": "array",
+      "description": "File/directory patterns to ignore",
+      "items": {
+        "type": "string"
+      },
+      "examples": [["tests/**", "**/*.test.rs"]]
+    },
+    "rules": {
+      "type": "object",
+      "description": "Configure individual pattern severity",
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["error", "warn", "off"]
+      },
+      "examples": [{
+        "SOL001": "error",
+        "SOL008": "warn"
+      }]
+    },
+    "output": {
+      "type": "object",
+      "description": "Output preferences",
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["terminal", "json", "markdown"],
+          "default": "terminal"
+        },
+        "colors": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "ci": {
+      "type": "object",
+      "description": "CI/CD settings",
+      "properties": {
+        "failOn": {
+          "type": "string",
+          "description": "Severity level that causes CI to fail",
+          "enum": ["critical", "high", "medium", "low", "any"],
+          "default": "critical"
+        },
+        "generateSarif": {
+          "type": "boolean",
+          "description": "Generate SARIF report for GitHub Code Scanning",
+          "default": false
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
