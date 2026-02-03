@@ -42,6 +42,7 @@ export default function Home() {
           <nav className="flex items-center gap-6">
             <Link href="#features" className="text-zinc-400 hover:text-white transition">Features</Link>
             <Link href="#audit" className="text-zinc-400 hover:text-white transition">Try It</Link>
+            <Link href="/api" className="text-zinc-400 hover:text-white transition">API</Link>
             <a 
               href="https://github.com/oh-ashen-one/solguard" 
               target="_blank" 
