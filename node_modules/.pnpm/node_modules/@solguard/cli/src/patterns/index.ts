@@ -46,6 +46,11 @@ import { checkNftSecurity } from './nft-security.js';
 import { checkStaking } from './staking.js';
 import { checkAmm } from './amm.js';
 import { checkLending } from './lending.js';
+import { checkBridge } from './bridge.js';
+import { checkVault } from './vault.js';
+import { checkMerkle } from './merkle.js';
+import { checkCompression } from './compression.js';
+import { checkProgramDerived } from './program-derived.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -331,6 +336,36 @@ const patterns: Pattern[] = [
     name: 'Lending Protocol Vulnerability',
     severity: 'critical',
     run: checkLending,
+  },
+  {
+    id: 'SOL046',
+    name: 'Bridge Vulnerability',
+    severity: 'critical',
+    run: checkBridge,
+  },
+  {
+    id: 'SOL047',
+    name: 'Vault Vulnerability',
+    severity: 'high',
+    run: checkVault,
+  },
+  {
+    id: 'SOL048',
+    name: 'Merkle Vulnerability',
+    severity: 'critical',
+    run: checkMerkle,
+  },
+  {
+    id: 'SOL049',
+    name: 'Compression Vulnerability',
+    severity: 'medium',
+    run: checkCompression,
+  },
+  {
+    id: 'SOL050',
+    name: 'Program-Derived Signing Issue',
+    severity: 'high',
+    run: checkProgramDerived,
   },
 ];
 
