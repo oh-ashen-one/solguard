@@ -21,6 +21,11 @@ import { checkFreezeAuthority } from './freeze-authority.js';
 import { checkOracleManipulation } from './oracle-manipulation.js';
 import { checkFlashLoan } from './flash-loan.js';
 import { checkUnsafeMath } from './unsafe-math.js';
+import { checkSysvarManipulation } from './sysvar-manipulation.js';
+import { checkUpgradeAuthority } from './upgrade-authority.js';
+import { checkTokenValidation } from './token-validation.js';
+import { checkCrossProgramState } from './cross-program-state.js';
+import { checkLamportBalance } from './lamport-balance.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -156,6 +161,36 @@ const patterns: Pattern[] = [
     name: 'Unsafe Arithmetic',
     severity: 'high',
     run: checkUnsafeMath,
+  },
+  {
+    id: 'SOL021',
+    name: 'Sysvar Manipulation Risk',
+    severity: 'critical',
+    run: checkSysvarManipulation,
+  },
+  {
+    id: 'SOL022',
+    name: 'Program Upgrade Authority Risk',
+    severity: 'medium',
+    run: checkUpgradeAuthority,
+  },
+  {
+    id: 'SOL023',
+    name: 'Token Account Validation',
+    severity: 'high',
+    run: checkTokenValidation,
+  },
+  {
+    id: 'SOL024',
+    name: 'Cross-Program State Dependency',
+    severity: 'high',
+    run: checkCrossProgramState,
+  },
+  {
+    id: 'SOL025',
+    name: 'Lamport Balance Vulnerability',
+    severity: 'high',
+    run: checkLamportBalance,
   },
 ];
 
