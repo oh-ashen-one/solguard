@@ -72,4 +72,4 @@ For GitHub Actions integration:
 
 ---
 
-*Get audited: `npx @solguard/cli audit ./your-program`*
+*Get audited: [github.com/oh-ashen-one/solguard](https://github.com/oh-ashen-one/solguard)*

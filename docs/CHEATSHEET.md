@@ -102,7 +102,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm install -g @solguard/cli
+      - name: Install SolGuard
+        run: |
+          git clone https://github.com/oh-ashen-one/solguard.git /tmp/solguard
+          cd /tmp/solguard/packages/cli && npm install && npm run build && npm link
       - run: solguard ci . --fail-on high --sarif results.sarif
       - uses: github/codeql-action/upload-sarif@v3
         with:
