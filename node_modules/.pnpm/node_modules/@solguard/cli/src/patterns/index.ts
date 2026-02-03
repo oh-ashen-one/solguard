@@ -91,6 +91,16 @@ import { checkArithmeticPrecision } from './arithmetic-precision.js';
 import { checkEventOrdering } from './event-ordering.js';
 import { checkAccountTypeSafety } from './account-type-safety.js';
 import { checkSyscallSecurity } from './syscall-security.js';
+import { checkSplGovernance } from './spl-governance.js';
+import { checkTokenExtensions } from './token-extensions.js';
+import { checkLookupTable } from './lookup-table.js';
+import { checkPriorityFee } from './priority-fee.js';
+import { checkSlotManipulation } from './slot-manipulation.js';
+import { checkCrossChain } from './cross-chain.js';
+import { checkMultisig } from './multisig.js';
+import { checkVersioning } from './versioning.js';
+import { checkAtomicOperations } from './atomic-operations.js';
+import { checkInitializationOrder } from './initialization-order.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -646,6 +656,66 @@ const patterns: Pattern[] = [
     name: 'Solana Syscall Security',
     severity: 'medium',
     run: checkSyscallSecurity,
+  },
+  {
+    id: 'SOL091',
+    name: 'SPL Governance Security',
+    severity: 'high',
+    run: checkSplGovernance,
+  },
+  {
+    id: 'SOL092',
+    name: 'Token Extensions Security',
+    severity: 'high',
+    run: checkTokenExtensions,
+  },
+  {
+    id: 'SOL093',
+    name: 'Address Lookup Table Security',
+    severity: 'high',
+    run: checkLookupTable,
+  },
+  {
+    id: 'SOL094',
+    name: 'Priority Fee Handling',
+    severity: 'medium',
+    run: checkPriorityFee,
+  },
+  {
+    id: 'SOL095',
+    name: 'Slot Number Manipulation',
+    severity: 'high',
+    run: checkSlotManipulation,
+  },
+  {
+    id: 'SOL096',
+    name: 'Cross-Chain Bridge Security',
+    severity: 'critical',
+    run: checkCrossChain,
+  },
+  {
+    id: 'SOL097',
+    name: 'Multisig Security',
+    severity: 'critical',
+    run: checkMultisig,
+  },
+  {
+    id: 'SOL098',
+    name: 'Account Versioning',
+    severity: 'medium',
+    run: checkVersioning,
+  },
+  {
+    id: 'SOL099',
+    name: 'Atomic Operations',
+    severity: 'high',
+    run: checkAtomicOperations,
+  },
+  {
+    id: 'SOL100',
+    name: 'Initialization Order Dependencies',
+    severity: 'high',
+    run: checkInitializationOrder,
   },
 ];
 
