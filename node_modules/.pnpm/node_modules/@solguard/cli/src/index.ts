@@ -13,6 +13,7 @@ import { checkCommand } from './commands/check.js';
 import { generateExampleConfig } from './config.js';
 import { compareCommand } from './commands/compare.js';
 import { listCommand } from './commands/list.js';
+import { learnCommand } from './commands/learn.js';
 
 const program = new Command();
 
@@ -152,6 +153,15 @@ program
   .argument('<pathB>', 'Second version (new)')
   .option('-o, --output <format>', 'Output format: terminal, json, markdown', 'terminal')
   .action(compareCommand);
+
+program
+  .command('learn')
+  .description('Learn about vulnerabilities with official Solana documentation')
+  .argument('[query]', 'Pattern ID (SOL001) or topic (pda, cpi, tokens)')
+  .option('--urls', 'Show only documentation URLs')
+  .option('--brief', 'Show summary only (no full content)')
+  .option('--raw', 'Output raw markdown (for piping to LLMs)')
+  .action(learnCommand);
 
 program
   .command('init')

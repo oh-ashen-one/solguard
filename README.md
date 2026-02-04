@@ -134,9 +134,31 @@ solguard ci . --fail-on high --sarif results.sarif
 # List all patterns
 solguard list
 
+# Learn about a vulnerability with official Solana docs
+solguard learn SOL001     # Learn about Missing Owner Check
+solguard learn pda        # Learn about PDAs in general
+solguard learn cpi --raw  # Raw markdown for piping to LLMs
+
 # Show stats
 solguard stats
 ```
+
+### 📚 LLM-Ready Documentation
+
+SolShield integrates with [Solana's LLM-ready docs](https://x.com/solana_devs/status/2019123339642695783) — just add `.md` to any Solana docs URL to get clean markdown perfect for AI assistants.
+
+```bash
+# Learn about a specific vulnerability pattern
+solguard learn SOL004  # Fetches PDA validation docs from Solana
+
+# Get raw markdown to pipe to your AI
+solguard learn cpi --raw | claude "explain this"
+
+# Just show the docs URLs
+solguard learn SOL001 --urls
+```
+
+Topics: `accounts`, `pda`, `cpi`, `tokens`, `transactions`, `programs`, `fees`, `anchor`, `rust`
 
 ### GitHub Actions Integration
 

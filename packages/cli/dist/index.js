@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {
+  getPatternById,
   listPatterns,
   runPatterns
 } from "./chunk-NHQDMUFY.js";
@@ -825,14 +826,16 @@ function statsCommand() {
   console.log(chalk6.green("  \u2713"), "Git pre-commit/push hooks");
   console.log(chalk6.green("  \u2713"), "Config file support");
   console.log(chalk6.green("  \u2713"), "JSON/Markdown/Terminal output");
+  console.log(chalk6.green("  \u2713"), "LLM-ready Solana docs integration");
   console.log("");
-  console.log(chalk6.bold("  Available Commands (14):"));
+  console.log(chalk6.bold("  Available Commands (15):"));
   console.log("");
   console.log(chalk6.cyan("  solguard audit <path>"), "       Audit a program");
   console.log(chalk6.cyan("  solguard fetch <id>"), "         Fetch and audit on-chain");
   console.log(chalk6.cyan("  solguard github <repo>"), "      Audit GitHub repo/PR");
   console.log(chalk6.cyan("  solguard compare <a> <b>"), "    Compare two versions");
   console.log(chalk6.cyan("  solguard list"), "               List all patterns");
+  console.log(chalk6.cyan("  solguard learn <pattern>"), "    Learn with Solana docs");
   console.log(chalk6.cyan("  solguard check <path>"), "       Quick pass/fail check");
   console.log(chalk6.cyan("  solguard ci <path>"), "          CI mode with SARIF");
   console.log(chalk6.cyan("  solguard watch <path>"), "       Watch and auto-audit");
@@ -1991,6 +1994,602 @@ function truncate(str, len) {
   return str.slice(0, len - 3) + "...";
 }
 
+// src/docs-mapping.ts
+var DOCS_BASE = "https://solana.com/docs";
+var patternDocs = {
+  // === CRITICAL: Account & Ownership ===
+  "SOL001": [
+    {
+      title: "Accounts",
+      url: `${DOCS_BASE}/core/accounts`,
+      mdUrl: `${DOCS_BASE}/core/accounts.md`,
+      section: "Account Ownership"
+    },
+    {
+      title: "Programs",
+      url: `${DOCS_BASE}/core/programs`,
+      mdUrl: `${DOCS_BASE}/core/programs.md`,
+      section: "Owner Validation"
+    }
+  ],
+  // === CRITICAL: Signer Checks ===
+  "SOL002": [
+    {
+      title: "Transactions",
+      url: `${DOCS_BASE}/core/transactions`,
+      mdUrl: `${DOCS_BASE}/core/transactions.md`,
+      section: "Signatures"
+    },
+    {
+      title: "Accounts",
+      url: `${DOCS_BASE}/core/accounts`,
+      mdUrl: `${DOCS_BASE}/core/accounts.md`,
+      section: "Account Structure"
+    }
+  ],
+  // === HIGH: Integer Overflow ===
+  "SOL003": [
+    {
+      title: "Developing Programs - Rust",
+      url: `${DOCS_BASE}/programs/lang-rust`,
+      mdUrl: `${DOCS_BASE}/programs/lang-rust.md`,
+      section: "Arithmetic Safety"
+    }
+  ],
+  // === HIGH: PDA Validation ===
+  "SOL004": [
+    {
+      title: "Program Derived Addresses",
+      url: `${DOCS_BASE}/core/pda`,
+      mdUrl: `${DOCS_BASE}/core/pda.md`,
+      section: "Canonical Bumps"
+    }
+  ],
+  // === CRITICAL: Authority Bypass ===
+  "SOL005": [
+    {
+      title: "Programs",
+      url: `${DOCS_BASE}/core/programs`,
+      mdUrl: `${DOCS_BASE}/core/programs.md`,
+      section: "Access Control"
+    },
+    {
+      title: "Accounts",
+      url: `${DOCS_BASE}/core/accounts`,
+      mdUrl: `${DOCS_BASE}/core/accounts.md`,
+      section: "Account Ownership"
+    }
+  ],
+  // === CRITICAL: Initialization ===
+  "SOL006": [
+    {
+      title: "Accounts",
+      url: `${DOCS_BASE}/core/accounts`,
+      mdUrl: `${DOCS_BASE}/core/accounts.md`,
+      section: "Creating Accounts"
+    }
+  ],
+  // === HIGH: CPI Vulnerabilities ===
+  "SOL007": [
+    {
+      title: "Cross Program Invocation",
+      url: `${DOCS_BASE}/core/cpi`,
+      mdUrl: `${DOCS_BASE}/core/cpi.md`,
+      section: "CPI Security"
+    }
+  ],
+  // === MEDIUM: Rounding Errors ===
+  "SOL008": [
+    {
+      title: "Developing Programs - Rust",
+      url: `${DOCS_BASE}/programs/lang-rust`,
+      mdUrl: `${DOCS_BASE}/programs/lang-rust.md`,
+      section: "Numeric Precision"
+    }
+  ],
+  // === HIGH: Account Confusion ===
+  "SOL009": [
+    {
+      title: "Accounts",
+      url: `${DOCS_BASE}/core/accounts`,
+      mdUrl: `${DOCS_BASE}/core/accounts.md`,
+      section: "Account Validation"
+    }
+  ],
+  // === CRITICAL: Closing Accounts ===
+  "SOL010": [
+    {
+      title: "Accounts",
+      url: `${DOCS_BASE}/core/accounts`,
+      mdUrl: `${DOCS_BASE}/core/accounts.md`,
+      section: "Closing Accounts"
+    },
+    {
+      title: "Fees on Solana",
+      url: `${DOCS_BASE}/core/fees`,
+      mdUrl: `${DOCS_BASE}/core/fees.md`,
+      section: "Rent"
+    }
+  ],
+  // === HIGH: Reentrancy ===
+  "SOL011": [
+    {
+      title: "Cross Program Invocation",
+      url: `${DOCS_BASE}/core/cpi`,
+      mdUrl: `${DOCS_BASE}/core/cpi.md`,
+      section: "CPI Depth"
+    }
+  ],
+  // === CRITICAL: Arbitrary CPI ===
+  "SOL012": [
+    {
+      title: "Cross Program Invocation",
+      url: `${DOCS_BASE}/core/cpi`,
+      mdUrl: `${DOCS_BASE}/core/cpi.md`,
+      section: "Program ID Validation"
+    }
+  ],
+  // === HIGH: Duplicate Mutable ===
+  "SOL013": [
+    {
+      title: "Transactions",
+      url: `${DOCS_BASE}/core/transactions`,
+      mdUrl: `${DOCS_BASE}/core/transactions.md`,
+      section: "Account Locking"
+    }
+  ],
+  // === MEDIUM: Rent Exemption ===
+  "SOL014": [
+    {
+      title: "Fees on Solana",
+      url: `${DOCS_BASE}/core/fees`,
+      mdUrl: `${DOCS_BASE}/core/fees.md`,
+      section: "Rent"
+    }
+  ],
+  // === CRITICAL: Type Cosplay ===
+  "SOL015": [
+    {
+      title: "Accounts",
+      url: `${DOCS_BASE}/core/accounts`,
+      mdUrl: `${DOCS_BASE}/core/accounts.md`,
+      section: "Account Discriminators"
+    }
+  ],
+  // === HIGH: Bump Seeds ===
+  "SOL016": [
+    {
+      title: "Program Derived Addresses",
+      url: `${DOCS_BASE}/core/pda`,
+      mdUrl: `${DOCS_BASE}/core/pda.md`,
+      section: "Canonical Bumps"
+    }
+  ],
+  // === MEDIUM: Freeze Authority ===
+  "SOL017": [
+    {
+      title: "Tokens on Solana",
+      url: `${DOCS_BASE}/core/tokens`,
+      mdUrl: `${DOCS_BASE}/core/tokens.md`,
+      section: "Token Authorities"
+    }
+  ],
+  // === HIGH: Oracle Manipulation ===
+  "SOL018": [
+    {
+      title: "Programs",
+      url: `${DOCS_BASE}/core/programs`,
+      mdUrl: `${DOCS_BASE}/core/programs.md`,
+      section: "External Data"
+    }
+  ],
+  // === CRITICAL: Flash Loans ===
+  "SOL019": [
+    {
+      title: "Transactions",
+      url: `${DOCS_BASE}/core/transactions`,
+      mdUrl: `${DOCS_BASE}/core/transactions.md`,
+      section: "Atomicity"
+    }
+  ],
+  // === HIGH: Unsafe Math ===
+  "SOL020": [
+    {
+      title: "Developing Programs - Rust",
+      url: `${DOCS_BASE}/programs/lang-rust`,
+      mdUrl: `${DOCS_BASE}/programs/lang-rust.md`,
+      section: "Checked Arithmetic"
+    }
+  ],
+  // === CRITICAL: Sysvar Manipulation ===
+  "SOL021": [
+    {
+      title: "Accounts",
+      url: `${DOCS_BASE}/core/accounts`,
+      mdUrl: `${DOCS_BASE}/core/accounts.md`,
+      section: "Sysvar Accounts"
+    }
+  ],
+  // === MEDIUM: Upgrade Authority ===
+  "SOL022": [
+    {
+      title: "Programs",
+      url: `${DOCS_BASE}/core/programs`,
+      mdUrl: `${DOCS_BASE}/core/programs.md`,
+      section: "Program Deployment"
+    }
+  ],
+  // === HIGH: Token Validation ===
+  "SOL023": [
+    {
+      title: "Tokens on Solana",
+      url: `${DOCS_BASE}/core/tokens`,
+      mdUrl: `${DOCS_BASE}/core/tokens.md`,
+      section: "Token Accounts"
+    }
+  ],
+  // === HIGH: Cross-Program State ===
+  "SOL024": [
+    {
+      title: "Cross Program Invocation",
+      url: `${DOCS_BASE}/core/cpi`,
+      mdUrl: `${DOCS_BASE}/core/cpi.md`,
+      section: "State Dependencies"
+    }
+  ],
+  // === HIGH: Lamport Balance ===
+  "SOL025": [
+    {
+      title: "Accounts",
+      url: `${DOCS_BASE}/core/accounts`,
+      mdUrl: `${DOCS_BASE}/core/accounts.md`,
+      section: "Lamports"
+    },
+    {
+      title: "Fees on Solana",
+      url: `${DOCS_BASE}/core/fees`,
+      mdUrl: `${DOCS_BASE}/core/fees.md`,
+      section: "Rent"
+    }
+  ],
+  // PDA & Seeds
+  "SOL026": [
+    {
+      title: "Program Derived Addresses",
+      url: `${DOCS_BASE}/core/pda`,
+      mdUrl: `${DOCS_BASE}/core/pda.md`,
+      section: "Seeds"
+    }
+  ],
+  // Error Handling
+  "SOL027": [
+    {
+      title: "Developing Programs - Rust",
+      url: `${DOCS_BASE}/programs/lang-rust`,
+      mdUrl: `${DOCS_BASE}/programs/lang-rust.md`,
+      section: "Error Handling"
+    }
+  ],
+  // Events
+  "SOL028": [
+    {
+      title: "Programs",
+      url: `${DOCS_BASE}/core/programs`,
+      mdUrl: `${DOCS_BASE}/core/programs.md`,
+      section: "Logging"
+    }
+  ],
+  // Instruction Introspection
+  "SOL029": [
+    {
+      title: "Transactions",
+      url: `${DOCS_BASE}/core/transactions`,
+      mdUrl: `${DOCS_BASE}/core/transactions.md`,
+      section: "Instructions"
+    }
+  ],
+  // Anchor
+  "SOL030": [
+    {
+      title: "Anchor Framework",
+      url: `${DOCS_BASE}/programs/anchor`,
+      mdUrl: `${DOCS_BASE}/programs/anchor.md`,
+      section: "Account Constraints"
+    }
+  ],
+  // Access Control
+  "SOL031": [
+    {
+      title: "Programs",
+      url: `${DOCS_BASE}/core/programs`,
+      mdUrl: `${DOCS_BASE}/core/programs.md`,
+      section: "Authorization"
+    }
+  ],
+  // Time Lock
+  "SOL032": [
+    {
+      title: "Accounts",
+      url: `${DOCS_BASE}/core/accounts`,
+      mdUrl: `${DOCS_BASE}/core/accounts.md`,
+      section: "Clock Sysvar"
+    }
+  ],
+  // Signature Replay
+  "SOL033": [
+    {
+      title: "Transactions",
+      url: `${DOCS_BASE}/core/transactions`,
+      mdUrl: `${DOCS_BASE}/core/transactions.md`,
+      section: "Signatures"
+    }
+  ],
+  // Storage Collision
+  "SOL034": [
+    {
+      title: "Accounts",
+      url: `${DOCS_BASE}/core/accounts`,
+      mdUrl: `${DOCS_BASE}/core/accounts.md`,
+      section: "Account Data"
+    }
+  ],
+  // Token operations
+  "SOL038": [
+    {
+      title: "Token Extensions",
+      url: `${DOCS_BASE}/core/tokens`,
+      mdUrl: `${DOCS_BASE}/core/tokens.md`,
+      section: "Token-2022"
+    }
+  ],
+  // CPI Guard
+  "SOL040": [
+    {
+      title: "Cross Program Invocation",
+      url: `${DOCS_BASE}/core/cpi`,
+      mdUrl: `${DOCS_BASE}/core/cpi.md`,
+      section: "CPI Security"
+    }
+  ]
+};
+var topicDocs = {
+  "accounts": [
+    {
+      title: "Accounts",
+      url: `${DOCS_BASE}/core/accounts`,
+      mdUrl: `${DOCS_BASE}/core/accounts.md`
+    }
+  ],
+  "pda": [
+    {
+      title: "Program Derived Addresses",
+      url: `${DOCS_BASE}/core/pda`,
+      mdUrl: `${DOCS_BASE}/core/pda.md`
+    }
+  ],
+  "cpi": [
+    {
+      title: "Cross Program Invocation",
+      url: `${DOCS_BASE}/core/cpi`,
+      mdUrl: `${DOCS_BASE}/core/cpi.md`
+    }
+  ],
+  "tokens": [
+    {
+      title: "Tokens on Solana",
+      url: `${DOCS_BASE}/core/tokens`,
+      mdUrl: `${DOCS_BASE}/core/tokens.md`
+    }
+  ],
+  "transactions": [
+    {
+      title: "Transactions",
+      url: `${DOCS_BASE}/core/transactions`,
+      mdUrl: `${DOCS_BASE}/core/transactions.md`
+    }
+  ],
+  "programs": [
+    {
+      title: "Programs on Solana",
+      url: `${DOCS_BASE}/core/programs`,
+      mdUrl: `${DOCS_BASE}/core/programs.md`
+    }
+  ],
+  "fees": [
+    {
+      title: "Fees on Solana",
+      url: `${DOCS_BASE}/core/fees`,
+      mdUrl: `${DOCS_BASE}/core/fees.md`
+    }
+  ],
+  "rent": [
+    {
+      title: "Fees on Solana",
+      url: `${DOCS_BASE}/core/fees`,
+      mdUrl: `${DOCS_BASE}/core/fees.md`,
+      section: "Rent"
+    }
+  ],
+  "anchor": [
+    {
+      title: "Anchor Framework",
+      url: `${DOCS_BASE}/programs/anchor`,
+      mdUrl: `${DOCS_BASE}/programs/anchor.md`
+    }
+  ],
+  "rust": [
+    {
+      title: "Developing Programs in Rust",
+      url: `${DOCS_BASE}/programs/lang-rust`,
+      mdUrl: `${DOCS_BASE}/programs/lang-rust.md`
+    }
+  ]
+};
+function getDocsForPattern(patternId) {
+  return patternDocs[patternId] || [];
+}
+function getDocsForTopic(topic) {
+  const normalized = topic.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return topicDocs[normalized] || [];
+}
+async function fetchDocContent(mdUrl) {
+  try {
+    const response = await fetch(mdUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch: ${response.status}`);
+    }
+    return await response.text();
+  } catch (error) {
+    throw new Error(`Could not fetch documentation: ${error}`);
+  }
+}
+
+// src/commands/learn.ts
+var COLORS = {
+  reset: "\x1B[0m",
+  bold: "\x1B[1m",
+  dim: "\x1B[2m",
+  cyan: "\x1B[36m",
+  green: "\x1B[32m",
+  yellow: "\x1B[33m",
+  blue: "\x1B[34m",
+  magenta: "\x1B[35m"
+};
+async function learnCommand(query, options) {
+  const { raw = false, brief = false, urls = false } = options;
+  if (!query) {
+    console.log(`${COLORS.cyan}${COLORS.bold}\u{1F4DA} SolShield Learn${COLORS.reset}`);
+    console.log(`
+Usage: solshield learn <pattern-id|topic>
+`);
+    console.log(`${COLORS.bold}Examples:${COLORS.reset}`);
+    console.log(`  solshield learn SOL001     # Learn about Missing Owner Check`);
+    console.log(`  solshield learn SOL004     # Learn about PDA Validation`);
+    console.log(`  solshield learn pda        # Learn about PDAs in general`);
+    console.log(`  solshield learn cpi        # Learn about Cross Program Invocation`);
+    console.log(`  solshield learn tokens     # Learn about Solana tokens`);
+    console.log(`
+${COLORS.bold}Available topics:${COLORS.reset}`);
+    console.log(`  accounts, pda, cpi, tokens, transactions, programs, fees, rent, anchor, rust`);
+    console.log(`
+${COLORS.bold}Options:${COLORS.reset}`);
+    console.log(`  --urls     Show only documentation URLs`);
+    console.log(`  --brief    Show summary only (no full content)`);
+    console.log(`  --raw      Output raw markdown (for piping to LLMs)`);
+    return;
+  }
+  const isPatternId = /^SOL\d{3}$/i.test(query);
+  let docs = [];
+  let contextTitle = "";
+  if (isPatternId) {
+    const patternId = query.toUpperCase();
+    const pattern = getPatternById(patternId);
+    if (!pattern) {
+      console.error(`${COLORS.yellow}Pattern ${patternId} not found.${COLORS.reset}`);
+      console.log(`
+Use 'solshield list' to see all available patterns.`);
+      return;
+    }
+    docs = getDocsForPattern(patternId);
+    contextTitle = `${patternId}: ${pattern.name}`;
+    if (!urls) {
+      console.log(`
+${COLORS.cyan}${COLORS.bold}\u{1F6E1}\uFE0F ${contextTitle}${COLORS.reset}`);
+      console.log(`${COLORS.dim}Severity: ${pattern.severity}${COLORS.reset}
+`);
+    }
+  } else {
+    docs = getDocsForTopic(query);
+    contextTitle = query.charAt(0).toUpperCase() + query.slice(1);
+    if (docs.length === 0) {
+      console.error(`${COLORS.yellow}Topic "${query}" not recognized.${COLORS.reset}`);
+      console.log(`
+Available topics: accounts, pda, cpi, tokens, transactions, programs, fees, rent, anchor, rust`);
+      return;
+    }
+    if (!urls) {
+      console.log(`
+${COLORS.cyan}${COLORS.bold}\u{1F4DA} Learning: ${contextTitle}${COLORS.reset}
+`);
+    }
+  }
+  if (docs.length === 0) {
+    console.log(`${COLORS.yellow}No documentation mapped for this pattern yet.${COLORS.reset}`);
+    console.log(`
+General Solana security docs: https://solana.com/docs/programs/anchor`);
+    return;
+  }
+  if (urls) {
+    console.log(`
+${COLORS.bold}\u{1F4D6} Documentation URLs:${COLORS.reset}
+`);
+    for (const doc of docs) {
+      console.log(`${COLORS.green}${doc.title}${COLORS.reset}`);
+      console.log(`  Web:      ${doc.url}`);
+      console.log(`  LLM-Ready: ${doc.mdUrl}`);
+      if (doc.section) {
+        console.log(`  ${COLORS.dim}Section: ${doc.section}${COLORS.reset}`);
+      }
+      console.log("");
+    }
+    console.log(`${COLORS.dim}\u{1F4A1} Tip: Use the .md URLs to feed documentation directly to AI assistants.${COLORS.reset}`);
+    return;
+  }
+  if (brief) {
+    console.log(`${COLORS.bold}\u{1F4D6} Related Documentation:${COLORS.reset}
+`);
+    for (const doc of docs) {
+      console.log(`  ${COLORS.green}\u2022${COLORS.reset} ${doc.title}${doc.section ? ` (${doc.section})` : ""}`);
+      console.log(`    ${COLORS.blue}${doc.url}${COLORS.reset}`);
+    }
+    console.log(`
+${COLORS.dim}Use --raw to fetch full content for LLM processing.${COLORS.reset}`);
+    return;
+  }
+  console.log(`${COLORS.bold}\u{1F4D6} Official Solana Documentation:${COLORS.reset}
+`);
+  for (const doc of docs) {
+    console.log(`${COLORS.magenta}\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501${COLORS.reset}`);
+    console.log(`${COLORS.green}${COLORS.bold}${doc.title}${COLORS.reset}${doc.section ? ` \u2192 ${doc.section}` : ""}`);
+    console.log(`${COLORS.dim}${doc.mdUrl}${COLORS.reset}`);
+    console.log(`${COLORS.magenta}\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501${COLORS.reset}
+`);
+    try {
+      const content = await fetchDocContent(doc.mdUrl);
+      if (raw) {
+        console.log(content);
+      } else {
+        const lines = content.split("\n");
+        const maxLines = 60;
+        let startLine = 0;
+        if (lines[0] === "---") {
+          for (let i = 1; i < lines.length; i++) {
+            if (lines[i] === "---") {
+              startLine = i + 1;
+              break;
+            }
+          }
+        }
+        const displayLines = lines.slice(startLine, startLine + maxLines);
+        console.log(displayLines.join("\n"));
+        if (lines.length > startLine + maxLines) {
+          console.log(`
+${COLORS.dim}... (${lines.length - startLine - maxLines} more lines)${COLORS.reset}`);
+          console.log(`${COLORS.dim}Use --raw for full content or visit: ${doc.url}${COLORS.reset}`);
+        }
+      }
+    } catch (error) {
+      console.error(`${COLORS.yellow}Could not fetch content: ${error}${COLORS.reset}`);
+      console.log(`${COLORS.dim}Visit: ${doc.url}${COLORS.reset}`);
+    }
+    console.log("");
+  }
+  if (!raw) {
+    console.log(`
+${COLORS.cyan}\u{1F4A1} Pro tip:${COLORS.reset} Use 'solshield learn ${query} --raw | claude' to feed docs to your AI assistant.`);
+  }
+}
+
 // src/index.ts
 var program = new Command();
 var args = process.argv.slice(2);
@@ -2045,6 +2644,7 @@ program.command("github").description("Audit a Solana program directly from GitH
 program.command("ci").description("Run audit in CI mode (GitHub Actions, etc.)").argument("<path>", "Path to program directory").option("--fail-on <level>", "Fail on severity level: critical, high, medium, low, any", "critical").option("--sarif <file>", "Output SARIF report for GitHub Code Scanning").option("--summary <file>", "Write markdown summary to file").action(ciCommand);
 program.command("list").description("List all vulnerability patterns with details").option("-s, --severity <level>", "Filter by severity: critical, high, medium").option("-o, --output <format>", "Output format: terminal, json, markdown", "terminal").action(listCommand);
 program.command("compare").description("Compare security between two program versions").argument("<pathA>", "First version (baseline)").argument("<pathB>", "Second version (new)").option("-o, --output <format>", "Output format: terminal, json, markdown", "terminal").action(compareCommand);
+program.command("learn").description("Learn about vulnerabilities with official Solana documentation").argument("[query]", "Pattern ID (SOL001) or topic (pda, cpi, tokens)").option("--urls", "Show only documentation URLs").option("--brief", "Show summary only (no full content)").option("--raw", "Output raw markdown (for piping to LLMs)").action(learnCommand);
 program.command("init").description("Initialize SolGuard in a project").option("-f, --force", "Overwrite existing config").action(async (options) => {
   const { existsSync: existsSync7, writeFileSync: writeFileSync5 } = await import("fs");
   const configPath = "solguard.config.json";

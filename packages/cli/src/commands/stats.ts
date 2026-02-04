@@ -67,16 +67,18 @@ export function statsCommand() {
   console.log(chalk.green('  ✓'), 'Git pre-commit/push hooks');
   console.log(chalk.green('  ✓'), 'Config file support');
   console.log(chalk.green('  ✓'), 'JSON/Markdown/Terminal output');
+  console.log(chalk.green('  ✓'), 'LLM-ready Solana docs integration');
   console.log('');
   
   // Commands
-  console.log(chalk.bold('  Available Commands (14):'));
+  console.log(chalk.bold('  Available Commands (15):'));
   console.log('');
   console.log(chalk.cyan('  solguard audit <path>'), '       Audit a program');
   console.log(chalk.cyan('  solguard fetch <id>'), '         Fetch and audit on-chain');
   console.log(chalk.cyan('  solguard github <repo>'), '      Audit GitHub repo/PR');
   console.log(chalk.cyan('  solguard compare <a> <b>'), '    Compare two versions');
   console.log(chalk.cyan('  solguard list'), '               List all patterns');
+  console.log(chalk.cyan('  solguard learn <pattern>'), '    Learn with Solana docs');
   console.log(chalk.cyan('  solguard check <path>'), '       Quick pass/fail check');
   console.log(chalk.cyan('  solguard ci <path>'), '          CI mode with SARIF');
   console.log(chalk.cyan('  solguard watch <path>'), '       Watch and auto-audit');
