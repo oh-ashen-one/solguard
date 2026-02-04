@@ -1,12 +1,174 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFileSync, unlinkSync, mkdirSync, existsSync } from 'fs';
-import { execSync } from 'child_process';
-import { join } from 'path';
-import { randomUUID } from 'crypto';
-import { tmpdir } from 'os';
+
+// Inline pattern detection - works on serverless without CLI dependency
+const PATTERNS = [
+  {
+    id: 'SOL001',
+    title: 'Missing Owner Check',
+    severity: 'critical',
+    pattern: /AccountInfo.*(?!.*owner\s*==)(?!.*has_one)/s,
+    description: 'Account ownership is not verified. Anyone could pass a malicious account.',
+    suggestion: 'Add owner validation: require!(account.owner == expected_program, ErrorCode::InvalidOwner);'
+  },
+  {
+    id: 'SOL002',
+    title: 'Missing Signer Check',
+    severity: 'critical',
+    pattern: /\/\/\/\s*CHECK:|AccountInfo.*(?!.*Signer|.*is_signer|.*#\[account\(.*signer)/,
+    suggestion: 'Add signer constraint: #[account(signer)] or verify is_signer manually.',
+    description: 'Authority account lacks signer verification. Any account could be passed as authority.'
+  },
+  {
+    id: 'SOL003',
+    title: 'Integer Overflow',
+    severity: 'high',
+    pattern: /\b(\w+)\s*[-+*]\s*(\w+)(?!.*checked_|.*saturating_|.*wrapping_)/,
+    description: 'Arithmetic operation without overflow protection could wrap around.',
+    suggestion: 'Use checked_add(), checked_sub(), or checked_mul() for safe arithmetic.'
+  },
+  {
+    id: 'SOL004',
+    title: 'Missing PDA Bump Verification',
+    severity: 'high',
+    pattern: /find_program_address|create_program_address(?!.*bump|.*seeds)/,
+    description: 'PDA derivation without bump seed storage could allow bump manipulation.',
+    suggestion: 'Store and verify the canonical bump seed.'
+  },
+  {
+    id: 'SOL005',
+    title: 'Authority Bypass',
+    severity: 'critical',
+    pattern: /authority|admin|owner.*AccountInfo(?!.*constraint|.*has_one)/i,
+    description: 'Sensitive authority account without proper constraints.',
+    suggestion: 'Add has_one constraint: #[account(has_one = authority)]'
+  },
+  {
+    id: 'SOL007',
+    title: 'Unchecked CPI',
+    severity: 'high',
+    pattern: /invoke(?:_signed)?.*(?!.*program_id\s*==)/,
+    description: 'Cross-program invocation without verifying the target program ID.',
+    suggestion: 'Verify program_id matches expected value before CPI.'
+  },
+  {
+    id: 'SOL010',
+    title: 'Account Closing Vulnerability',
+    severity: 'critical',
+    pattern: /close\s*=|try_borrow_mut_lamports.*=\s*0(?!.*realloc|.*zero)/,
+    description: 'Account closure without proper cleanup could allow revival attacks.',
+    suggestion: 'Zero out account data before closing and use close constraint properly.'
+  },
+  {
+    id: 'SOL011',
+    title: 'Reentrancy Risk',
+    severity: 'high',
+    pattern: /invoke(?:_signed)?[\s\S]*?(?:balance|lamports|amount)\s*[+-=]/,
+    description: 'State modification after CPI call could enable reentrancy.',
+    suggestion: 'Update state before making external calls (checks-effects-interactions).'
+  },
+  {
+    id: 'SOL015',
+    title: 'Type Cosplay',
+    severity: 'critical',
+    pattern: /#\[account\][\s\S]*?pub\s+struct(?![\s\S]*?discriminator|[\s\S]*?DISCRIMINATOR)/,
+    description: 'Account struct without discriminator could be confused with other types.',
+    suggestion: 'Anchor adds discriminators automatically, but verify for raw Solana programs.'
+  },
+  {
+    id: 'SOL018',
+    title: 'Oracle Manipulation',
+    severity: 'high',
+    pattern: /price|oracle|feed(?!.*staleness|.*confidence|.*twap)/i,
+    description: 'Oracle data usage without staleness or confidence checks.',
+    suggestion: 'Check oracle staleness, confidence interval, and use TWAP for critical operations.'
+  },
+  {
+    id: 'SOL027',
+    title: 'Unsafe Unwrap',
+    severity: 'medium',
+    pattern: /\.unwrap\(\)|\.expect\(/,
+    description: 'Using unwrap() can cause panic. Handle errors gracefully.',
+    suggestion: 'Use ? operator or match/if-let for error handling.'
+  },
+  {
+    id: 'SOL035',
+    title: 'Unbounded Loop',
+    severity: 'medium',
+    pattern: /for\s+\w+\s+in\s+\w+(?!.*\.iter\(\)\.take|.*\.len\(\)\s*<|.*MAX_)/,
+    description: 'Loop without bounds could consume all compute budget.',
+    suggestion: 'Add iteration limits to prevent denial of service.'
+  }
+];
+
+interface Finding {
+  id: string;
+  title: string;
+  severity: string;
+  description: string;
+  suggestion: string;
+  location: {
+    file: string;
+    line: number | null;
+    snippet: string;
+  };
+}
+
+function analyzeCode(code: string): Finding[] {
+  const findings: Finding[] = [];
+  const lines = code.split('\n');
+  
+  for (const pattern of PATTERNS) {
+    const match = code.match(pattern.pattern);
+    if (match) {
+      // Find line number of match
+      let lineNum = 1;
+      let charCount = 0;
+      const matchIndex = match.index || 0;
+      
+      for (let i = 0; i < lines.length; i++) {
+        charCount += lines[i].length + 1;
+        if (charCount > matchIndex) {
+          lineNum = i + 1;
+          break;
+        }
+      }
+      
+      // Get snippet (3 lines around match)
+      const startLine = Math.max(0, lineNum - 2);
+      const endLine = Math.min(lines.length, lineNum + 2);
+      const snippet = lines.slice(startLine, endLine).join('\n');
+      
+      findings.push({
+        id: pattern.id,
+        title: pattern.title,
+        severity: pattern.severity,
+        description: pattern.description,
+        suggestion: pattern.suggestion,
+        location: {
+          file: 'input.rs',
+          line: lineNum,
+          snippet: snippet.substring(0, 200),
+        }
+      });
+    }
+  }
+  
+  return findings;
+}
+
+function calculateSeverityScore(summary: any): number {
+  const weights = { critical: 40, high: 25, medium: 10, low: 3, info: 1 };
+  let score = 0;
+  score += (summary.critical || 0) * weights.critical;
+  score += (summary.high || 0) * weights.high;
+  score += (summary.medium || 0) * weights.medium;
+  score += (summary.low || 0) * weights.low;
+  score += (summary.info || 0) * weights.info;
+  return Math.min(100, score);
+}
 
 /**
- * SolGuard Public API for Agents
+ * SolShield Public API for Agents
  * 
  * POST /api/v1/audit
  * 
@@ -14,24 +176,6 @@ import { tmpdir } from 'os';
  * {
  *   "code": "use anchor_lang::prelude::*; ...",  // Rust source code
  *   "format": "json" | "markdown",               // Optional, default: json
- *   "ai": boolean                                 // Optional, include AI explanations
- * }
- * 
- * Response (success):
- * {
- *   "success": true,
- *   "programPath": "temp file path",
- *   "timestamp": "2026-02-02T...",
- *   "findings": [...],
- *   "summary": { critical: 0, high: 0, ... },
- *   "passed": true,
- *   "severityScore": 0
- * }
- * 
- * Response (error):
- * {
- *   "success": false,
- *   "error": "Error message"
  * }
  */
 export async function POST(request: NextRequest) {
@@ -39,7 +183,7 @@ export async function POST(request: NextRequest) {
   
   try {
     const body = await request.json();
-    const { code, format = 'json', ai = false } = body;
+    const { code, format = 'json' } = body;
     
     // Validate input
     if (!code || typeof code !== 'string') {
@@ -56,72 +200,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create temp directory
-    // Use system temp dir for serverless compatibility (Netlify, Vercel)
-    const tempDir = join(tmpdir(), 'solshield');
-    if (!existsSync(tempDir)) {
-      mkdirSync(tempDir, { recursive: true });
-    }
+    // Run inline pattern detection
+    const findings = analyzeCode(code);
     
-    const fileId = randomUUID();
-    const filePath = join(tempDir, `${fileId}.rs`);
+    // Calculate summary
+    const summary = {
+      critical: findings.filter(f => f.severity === 'critical').length,
+      high: findings.filter(f => f.severity === 'high').length,
+      medium: findings.filter(f => f.severity === 'medium').length,
+      low: findings.filter(f => f.severity === 'low').length,
+      info: 0,
+      total: findings.length,
+    };
     
-    try {
-      // Write code to temp file
-      writeFileSync(filePath, code);
-      
-      // Build CLI command
-      const cliPath = join(process.cwd(), '..', 'cli', 'dist', 'index.js');
-      const aiFlag = ai ? '' : '--no-ai';
-      
-      let output: string;
-      try {
-        output = execSync(
-          `node "${cliPath}" audit "${filePath}" --output json ${aiFlag}`,
-          { 
-            encoding: 'utf-8', 
-            timeout: 60000, // 60 second timeout
-            maxBuffer: 10 * 1024 * 1024, // 10MB buffer
-          }
-        );
-      } catch (execError: any) {
-        // CLI exits with code 1 when vulnerabilities found - that's expected
-        output = execError.stdout || '';
-        if (!output && execError.stderr) {
-          throw new Error(execError.stderr);
-        }
-      }
-      
-      // Parse JSON output
-      const result = JSON.parse(output);
-      
-      // Calculate severity score
-      const severityScore = calculateSeverityScore(result.summary);
-      
-      // Build response
-      const response = {
-        success: true,
-        ...result,
-        severityScore,
-        executionTimeMs: Date.now() - startTime,
-        apiVersion: '1.0.0',
-      };
+    const severityScore = calculateSeverityScore(summary);
+    
+    const result = {
+      success: true,
+      programPath: 'input.rs',
+      timestamp: new Date().toISOString(),
+      findings,
+      summary,
+      passed: summary.critical === 0 && summary.high === 0,
+      severityScore,
+      patternsChecked: PATTERNS.length,
+      executionTimeMs: Date.now() - startTime,
+      apiVersion: '1.0.0',
+      note: 'Web API uses simplified detection. Full CLI has 150+ patterns.',
+    };
 
-      // Format response
-      if (format === 'markdown') {
-        return new NextResponse(formatAsMarkdown(result), {
-          headers: { 'Content-Type': 'text/markdown' },
-        });
-      }
-      
-      return NextResponse.json(response);
-      
-    } finally {
-      // Clean up temp file
-      try {
-        unlinkSync(filePath);
-      } catch {}
+    // Format response
+    if (format === 'markdown') {
+      return new NextResponse(formatAsMarkdown(result), {
+        headers: { 'Content-Type': 'text/markdown' },
+      });
     }
+    
+    return NextResponse.json(result);
     
   } catch (error: any) {
     console.error('Audit API error:', error);
@@ -136,20 +251,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function calculateSeverityScore(summary: any): number {
-  const weights = { critical: 40, high: 25, medium: 10, low: 3, info: 1 };
-  let score = 0;
-  score += (summary.critical || 0) * weights.critical;
-  score += (summary.high || 0) * weights.high;
-  score += (summary.medium || 0) * weights.medium;
-  score += (summary.low || 0) * weights.low;
-  score += (summary.info || 0) * weights.info;
-  return Math.min(100, score);
-}
-
 function formatAsMarkdown(result: any): string {
   const lines = [
-    '# 🛡️ SolGuard Audit Report',
+    '# 🛡️ SolShield Audit Report',
     '',
     `**Status:** ${result.passed ? '✅ PASSED' : '❌ FAILED'}`,
     `**Date:** ${result.timestamp}`,
@@ -162,7 +266,6 @@ function formatAsMarkdown(result: any): string {
     `| 🟠 High | ${result.summary.high} |`,
     `| 🟡 Medium | ${result.summary.medium} |`,
     `| 🔵 Low | ${result.summary.low} |`,
-    `| ⚪ Info | ${result.summary.info} |`,
     '',
   ];
 
@@ -181,7 +284,7 @@ function formatAsMarkdown(result: any): string {
     }
   }
 
-  lines.push('---', '*Generated by SolGuard*');
+  lines.push('---', '*Generated by SolShield*');
   return lines.join('\n');
 }
 
@@ -189,8 +292,10 @@ function formatAsMarkdown(result: any): string {
 export async function GET() {
   return NextResponse.json({
     status: 'ok',
-    service: 'SolGuard Audit API',
+    service: 'SolShield Audit API',
     version: '1.0.0',
+    patternsAvailable: PATTERNS.length,
+    note: 'Web API uses simplified detection. Full CLI has 150+ patterns.',
     endpoints: {
       'POST /api/v1/audit': 'Audit Rust/Anchor code',
     },
