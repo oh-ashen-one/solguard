@@ -131,6 +131,26 @@ import { checkInstructionSize } from './instruction-size.js';
 import { checkAccountSeedLength } from './account-seed-length.js';
 import { checkTokenDecimalHandling } from './token-decimal-handling.js';
 import { checkAccountPdaBumpStorage } from './account-pda-bump-storage.js';
+import { checkTickAccountSpoofing } from './tick-account-spoofing.js';
+import { checkGovernanceProposalInjection } from './governance-proposal-injection.js';
+import { checkBondingCurveManipulation } from './bonding-curve-manipulation.js';
+import { checkInfiniteMint } from './infinite-mint.js';
+import { checkLiquidationManipulation } from './liquidation-manipulation.js';
+import { checkSupplyChainAttack } from './supply-chain-attack.js';
+import { checkPrivateKeyExposure } from './private-key-exposure.js';
+import { checkInsiderThreat } from './insider-threat.js';
+import { checkTreasuryDrain } from './treasury-drain.js';
+import { checkClmmExploit } from './clmm-exploit.js';
+import { checkBotCompromise } from './bot-compromise.js';
+import { checkSignatureVerificationBypass } from './signature-verification-bypass.js';
+import { checkLpTokenOracle } from './lp-token-oracle.js';
+import { checkUncheckedAccountCpi } from './unchecked-account-cpi.js';
+import { checkBreakLogicBug } from './break-logic-bug.js';
+import { checkSimulationDetection } from './simulation-detection.js';
+import { checkRootOfTrust } from './root-of-trust.js';
+import { checkSplLendingRounding } from './spl-lending-rounding.js';
+import { checkAnchorUncheckedAccount } from './anchor-unchecked-account.js';
+import { checkCrossProgamInvocationSafety } from './cross-program-invocation-check.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -926,6 +946,126 @@ const patterns: Pattern[] = [
     name: 'PDA Bump Storage',
     severity: 'low',
     run: checkAccountPdaBumpStorage,
+  },
+  {
+    id: 'SOL131',
+    name: 'Tick Account Spoofing',
+    severity: 'critical',
+    run: checkTickAccountSpoofing,
+  },
+  {
+    id: 'SOL132',
+    name: 'Governance Proposal Injection',
+    severity: 'critical',
+    run: checkGovernanceProposalInjection,
+  },
+  {
+    id: 'SOL133',
+    name: 'Bonding Curve Manipulation',
+    severity: 'critical',
+    run: checkBondingCurveManipulation,
+  },
+  {
+    id: 'SOL134',
+    name: 'Infinite Mint Vulnerability',
+    severity: 'critical',
+    run: checkInfiniteMint,
+  },
+  {
+    id: 'SOL135',
+    name: 'Liquidation Threshold Manipulation',
+    severity: 'critical',
+    run: checkLiquidationManipulation,
+  },
+  {
+    id: 'SOL136',
+    name: 'Supply Chain Attack Vector',
+    severity: 'high',
+    run: checkSupplyChainAttack,
+  },
+  {
+    id: 'SOL137',
+    name: 'Private Key Exposure',
+    severity: 'critical',
+    run: checkPrivateKeyExposure,
+  },
+  {
+    id: 'SOL138',
+    name: 'Insider Threat Vector',
+    severity: 'critical',
+    run: checkInsiderThreat,
+  },
+  {
+    id: 'SOL139',
+    name: 'Treasury Drain Attack',
+    severity: 'critical',
+    run: checkTreasuryDrain,
+  },
+  {
+    id: 'SOL140',
+    name: 'CLMM/AMM Exploit',
+    severity: 'critical',
+    run: checkClmmExploit,
+  },
+  {
+    id: 'SOL141',
+    name: 'Bot/Automation Compromise',
+    severity: 'high',
+    run: checkBotCompromise,
+  },
+  {
+    id: 'SOL142',
+    name: 'Signature Verification Bypass',
+    severity: 'critical',
+    run: checkSignatureVerificationBypass,
+  },
+  {
+    id: 'SOL143',
+    name: 'LP Token Oracle Manipulation',
+    severity: 'critical',
+    run: checkLpTokenOracle,
+  },
+  {
+    id: 'SOL144',
+    name: 'Unchecked Account in CPI',
+    severity: 'critical',
+    run: checkUncheckedAccountCpi,
+  },
+  {
+    id: 'SOL145',
+    name: 'Break Statement Logic Bug',
+    severity: 'medium',
+    run: checkBreakLogicBug,
+  },
+  {
+    id: 'SOL146',
+    name: 'Transaction Simulation Detection',
+    severity: 'critical',
+    run: checkSimulationDetection,
+  },
+  {
+    id: 'SOL147',
+    name: 'Root of Trust Establishment',
+    severity: 'critical',
+    run: checkRootOfTrust,
+  },
+  {
+    id: 'SOL148',
+    name: 'SPL Lending Rounding',
+    severity: 'critical',
+    run: checkSplLendingRounding,
+  },
+  {
+    id: 'SOL149',
+    name: 'Anchor Unchecked Account',
+    severity: 'critical',
+    run: checkAnchorUncheckedAccount,
+  },
+  {
+    id: 'SOL150',
+    name: 'Cross-Program Invocation Safety',
+    severity: 'high',
+    run: checkCrossProgamInvocationSafety,
   },
 ];
 

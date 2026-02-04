@@ -318,7 +318,7 @@ pub enum VaultError {
           
           <p className="text-xl text-zinc-400 text-center max-w-2xl mx-auto mb-12">
             AI-powered vulnerability detection for Anchor programs. 
-            142 patterns. Instant analysis. Ship secure code.
+            150 patterns. Instant analysis. Ship secure code.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -348,7 +348,7 @@ pub enum VaultError {
         <div className="max-w-6xl mx-auto px-6 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { value: '142', label: 'Vulnerability Patterns', sublabel: 'Based on real exploits' },
+              { value: '150', label: 'Vulnerability Patterns', sublabel: 'Based on real exploits' },
               { value: '$557M+', label: 'Exploits Covered', sublabel: 'Wormhole, Mango, more' },
               { value: '17', label: 'CLI Commands', sublabel: 'Full audit toolkit' },
               { value: '<1s', label: 'Analysis Time', sublabel: 'Instant results' },
@@ -657,7 +657,7 @@ pub enum VaultError {
               href="/patterns"
               className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
             >
-              View all 142 patterns
+              View all 150 patterns
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
               </svg>

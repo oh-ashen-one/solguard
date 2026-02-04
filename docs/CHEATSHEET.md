@@ -16,7 +16,7 @@ solguard watch ./program
 # CI mode with SARIF
 solguard ci . --fail-on high --sarif results.sarif
 
-# List all 130 patterns
+# List all 150 patterns
 solguard list
 
 # Show audit stats
@@ -31,7 +31,7 @@ solguard audit . --output json      # Machine-readable
 solguard audit . --output markdown  # Documentation
 ```
 
-## 130 Vulnerability Patterns
+## 150 Vulnerability Patterns
 
 ### By Category
 
