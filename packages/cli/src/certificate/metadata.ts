@@ -32,7 +32,7 @@ interface CertificateMetadata {
 export function generateCertificateMetadata(
   result: AuditResult,
   programId: string,
-  imageUri: string = 'https://solguard.dev/certificate.png'
+  imageUri: string = 'https://SolShield AI.dev/certificate.png'
 ): CertificateMetadata {
   const passed = result.passed;
   const findingsHash = createHash('sha256')
@@ -41,13 +41,13 @@ export function generateCertificateMetadata(
     .slice(0, 16);
 
   return {
-    name: `SolGuard Audit: ${programId.slice(0, 8)}...`,
+    name: `SolShield AI Audit: ${programId.slice(0, 8)}...`,
     symbol: 'AUDIT',
     description: passed
-      ? `✅ This program passed the SolGuard security audit with no critical or high severity issues.`
-      : `⚠️ This program was audited by SolGuard. ${result.summary.critical} critical and ${result.summary.high} high severity issues were found.`,
+      ? `✅ This program passed the SolShield AI security audit with no critical or high severity issues.`
+      : `⚠️ This program was audited by SolShield AI. ${result.summary.critical} critical and ${result.summary.high} high severity issues were found.`,
     image: imageUri,
-    external_url: `https://solguard.dev/audit/${programId}`,
+    external_url: `https://SolShield AI.dev/audit/${programId}`,
     attributes: [
       {
         trait_type: 'Status',
@@ -83,7 +83,7 @@ export function generateCertificateMetadata(
       },
       {
         trait_type: 'Auditor',
-        value: 'SolGuard AI',
+        value: 'SolShield AI AI',
       },
       {
         trait_type: 'Version',
@@ -158,7 +158,7 @@ export function generateCertificateSvg(
   <rect x="8" y="8" width="384" height="484" fill="none" stroke="${statusColor}" stroke-width="2" rx="12" opacity="0.5"/>
   
   <!-- Header -->
-  <text x="200" y="50" text-anchor="middle" fill="#FAFAFA" font-family="system-ui" font-size="24" font-weight="bold">🛡️ SolGuard</text>
+  <text x="200" y="50" text-anchor="middle" fill="#FAFAFA" font-family="system-ui" font-size="24" font-weight="bold">🛡️ SolShield AI</text>
   <text x="200" y="75" text-anchor="middle" fill="#71717A" font-family="system-ui" font-size="12">Security Audit Certificate</text>
   
   <!-- Status Badge -->
@@ -200,7 +200,7 @@ export function generateCertificateSvg(
   <text x="200" y="370" text-anchor="middle" fill="#71717A" font-family="system-ui" font-size="11">Audited on ${date}</text>
   
   <!-- Footer -->
-  <text x="200" y="450" text-anchor="middle" fill="#52525B" font-family="system-ui" font-size="10">Powered by AI • solguard.dev</text>
+  <text x="200" y="450" text-anchor="middle" fill="#52525B" font-family="system-ui" font-size="10">Powered by AI • SolShield AI.dev</text>
   <text x="200" y="470" text-anchor="middle" fill="#3F3F46" font-family="system-ui" font-size="8">This certificate is stored on the Solana blockchain</text>
 </svg>
   `.trim();

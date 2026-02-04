@@ -1,13 +1,13 @@
 /**
- * SolGuard Configuration
+ * SolShield AI Configuration
  * 
- * Loads config from solguard.config.json, .solguardrc, or package.json
+ * Loads config from solshield.config.json, .solshieldrc, or package.json
  */
 
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
-export interface SolGuardConfig {
+export interface SolShieldConfig {
   // Patterns to disable
   disable?: string[];
   
@@ -34,15 +34,15 @@ export interface SolGuardConfig {
 }
 
 const CONFIG_FILES = [
-  'solguard.config.json',
-  '.solguardrc',
-  '.solguardrc.json',
+  'solshield.config.json',
+  '.solshieldrc',
+  '.solshieldrc.json',
 ];
 
 /**
  * Load configuration from the project root
  */
-export function loadConfig(projectPath: string): SolGuardConfig {
+export function loadConfig(projectPath: string): SolShieldConfig {
   // Try dedicated config files
   for (const filename of CONFIG_FILES) {
     const configPath = join(projectPath, filename);
@@ -61,8 +61,8 @@ export function loadConfig(projectPath: string): SolGuardConfig {
   if (existsSync(packagePath)) {
     try {
       const pkg = JSON.parse(readFileSync(packagePath, 'utf-8'));
-      if (pkg.solguard) {
-        return pkg.solguard;
+      if (pkg.solshield) {
+        return pkg.solshield;
       }
     } catch {
       // Ignore
@@ -74,8 +74,8 @@ export function loadConfig(projectPath: string): SolGuardConfig {
   if (existsSync(cargoPath)) {
     try {
       const cargo = readFileSync(cargoPath, 'utf-8');
-      // Basic TOML parsing for [package.metadata.solguard]
-      const match = cargo.match(/\[package\.metadata\.solguard\]\s*([\s\S]*?)(?:\n\[|$)/);
+      // Basic TOML parsing for [package.metadata.solshield]
+      const match = cargo.match(/\[package\.metadata\.SolShield AI\]\s*([\s\S]*?)(?:\n\[|$)/);
       if (match) {
         // Very basic TOML -> JSON conversion
         const tomlSection = match[1];
@@ -112,9 +112,9 @@ export function loadConfig(projectPath: string): SolGuardConfig {
  * Merge configs (cli args override config file)
  */
 export function mergeConfig(
-  fileConfig: SolGuardConfig,
-  cliOptions: Partial<SolGuardConfig>
-): SolGuardConfig {
+  fileConfig: SolShieldConfig,
+  cliOptions: Partial<SolShieldConfig>
+): SolShieldConfig {
   return {
     ...fileConfig,
     ...cliOptions,
@@ -132,14 +132,14 @@ export function mergeConfig(
 /**
  * Check if a pattern is disabled
  */
-export function isPatternDisabled(config: SolGuardConfig, patternId: string): boolean {
+export function isPatternDisabled(config: SolShieldConfig, patternId: string): boolean {
   return config.disable?.includes(patternId) || false;
 }
 
 /**
  * Check if a path should be ignored
  */
-export function shouldIgnore(config: SolGuardConfig, filePath: string): boolean {
+export function shouldIgnore(config: SolShieldConfig, filePath: string): boolean {
   if (!config.ignore) return false;
   
   return config.ignore.some(pattern => {

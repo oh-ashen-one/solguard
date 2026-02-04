@@ -1,4 +1,4 @@
-# 🚀 SolGuard Deployment Guide
+# 🚀 SolShield AI Deployment Guide
 
 This guide covers deploying both the **Web UI** and the **On-chain Program**.
 
@@ -49,7 +49,7 @@ wrangler pages deploy .next
 
 ## On-chain Program Deployment
 
-This section explains how to deploy the SolGuard Anchor program to Solana devnet/mainnet.
+This section explains how to deploy the SolShield AI Anchor program to Solana devnet/mainnet.
 
 ---
 
@@ -100,10 +100,10 @@ anchor build
 
 ```bash
 # Get the program keypair address
-solana address -k target/deploy/solguard-keypair.json
+solana address -k target/deploy/SolShield AI-keypair.json
 ```
 
-Update `declare_id!()` in `programs/solguard/src/lib.rs` with this address.
+Update `declare_id!()` in `programs/SolShield AI/src/lib.rs` with this address.
 
 ### 4. Deploy
 
@@ -124,7 +124,7 @@ solana program show <PROGRAM_ID>
 
 1. Visit [Solana Playground](https://beta.solpg.io/)
 2. Create new project → Select "Anchor"
-3. Copy contents of `packages/program/programs/solguard/src/lib.rs`
+3. Copy contents of `packages/program/programs/SolShield AI/src/lib.rs`
 4. Click "Build" → "Deploy"
 5. Copy the deployed Program ID
 
@@ -164,7 +164,7 @@ anchor deploy
 ### 1. Update Program ID
 
 Update these files with your deployed Program ID:
-- `packages/program/programs/solguard/src/lib.rs` (declare_id!)
+- `packages/program/programs/SolShield AI/src/lib.rs` (declare_id!)
 - `packages/program/Anchor.toml` (programs.devnet)
 - `packages/cli/src/config.ts` (if applicable)
 
@@ -192,8 +192,8 @@ let cpi_accounts = VerifyAudit {
     audit: audit_account.to_account_info(),
     verifier: verifier.to_account_info(),
 };
-let cpi_ctx = CpiContext::new(solguard_program.to_account_info(), cpi_accounts);
-let is_audited = solguard::cpi::verify_audit(cpi_ctx)?;
+let cpi_ctx = CpiContext::new(SolShield AI_program.to_account_info(), cpi_accounts);
+let is_audited = SolShield AI::cpi::verify_audit(cpi_ctx)?;
 ```
 
 ---
@@ -223,7 +223,7 @@ solana program extend <PROGRAM_ID> 50000
 ### "Account already exists"
 The program was already deployed. Use `anchor upgrade` instead:
 ```bash
-anchor upgrade target/deploy/solguard.so --program-id <PROGRAM_ID>
+anchor upgrade target/deploy/SolShield AI.so --program-id <PROGRAM_ID>
 ```
 
 ---
@@ -232,7 +232,7 @@ anchor upgrade target/deploy/solguard.so --program-id <PROGRAM_ID>
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    SolGuard Program                          │
+│                    SolShield AI Program                          │
 ├─────────────────────────────────────────────────────────────┤
 │  create_audit()     → Store audit as PDA                    │
 │  verify_audit()     → CPI-callable verification             │

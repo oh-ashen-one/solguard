@@ -197,7 +197,7 @@ export default function PatternsPage() {
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-2xl">🛡️</span>
-            <span className="text-xl font-bold">SolGuard</span>
+            <span className="text-xl font-bold">SolShield AI</span>
           </Link>
           <nav className="flex items-center gap-6">
             <Link href="/" className="text-zinc-400 hover:text-white">Home</Link>

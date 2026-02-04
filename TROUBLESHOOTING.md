@@ -1,4 +1,4 @@
-# 🔧 SolGuard Troubleshooting
+# 🔧 SolShield AI Troubleshooting
 
 Solutions for common issues.
 
@@ -6,7 +6,7 @@ Solutions for common issues.
 
 ## Installation
 
-### "command not found: solguard"
+### "command not found: SolShield AI"
 
 **Fix:** Add npm global bin to PATH:
 ```bash
@@ -30,8 +30,8 @@ nvm use 20
 
 # Now install without sudo
 # From source (npm package coming soon)
-git clone https://github.com/oh-ashen-one/solguard.git
-cd solguard/packages/cli && npm install && npm run build && npm link
+git clone https://github.com/oh-ashen-one/solshield.git
+cd SolShield AI/packages/cli && npm install && npm run build && npm link
 ```
 
 ---
@@ -45,11 +45,11 @@ cd solguard/packages/cli && npm install && npm run build && npm link
 **Fix:** 
 ```bash
 # Specify the correct path
-solguard audit ./programs/my-program
+SolShield AI audit ./programs/my-program
 
 # Or audit current directory
 cd programs/my-program
-solguard audit .
+SolShield AI audit .
 ```
 
 ### "Parse error" on valid Rust code
@@ -66,7 +66,7 @@ solguard audit .
 
 **Check:** Run with verbose mode:
 ```bash
-solguard audit . --verbose
+SolShield AI audit . --verbose
 ```
 
 ---
@@ -102,7 +102,7 @@ pnpm dev
 **Fix:**
 ```bash
 # Public repos only
-solguard github owner/repo
+SolShield AI github owner/repo
 
 # For private repos (coming soon)
 # Will need GitHub token
@@ -112,7 +112,7 @@ solguard github owner/repo
 
 **Fix:** Ensure PR exists and repo is correct:
 ```bash
-solguard github owner/repo --pr 123
+SolShield AI github owner/repo --pr 123
 ```
 
 ---
@@ -139,7 +139,7 @@ permissions:
 
 - name: Audit changed files
   if: steps.changed.outputs.any_changed == 'true'
-  run: solguard audit ${{ steps.changed.outputs.all_changed_files }}
+  run: SolShield AI audit ${{ steps.changed.outputs.all_changed_files }}
 ```
 
 ---
@@ -156,16 +156,16 @@ permissions:
 solana program show <PROGRAM_ID>
 
 # Use different RPC
-solguard fetch <PROGRAM_ID> --rpc https://api.mainnet-beta.solana.com
+SolShield AI fetch <PROGRAM_ID> --rpc https://api.mainnet-beta.solana.com
 ```
 
 ### "Program is not an Anchor program"
 
-**Cause:** SolGuard currently optimized for Anchor
+**Cause:** SolShield AI currently optimized for Anchor
 
 **Workaround:** Fetch the source from GitHub instead:
 ```bash
-solguard github owner/repo
+SolShield AI github owner/repo
 ```
 
 ---
@@ -186,10 +186,10 @@ solguard github owner/repo
 **Fix:** Filter by severity:
 ```bash
 # Only critical and high
-solguard audit . --min-severity high
+SolShield AI audit . --min-severity high
 
 # Or exclude specific patterns
-solguard audit . --exclude SOL028,SOL039
+SolShield AI audit . --exclude SOL028,SOL039
 ```
 
 ---
@@ -203,17 +203,17 @@ solguard audit . --exclude SOL028,SOL039
 **Fix:**
 ```bash
 # Audit specific directory
-solguard audit ./programs/specific-program
+SolShield AI audit ./programs/specific-program
 
 # Skip test files
-solguard audit . --ignore '**/test/**'
+SolShield AI audit . --ignore '**/test/**'
 ```
 
 ### "Out of memory"
 
 **Fix:** Increase Node.js memory:
 ```bash
-NODE_OPTIONS="--max-old-space-size=4096" solguard audit .
+NODE_OPTIONS="--max-old-space-size=4096" SolShield AI audit .
 ```
 
 ---
@@ -239,7 +239,7 @@ npm install -g pnpm
 ## Still Stuck?
 
 1. **Check logs:** Run with `--verbose`
-2. **Search issues:** [GitHub Issues](https://github.com/oh-ashen-one/solguard/issues)
+2. **Search issues:** [GitHub Issues](https://github.com/oh-ashen-one/solshield/issues)
 3. **Open new issue:** Include error message, steps to reproduce, and environment info
 
 ---

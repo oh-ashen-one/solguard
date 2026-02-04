@@ -17,7 +17,7 @@ Which pattern flagged incorrectly? (e.g., SOL002)
 ## Why It's a False Positive
 Explain why this code is actually safe.
 
-## SolGuard Output
+## SolShield AI Output
 ```
 // Paste the finding here
 ```

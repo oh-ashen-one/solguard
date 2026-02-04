@@ -1,16 +1,16 @@
 {
-  "name": "@solguard/cli",
+  "name": "@SolShield AI/cli",
   "version": "0.1.0",
-  "description": "SolGuard CLI - AI-Powered Smart Contract Auditor for Solana",
+  "description": "SolShield AI CLI - AI-Powered Smart Contract Auditor for Solana",
   "author": "Midir <midir@clawd.bot>",
   "license": "MIT",
-  "homepage": "https://github.com/oh-ashen-one/solguard",
+  "homepage": "https://github.com/oh-ashen-one/solshield",
   "repository": {
     "type": "git",
-    "url": "https://github.com/oh-ashen-one/solguard.git"
+    "url": "https://github.com/oh-ashen-one/solshield.git"
   },
   "bugs": {
-    "url": "https://github.com/oh-ashen-one/solguard/issues"
+    "url": "https://github.com/oh-ashen-one/solshield/issues"
   },
   "keywords": [
     "solana",
@@ -24,7 +24,7 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "solguard": "./dist/index.js"
+    "SolShield AI": "./dist/index.js"
   },
   "files": [
     "dist",

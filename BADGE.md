@@ -1,6 +1,6 @@
-# 🛡️ SolGuard Audit Badge
+# 🛡️ SolShield AI Audit Badge
 
-Show that your Solana program has been audited by SolGuard!
+Show that your Solana program has been audited by SolShield AI!
 
 ## Usage
 
@@ -9,43 +9,43 @@ Add this badge to your README:
 ### Markdown
 
 ```markdown
-[![Audited by SolGuard](https://img.shields.io/badge/Audited%20by-SolGuard%20🛡️-brightgreen)](https://github.com/oh-ashen-one/solguard)
+[![Audited by SolShield AI](https://img.shields.io/badge/Audited%20by-SolShield AI%20🛡️-brightgreen)](https://github.com/oh-ashen-one/solshield)
 ```
 
-**Result:** [![Audited by SolGuard](https://img.shields.io/badge/Audited%20by-SolGuard%20🛡️-brightgreen)](https://github.com/oh-ashen-one/solguard)
+**Result:** [![Audited by SolShield AI](https://img.shields.io/badge/Audited%20by-SolShield AI%20🛡️-brightgreen)](https://github.com/oh-ashen-one/solshield)
 
 ### With Status
 
 ```markdown
 <!-- Passed audit -->
-[![SolGuard: Passed](https://img.shields.io/badge/SolGuard-Passed%20✓-brightgreen)](https://github.com/oh-ashen-one/solguard)
+[![SolShield AI: Passed](https://img.shields.io/badge/SolShield AI-Passed%20✓-brightgreen)](https://github.com/oh-ashen-one/solshield)
 
 <!-- Has warnings -->
-[![SolGuard: Warnings](https://img.shields.io/badge/SolGuard-Warnings%20⚠️-yellow)](https://github.com/oh-ashen-one/solguard)
+[![SolShield AI: Warnings](https://img.shields.io/badge/SolShield AI-Warnings%20⚠️-yellow)](https://github.com/oh-ashen-one/solshield)
 
 <!-- Critical issues -->
-[![SolGuard: Critical](https://img.shields.io/badge/SolGuard-Critical%20🔴-red)](https://github.com/oh-ashen-one/solguard)
+[![SolShield AI: Critical](https://img.shields.io/badge/SolShield AI-Critical%20🔴-red)](https://github.com/oh-ashen-one/solshield)
 ```
 
 **Results:**
-- [![SolGuard: Passed](https://img.shields.io/badge/SolGuard-Passed%20✓-brightgreen)](https://github.com/oh-ashen-one/solguard)
-- [![SolGuard: Warnings](https://img.shields.io/badge/SolGuard-Warnings%20⚠️-yellow)](https://github.com/oh-ashen-one/solguard)
-- [![SolGuard: Critical](https://img.shields.io/badge/SolGuard-Critical%20🔴-red)](https://github.com/oh-ashen-one/solguard)
+- [![SolShield AI: Passed](https://img.shields.io/badge/SolShield AI-Passed%20✓-brightgreen)](https://github.com/oh-ashen-one/solshield)
+- [![SolShield AI: Warnings](https://img.shields.io/badge/SolShield AI-Warnings%20⚠️-yellow)](https://github.com/oh-ashen-one/solshield)
+- [![SolShield AI: Critical](https://img.shields.io/badge/SolShield AI-Critical%20🔴-red)](https://github.com/oh-ashen-one/solshield)
 
 ### With Pattern Count
 
 ```markdown
-[![SolGuard: 130 Patterns](https://img.shields.io/badge/SolGuard-130%20Patterns%20Checked-blue)](https://github.com/oh-ashen-one/solguard)
+[![SolShield AI: 130 Patterns](https://img.shields.io/badge/SolShield AI-130%20Patterns%20Checked-blue)](https://github.com/oh-ashen-one/solshield)
 ```
 
-**Result:** [![SolGuard: 130 Patterns](https://img.shields.io/badge/SolGuard-130%20Patterns%20Checked-blue)](https://github.com/oh-ashen-one/solguard)
+**Result:** [![SolShield AI: 130 Patterns](https://img.shields.io/badge/SolShield AI-130%20Patterns%20Checked-blue)](https://github.com/oh-ashen-one/solshield)
 
 ## Dynamic Badge (Future)
 
 Once on-chain audit registry is deployed, badges will be dynamic:
 
 ```markdown
-![SolGuard Status](https://solguard.dev/badge/<PROGRAM_ID>)
+![SolShield AI Status](https://SolShield AI.dev/badge/<PROGRAM_ID>)
 ```
 
 This will query the on-chain registry and show real-time audit status.
@@ -56,11 +56,11 @@ For GitHub Actions integration:
 
 ```yaml
 # In your workflow
-- name: Run SolGuard
-  run: solguard ci . --fail-on critical
+- name: Run SolShield AI
+  run: SolShield AI ci . --fail-on critical
 
 # Badge shows CI status
-[![SolGuard CI](https://github.com/YOUR_ORG/YOUR_REPO/actions/workflows/solguard.yml/badge.svg)](https://github.com/YOUR_ORG/YOUR_REPO/actions/workflows/solguard.yml)
+[![SolShield AI CI](https://github.com/YOUR_ORG/YOUR_REPO/actions/workflows/SolShield AI.yml/badge.svg)](https://github.com/YOUR_ORG/YOUR_REPO/actions/workflows/SolShield AI.yml)
 ```
 
 ## Why Use a Badge?
@@ -72,4 +72,4 @@ For GitHub Actions integration:
 
 ---
 
-*Get audited: [github.com/oh-ashen-one/solguard](https://github.com/oh-ashen-one/solguard)*
+*Get audited: [github.com/oh-ashen-one/solshield](https://github.com/oh-ashen-one/solshield)*

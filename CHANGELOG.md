@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to SolGuard during the hackathon.
+All notable changes to SolShield AI during the hackathon.
 
 **97 commits in 2 days** — built entirely by AI agents.
 

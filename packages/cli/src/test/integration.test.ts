@@ -1,5 +1,5 @@
 /**
- * Integration tests for SolGuard CLI
+ * Integration tests for SolShield AI CLI
  * Tests pattern registry and core functionality
  */
 

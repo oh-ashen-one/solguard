@@ -25,25 +25,25 @@ const isJsonOutput = args.includes('--output') && args[args.indexOf('--output') 
 if (!isJsonOutput) {
   console.log(chalk.cyan(`
 ╔═══════════════════════════════════════════╗
-║  🛡️  SolGuard - Smart Contract Auditor    ║
+║  🛡️  SolShield AI - Smart Contract Auditor    ║
 ║     AI-Powered Security for Solana        ║
 ╚═══════════════════════════════════════════╝
 `));
 }
 
 program
-  .name('solguard')
+  .name('SolShield AI')
   .description('AI-powered smart contract auditor for Solana')
   .version('0.1.0', '-v, --version', 'Output version number')
   .option('-V, --verbose-version', 'Show detailed version info')
   .on('option:verbose-version', () => {
-    console.log(`SolGuard v0.1.0`);
+    console.log(`SolShield AI v0.1.0`);
     console.log(`  Patterns: 130`);
     console.log(`  Commands: 17`);
     console.log(`  Built: 2026-02-02`);
     console.log(`  Node: ${process.version}`);
     console.log(`  Platform: ${process.platform}`);
-    console.log(`  https://github.com/oh-ashen-one/solguard`);
+    console.log(`  https://github.com/oh-ashen-one/solshield`);
     process.exit(0);
   });
 
@@ -99,12 +99,12 @@ program
 
 program
   .command('stats')
-  .description('Show SolGuard statistics and capabilities')
+  .description('Show SolShield AI statistics and capabilities')
   .action(statsCommand);
 
 program
   .command('demo')
-  .description('Run a quick demo showcasing SolGuard capabilities')
+  .description('Run a quick demo showcasing SolShield AI capabilities')
   .action(demoCommand);
 
 program
@@ -179,11 +179,11 @@ program
 
 program
   .command('init')
-  .description('Initialize SolGuard in a project')
+  .description('Initialize SolShield AI in a project')
   .option('-f, --force', 'Overwrite existing config')
   .action(async (options: any) => {
     const { existsSync, writeFileSync } = await import('fs');
-    const configPath = 'solguard.config.json';
+    const configPath = 'solshield.config.json';
     
     if (existsSync(configPath) && !options.force) {
       console.log(chalk.yellow(`Config already exists: ${configPath}`));
@@ -193,7 +193,7 @@ program
     
     writeFileSync(configPath, generateExampleConfig());
     console.log(chalk.green(`✓ Created ${configPath}`));
-    console.log(chalk.dim('Edit the file to customize SolGuard behavior'));
+    console.log(chalk.dim('Edit the file to customize SolShield AI behavior'));
   });
 
 program
@@ -208,7 +208,7 @@ program
   .command('report')
   .description('Generate HTML audit report')
   .argument('<path>', 'Path to program directory')
-  .option('-o, --output <file>', 'Output HTML file', 'solguard-report.html')
+  .option('-o, --output <file>', 'Output HTML file', 'SolShield AI-report.html')
   .option('-n, --name <name>', 'Program name for report')
   .action(async (path: string, options: any) => {
     const { existsSync, readdirSync, statSync, readFileSync } = await import('fs');

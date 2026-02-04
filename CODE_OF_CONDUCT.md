@@ -34,4 +34,4 @@ This Code of Conduct is adapted from the [Contributor Covenant](https://www.cont
 
 ---
 
-*SolGuard is committed to being a welcoming project for all contributors.*
+*SolShield AI is committed to being a welcoming project for all contributors.*

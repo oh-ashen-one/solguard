@@ -1,4 +1,4 @@
-# 🚨 SolGuard: 3 Actions to Win $50K
+# 🚨 SolShield AI: 3 Actions to Win $50K
 
 **Current: 8/10 → With these actions: 9.5+/10**
 
@@ -24,12 +24,12 @@ Judges are busy. Video is often the ONLY thing they watch. Every competitor will
 
 ### Quick Steps:
 1. Start screen recording (Loom, QuickTime, or iPhone)
-2. Open: https://codespaces.new/oh-ashen-one/solguard?quickstart=1
+2. Open: https://codespaces.new/oh-ashen-one/solshield?quickstart=1
 3. Wait 60 seconds for environment
 4. Click **"🔓 Vulnerable Vault"** button
 5. Click **"🔍 Run Security Audit"**
 6. Show the findings (scroll through them)
-7. Say: *"Manual audits cost $50K. SolGuard does this in under a second, for free."*
+7. Say: *"Manual audits cost $50K. SolShield AI does this in under a second, for free."*
 8. Stop recording, upload to YouTube/Loom
 
 **Full script:** [VIDEO-SCRIPT.md](VIDEO-SCRIPT.md)
@@ -50,7 +50,7 @@ cd packages/web
 netlify deploy --prod
 ```
 
-You'll get a URL like `solguard.netlify.app` — way more professional than Codespaces.
+You'll get a URL like `SolShield AI.netlify.app` — way more professional than Codespaces.
 
 ---
 

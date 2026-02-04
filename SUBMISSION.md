@@ -1,7 +1,7 @@
 # Hackathon Submission Details
 
 ## Project Name
-SolGuard
+SolShield AI
 
 ## Tagline
 AI-Powered Smart Contract Auditor for Solana
@@ -11,7 +11,7 @@ AI-Powered Smart Contract Auditor for Solana
 
 ## Solana Integration (998 chars)
 
-SolGuard integrates with Solana through a custom Anchor program that creates an on-chain audit registry:
+SolShield AI integrates with Solana through a custom Anchor program that creates an on-chain audit registry:
 
 **1. Audit Storage (PDAs)** - Each audited program gets a PDA storing: findings hash, severity scores, pass/fail status, and auditor identity. Programs can be re-audited with full version history preserved.
 
@@ -26,13 +26,13 @@ SolGuard integrates with Solana through a custom Anchor program that creates an 
 This creates a decentralized security layer where audit results are immutable, verifiable, and composable with other Solana protocols.
 
 ## GitHub
-https://github.com/oh-ashen-one/solguard
+https://github.com/oh-ashen-one/solshield
 
 ## Demo
 
 **One-Click Demo (No Setup Required):**
-- 🚀 **GitHub Codespaces:** https://codespaces.new/oh-ashen-one/solguard?quickstart=1
-- 🟠 **Gitpod:** https://gitpod.io/#https://github.com/oh-ashen-one/solguard
+- 🚀 **GitHub Codespaces:** https://codespaces.new/oh-ashen-one/solshield?quickstart=1
+- 🟠 **Gitpod:** https://gitpod.io/#https://github.com/oh-ashen-one/solshield
 
 Click either link → Wait for environment to spin up → Web UI opens automatically at port 3000 → Click "Vulnerable Vault" → Run audit!
 
@@ -48,7 +48,7 @@ Click either link → Wait for environment to spin up → Web UI opens automatic
 ```bash
 # One-command demo (after cloning)
 cd packages/cli && npm install && npm run build && npm link
-solguard demo
+SolShield AI demo
 ```
 
 ## Key Stats
@@ -59,7 +59,7 @@ solguard demo
 - **19** tests (all passing)
 - **$495M+** in exploits our patterns would have caught
 
-## Why SolGuard Should Win
+## Why SolShield AI Should Win
 
 1. **Largest Pattern Coverage** — 130 patterns, more than any alternative
 2. **Real-World Impact** — Would have caught Wormhole, Mango, Cashio exploits

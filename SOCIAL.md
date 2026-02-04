@@ -1,6 +1,6 @@
-# 📱 SolGuard Social Media Kit
+# 📱 SolShield AI Social Media Kit
 
-Ready-to-post content for sharing SolGuard.
+Ready-to-post content for sharing SolShield AI.
 
 ---
 
@@ -8,7 +8,7 @@ Ready-to-post content for sharing SolGuard.
 
 ### Launch Tweet
 ```
-🛡️ Introducing SolGuard
+🛡️ Introducing SolShield AI
 
 AI-powered smart contract auditor for Solana:
 • 130 vulnerability patterns
@@ -18,7 +18,7 @@ AI-powered smart contract auditor for Solana:
 Manual audits cost $50K. We do it instantly.
 
 Try it now (one click, no setup):
-https://codespaces.new/oh-ashen-one/solguard?quickstart=1
+https://codespaces.new/oh-ashen-one/solshield?quickstart=1
 
 Built 100% by AI agents 🤖
 ```
@@ -40,17 +40,17 @@ These patterns would have caught $495M+ in exploits:
 
 3/ Instant audits
 Manual audits: $10K-$100K, weeks of waiting
-SolGuard: Free, < 1 second
+SolShield AI: Free, < 1 second
 
 4/ Try it yourself
 One click, no setup required:
-https://codespaces.new/oh-ashen-one/solguard?quickstart=1
+https://codespaces.new/oh-ashen-one/solshield?quickstart=1
 
 5/ 100% built by AI
 Every line of code written by an AI agent.
 122 commits in 2 days.
 
-GitHub: https://github.com/oh-ashen-one/solguard
+GitHub: https://github.com/oh-ashen-one/solshield
 
 What vulnerabilities should we add next?
 ```
@@ -60,11 +60,11 @@ What vulnerabilities should we add next?
 ## LinkedIn
 
 ```
-🛡️ Excited to share SolGuard - an AI-powered smart contract auditor for Solana
+🛡️ Excited to share SolShield AI - an AI-powered smart contract auditor for Solana
 
 The problem: Manual security audits cost $10K-$100K and take weeks. Small teams can't afford them.
 
-The solution: SolGuard runs 130 vulnerability checks in under 1 second, for free.
+The solution: SolShield AI runs 130 vulnerability checks in under 1 second, for free.
 
 Key features:
 • Detects critical vulnerabilities (missing signers, overflows, reentrancy)
@@ -75,7 +75,7 @@ Key features:
 
 The interesting part? It was built 100% by an AI agent in 2 days for a hackathon.
 
-Try it: https://github.com/oh-ashen-one/solguard
+Try it: https://github.com/oh-ashen-one/solshield
 
 #Solana #SmartContracts #Security #AI #Web3
 ```
@@ -85,7 +85,7 @@ Try it: https://github.com/oh-ashen-one/solguard
 ## Discord/Telegram
 
 ```
-🛡️ **SolGuard** - AI-Powered Smart Contract Auditor
+🛡️ **SolShield AI** - AI-Powered Smart Contract Auditor
 
 **What:** Automated security audits for Solana/Anchor programs
 **Patterns:** 130 vulnerability detectors
@@ -93,10 +93,10 @@ Try it: https://github.com/oh-ashen-one/solguard
 **Cost:** Free (beta)
 
 **Try it (no setup):**
-https://codespaces.new/oh-ashen-one/solguard?quickstart=1
+https://codespaces.new/oh-ashen-one/solshield?quickstart=1
 
 **GitHub:**
-https://github.com/oh-ashen-one/solguard
+https://github.com/oh-ashen-one/solshield
 
 Built by AI for the Solana x OpenClaw Hackathon 🤖
 ```
@@ -106,9 +106,9 @@ Built by AI for the Solana x OpenClaw Hackathon 🤖
 ## YouTube Description
 
 ```
-SolGuard - AI-Powered Smart Contract Auditor for Solana
+SolShield AI - AI-Powered Smart Contract Auditor for Solana
 
-Manual audits cost $10K-$100K and take weeks. SolGuard does it in seconds, for free.
+Manual audits cost $10K-$100K and take weeks. SolShield AI does it in seconds, for free.
 
 🔥 Features:
 - 130 vulnerability patterns
@@ -122,8 +122,8 @@ Manual audits cost $10K-$100K and take weeks. SolGuard does it in seconds, for f
 - Cashio ($52M)
 
 🔗 Links:
-GitHub: https://github.com/oh-ashen-one/solguard
-Try it: https://codespaces.new/oh-ashen-one/solguard?quickstart=1
+GitHub: https://github.com/oh-ashen-one/solshield
+Try it: https://codespaces.new/oh-ashen-one/solshield?quickstart=1
 
 Built 100% by AI agents for the Solana x OpenClaw Agent Hackathon.
 
@@ -136,16 +136,16 @@ Built 100% by AI agents for the Solana x OpenClaw Agent Hackathon.
 
 ### Title
 ```
-SolGuard: AI-Powered Smart Contract Auditor for Solana (130 patterns, built by AI)
+SolShield AI: AI-Powered Smart Contract Auditor for Solana (130 patterns, built by AI)
 ```
 
 ### Text
 ```
-Hi HN, I built SolGuard - an automated security auditor for Solana smart contracts.
+Hi HN, I built SolShield AI - an automated security auditor for Solana smart contracts.
 
 The problem: Manual audits cost $10K-$100K and take weeks. Small teams ship without audits and get exploited.
 
-SolGuard runs 130 vulnerability checks in under a second:
+SolShield AI runs 130 vulnerability checks in under a second:
 - Missing signer/owner checks
 - Integer overflows
 - Reentrancy risks
@@ -155,9 +155,9 @@ SolGuard runs 130 vulnerability checks in under a second:
 
 The interesting part: It was built 100% by an AI agent (Claude on Clawdbot) in 2 days for a hackathon. 122 commits, zero human-written code.
 
-Try it (one click, no setup): https://codespaces.new/oh-ashen-one/solguard?quickstart=1
+Try it (one click, no setup): https://codespaces.new/oh-ashen-one/solshield?quickstart=1
 
-GitHub: https://github.com/oh-ashen-one/solguard
+GitHub: https://github.com/oh-ashen-one/solshield
 
 Would love feedback on the patterns and detection approach.
 ```

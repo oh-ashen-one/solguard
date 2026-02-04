@@ -13,7 +13,7 @@ interface WatchOptions {
  * Watch a directory for changes and auto-audit
  */
 export async function watchCommand(path: string, options: WatchOptions) {
-  console.log(chalk.cyan('\n  🔍 SolGuard Watch Mode\n'));
+  console.log(chalk.cyan('\n  🔍 SolShield AI Watch Mode\n'));
   console.log(chalk.gray(`  Watching: ${path}`));
   console.log(chalk.gray('  Press Ctrl+C to stop\n'));
 

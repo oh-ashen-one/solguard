@@ -1,6 +1,6 @@
-# 🔌 SolGuard Integrations
+# 🔌 SolShield AI Integrations
 
-Ready-to-use templates for integrating SolGuard into your workflow.
+Ready-to-use templates for integrating SolShield AI into your workflow.
 
 ## Quick Links
 
@@ -20,8 +20,8 @@ Automatically audit every PR and push.
 ### Basic Setup
 
 ```yaml
-# .github/workflows/solguard.yml
-name: SolGuard
+# .github/workflows/SolShield AI.yml
+name: SolShield AI
 on: [push, pull_request]
 
 jobs:
@@ -30,9 +30,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          git clone https://github.com/oh-ashen-one/solguard.git /tmp/solguard
-          cd /tmp/solguard/packages/cli && npm install && npm run build && npm link
-      - run: solguard ci . --fail-on high --sarif results.sarif
+          git clone https://github.com/oh-ashen-one/solshield.git /tmp/SolShield AI
+          cd /tmp/SolShield AI/packages/cli && npm install && npm run build && npm link
+      - run: SolShield AI ci . --fail-on high --sarif results.sarif
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
@@ -54,7 +54,7 @@ Catch issues before they're committed.
 ```bash
 # Download hook
 curl -o .git/hooks/pre-commit \
-  https://raw.githubusercontent.com/oh-ashen-one/solguard/main/examples/ci-templates/pre-commit-hook.sh
+  https://raw.githubusercontent.com/oh-ashen-one/solshield/main/examples/ci-templates/pre-commit-hook.sh
 
 # Make executable
 chmod +x .git/hooks/pre-commit
@@ -77,7 +77,7 @@ Run audits from your editor.
 1. Copy [vscode-tasks.json](examples/ci-templates/vscode-tasks.json) to `.vscode/tasks.json`
 2. Open Command Palette (`Ctrl/Cmd + Shift + P`)
 3. Type "Run Task"
-4. Select a SolGuard task
+4. Select a SolShield AI task
 
 ### Available Tasks
 - **Audit Current File** — Check the active file
@@ -93,10 +93,10 @@ Run audits from your editor.
 Show your audit status to visitors.
 
 ```markdown
-[![Audited by SolGuard](https://img.shields.io/badge/Audited%20by-SolGuard%20🛡️-brightgreen)](https://github.com/oh-ashen-one/solguard)
+[![Audited by SolShield AI](https://img.shields.io/badge/Audited%20by-SolShield AI%20🛡️-brightgreen)](https://github.com/oh-ashen-one/solshield)
 ```
 
-[![Audited by SolGuard](https://img.shields.io/badge/Audited%20by-SolGuard%20🛡️-brightgreen)](https://github.com/oh-ashen-one/solguard)
+[![Audited by SolShield AI](https://img.shields.io/badge/Audited%20by-SolShield AI%20🛡️-brightgreen)](https://github.com/oh-ashen-one/solshield)
 
 See [BADGE.md](BADGE.md) for more badge options.
 
@@ -104,11 +104,11 @@ See [BADGE.md](BADGE.md) for more badge options.
 
 ## Programmatic API
 
-Use SolGuard in your own tools:
+Use SolShield AI in your own tools:
 
 ```typescript
-// Coming soon: @solguard/core package
-import { audit } from '@solguard/core';
+// Coming soon: @SolShield AI/core package
+import { audit } from '@SolShield AI/core';
 
 const results = await audit({
   path: './programs',
@@ -161,7 +161,7 @@ Response:
 - 📖 [DEMO.md](DEMO.md) — Quick start guide
 - 📊 [BENCHMARKS.md](BENCHMARKS.md) — Performance info
 - 🔒 [SECURITY.md](SECURITY.md) — Security policy
-- 🐛 [Issues](https://github.com/oh-ashen-one/solguard/issues) — Bug reports
+- 🐛 [Issues](https://github.com/oh-ashen-one/solshield/issues) — Bug reports
 
 ---
 

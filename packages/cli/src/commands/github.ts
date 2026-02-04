@@ -58,7 +58,7 @@ async function cloneRepo(
   repo: string, 
   options: { pr?: number; branch?: string }
 ): Promise<string> {
-  const tempDir = join(tmpdir(), `solguard-${Date.now()}`);
+  const tempDir = join(tmpdir(), `SolShield AI-${Date.now()}`);
   await mkdir(tempDir, { recursive: true });
   
   const repoUrl = `https://github.com/${owner}/${repo}.git`;
@@ -255,7 +255,7 @@ export function formatGithubAuditResult(
   
   if (format === 'markdown') {
     const lines = [
-      `# SolGuard Audit: ${result.repo}`,
+      `# SolShield AI Audit: ${result.repo}`,
       '',
       `**Ref:** ${result.ref}`,
       `**Files Scanned:** ${result.files}`,
@@ -303,7 +303,7 @@ export function formatGithubAuditResult(
   
   // Text format
   const lines = [
-    `SolGuard Audit: ${result.repo} (${result.ref})`,
+    `SolShield AI Audit: ${result.repo} (${result.ref})`,
     `Files: ${result.files} | Duration: ${result.duration}ms`,
     '',
   ];

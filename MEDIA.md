@@ -1,4 +1,4 @@
-# 🎨 SolGuard Media Assets
+# 🎨 SolShield AI Media Assets
 
 Resources for press, presentations, and sharing.
 
@@ -7,16 +7,16 @@ Resources for press, presentations, and sharing.
 ## Brand
 
 ### Name
-**SolGuard** (one word, capital S and G)
+**SolShield AI** (one word, capital S and G)
 
 ### Tagline
 "AI-Powered Smart Contract Auditor for Solana"
 
 ### Short Description
-> SolGuard detects 130 vulnerability patterns in Solana smart contracts in under a second, for free.
+> SolShield AI detects 130 vulnerability patterns in Solana smart contracts in under a second, for free.
 
 ### Elevator Pitch
-> Manual security audits cost $10K-$100K and take weeks. SolGuard does it instantly with 130 AI-powered vulnerability checks, catching issues that have caused over $495M in real-world exploits.
+> Manual security audits cost $10K-$100K and take weeks. SolShield AI does it instantly with 130 AI-powered vulnerability checks, catching issues that have caused over $495M in real-world exploits.
 
 ---
 
@@ -33,7 +33,7 @@ Resources for press, presentations, and sharing.
 ```
 
 ### Emoji Logo
-🛡️ SolGuard
+🛡️ SolShield AI
 
 ### Icon Ideas
 - Shield with code brackets
@@ -77,7 +77,7 @@ Resources for press, presentations, and sharing.
 
 ### CLI Output
 ```
-🛡️ SOLGUARD AUDIT REPORT
+🛡️ SolShield AI AUDIT REPORT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔴 Critical: 4  🟠 High: 5  🟡 Medium: 2
 
@@ -96,14 +96,14 @@ Resources for press, presentations, and sharing.
 ## Comparisons
 
 ### vs Manual Audits
-| Aspect | Manual | SolGuard |
+| Aspect | Manual | SolShield AI |
 |--------|--------|----------|
 | Time | 1-4 weeks | < 1 second |
 | Cost | $10K-$100K | Free |
 | Consistency | Varies | Deterministic |
 
 ### vs Competitors
-| Feature | SolGuard | Others |
+| Feature | SolShield AI | Others |
 |---------|----------|--------|
 | Patterns | 130 | ~20-30 |
 | On-chain registry | ✅ | ❌ |
@@ -114,9 +114,9 @@ Resources for press, presentations, and sharing.
 
 ## Contact
 
-- **GitHub:** https://github.com/oh-ashen-one/solguard
+- **GitHub:** https://github.com/oh-ashen-one/solshield
 - **Twitter:** [@ashen_one](https://twitter.com/ashen_one)
-- **Demo:** https://codespaces.new/oh-ashen-one/solguard?quickstart=1
+- **Demo:** https://codespaces.new/oh-ashen-one/solshield?quickstart=1
 
 ---
 

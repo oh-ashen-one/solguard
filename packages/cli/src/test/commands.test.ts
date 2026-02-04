@@ -107,7 +107,7 @@ describe('CLI Commands', () => {
       });
       
       expect(html).toContain('<!DOCTYPE html>');
-      expect(html).toContain('SolGuard');
+      expect(html).toContain('SolShield AI');
       expect(html).toContain('test-program');
       expect(html).toContain('AUDIT PASSED');
     });

@@ -13,11 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SolGuard - AI-Powered Smart Contract Auditor for Solana",
+  title: "SolShield AI - AI-Powered Smart Contract Auditor for Solana",
   description: "Detect vulnerabilities in your Anchor programs instantly. Get AI-powered explanations and fix suggestions. Ship secure code faster.",
   keywords: ["Solana", "smart contract", "security", "audit", "Anchor", "Rust", "AI"],
   openGraph: {
-    title: "SolGuard - AI-Powered Smart Contract Auditor",
+    title: "SolShield AI - AI-Powered Smart Contract Auditor",
     description: "Detect vulnerabilities in your Anchor programs instantly.",
     type: "website",
   },

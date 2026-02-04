@@ -131,7 +131,7 @@ export async function ciCommand(path: string, options: CiOptions) {
   const summaryPath = process.env.GITHUB_STEP_SUMMARY || options.summary;
   if (summaryPath) {
     const summaryLines = [
-      '## 🛡️ SolGuard Security Audit',
+      '## 🛡️ SolShield AI Security Audit',
       '',
       `| Severity | Count |`,
       `|----------|-------|`,
@@ -175,7 +175,7 @@ export async function ciCommand(path: string, options: CiOptions) {
   }
 
   // Print summary
-  console.log('\n--- SolGuard CI Summary ---');
+  console.log('\n--- SolShield AI CI Summary ---');
   console.log(`Files: ${rustFiles.length} | Findings: ${allFindings.length} | Duration: ${duration}ms`);
   console.log(`Critical: ${counts.critical} | High: ${counts.high} | Medium: ${counts.medium} | Low: ${counts.low}`);
 
@@ -250,9 +250,9 @@ function generateSarif(findings: Finding[], basePath: string): object {
     runs: [{
       tool: {
         driver: {
-          name: 'SolGuard',
+          name: 'SolShield AI',
           version: '0.1.0',
-          informationUri: 'https://github.com/oh-ashen-one/solguard',
+          informationUri: 'https://github.com/oh-ashen-one/solshield',
           rules,
         },
       },

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       // Write code to temp file
       writeFileSync(filePath, code);
       
-      // Run solguard CLI
+      // Run SolShield AI CLI
       const cliPath = join(process.cwd(), '..', 'cli', 'dist', 'index.js');
       
       let output: string;

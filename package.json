@@ -1,19 +1,19 @@
 {
-  "name": "solguard",
+  "name": "SolShield AI",
   "version": "0.1.0",
   "private": true,
   "description": "AI-Powered Smart Contract Auditor for Solana",
   "repository": {
     "type": "git",
-    "url": "https://github.com/oh-ashen-one/solguard"
+    "url": "https://github.com/oh-ashen-one/solshield"
   },
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "cli": "pnpm --filter @solguard/cli",
-    "web": "pnpm --filter @solguard/web",
-    "dev": "pnpm --filter @solguard/cli dev",
+    "cli": "pnpm --filter @SolShield AI/cli",
+    "web": "pnpm --filter @SolShield AI/web",
+    "dev": "pnpm --filter @SolShield AI/cli dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test"
   },

@@ -29,4 +29,4 @@ What kind of vulnerability should this pattern detect?
 - Links to documentation, exploits, or audits that demonstrate this vulnerability
 
 ## Detection Strategy
-How could SolGuard detect this pattern?
+How could SolShield AI detect this pattern?

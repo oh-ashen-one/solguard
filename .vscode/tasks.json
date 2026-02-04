@@ -2,31 +2,31 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "SolGuard: Audit",
+      "label": "SolShield AI: Audit",
       "type": "shell",
-      "command": "npx solguard audit .",
+      "command": "npx SolShield AI audit .",
       "problemMatcher": [],
       "group": "build"
     },
     {
-      "label": "SolGuard: Check",
+      "label": "SolShield AI: Check",
       "type": "shell",
-      "command": "npx solguard check . --fail-on high",
+      "command": "npx SolShield AI check . --fail-on high",
       "problemMatcher": [],
       "group": "test"
     },
     {
-      "label": "SolGuard: Watch",
+      "label": "SolShield AI: Watch",
       "type": "shell",
-      "command": "npx solguard watch .",
+      "command": "npx SolShield AI watch .",
       "problemMatcher": [],
       "isBackground": true,
       "group": "build"
     },
     {
-      "label": "SolGuard: Generate Report",
+      "label": "SolShield AI: Generate Report",
       "type": "shell",
-      "command": "npx solguard report . -o audit-report.html",
+      "command": "npx SolShield AI report . -o audit-report.html",
       "problemMatcher": [],
       "group": "build"
     }

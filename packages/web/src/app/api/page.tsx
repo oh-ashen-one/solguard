@@ -8,14 +8,14 @@ export default function ApiDocs() {
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-2xl">🛡️</span>
-            <span className="text-xl font-bold">SolGuard</span>
+            <span className="text-xl font-bold">SolShield AI</span>
           </Link>
           <nav className="flex items-center gap-6">
             <Link href="/" className="text-zinc-400 hover:text-white transition">Home</Link>
             <Link href="/patterns" className="text-zinc-400 hover:text-white transition">Patterns</Link>
             <Link href="/api" className="text-white font-medium">API</Link>
             <a 
-              href="https://github.com/oh-ashen-one/solguard" 
+              href="https://github.com/oh-ashen-one/solshield" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-zinc-400 hover:text-white transition"
@@ -51,7 +51,7 @@ export default function ApiDocs() {
           <section className="bg-zinc-800/50 rounded-xl p-6 border border-zinc-700">
             <h2 className="text-xl font-semibold mb-4">Base URL</h2>
             <code className="bg-zinc-900 px-4 py-2 rounded-lg text-emerald-400 block">
-              https://solguard.dev/api/v1
+              https://SolShield AI.dev/api/v1
             </code>
           </section>
 
@@ -110,7 +110,7 @@ export default function ApiDocs() {
 
             <h3 className="font-semibold mb-2 text-zinc-200">Example (cURL)</h3>
             <pre className="bg-zinc-900 p-4 rounded-lg overflow-x-auto text-sm border border-zinc-700">
-{`curl -X POST https://solguard.dev/api/v1/audit \\
+{`curl -X POST https://SolShield AI.dev/api/v1/audit \\
   -H "Content-Type: application/json" \\
   -d '{
     "code": "use anchor_lang::prelude::*;\\n\\n#[program]\\npub mod my_program { ... }"
@@ -132,7 +132,7 @@ export default function ApiDocs() {
             <pre className="bg-zinc-900 p-4 rounded-lg overflow-x-auto text-sm border border-zinc-700">
 {`{
   "status": "ok",
-  "service": "SolGuard Audit API",
+  "service": "SolShield AI Audit API",
   "version": "1.0.0",
   "patterns": 130
 }`}
@@ -217,7 +217,7 @@ export default function ApiDocs() {
           <section className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-xl p-6 border border-emerald-500/20">
             <h2 className="text-xl font-semibold mb-2">130 Vulnerability Patterns</h2>
             <p className="text-zinc-300 mb-4">
-              SolGuard detects vulnerabilities across core security, CPI, DeFi, NFT, token, 
+              SolShield AI detects vulnerabilities across core security, CPI, DeFi, NFT, token, 
               PDA, Anchor, and more categories.
             </p>
             <Link 
@@ -232,20 +232,20 @@ export default function ApiDocs() {
           <section className="bg-zinc-800/50 rounded-xl p-6 border border-zinc-700">
             <h2 className="text-xl font-semibold mb-4">CLI Alternative</h2>
             <p className="text-zinc-300 mb-4">
-              For local development and CI/CD integration, use the SolGuard CLI:
+              For local development and CI/CD integration, use the SolShield AI CLI:
             </p>
             <pre className="bg-zinc-900 p-4 rounded-lg overflow-x-auto text-sm border border-zinc-700">
 {`# Install
-npm install -g @solguard/cli
+npm install -g @SolShield AI/cli
 
 # Audit local program
-solguard audit ./my-program
+SolShield AI audit ./my-program
 
 # Audit GitHub repo
-solguard github coral-xyz/anchor
+SolShield AI github coral-xyz/anchor
 
 # CI mode with SARIF output
-solguard ci . --fail-on high --sarif results.sarif`}
+SolShield AI ci . --fail-on high --sarif results.sarif`}
             </pre>
           </section>
         </div>

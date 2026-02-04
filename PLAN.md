@@ -1,4 +1,4 @@
-# SolGuard Build Plan
+# SolShield AI Build Plan
 
 > **AI-Powered Smart Contract Auditor for Solana**
 > Hackathon Deadline: Feb 12, 2026 (10 days)
@@ -20,7 +20,7 @@ An autonomous smart contract auditing system that:
 ## 📁 PROJECT STRUCTURE
 
 ```
-solguard/
+SolShield AI/
 ├── packages/
 │   ├── cli/                 # Command-line tool
 │   │   ├── src/
@@ -58,7 +58,7 @@ solguard/
 │   │
 │   └── program/             # Anchor on-chain registry
 │       ├── programs/
-│       │   └── solguard/
+│       │   └── SolShield AI/
 │       │       └── src/
 │       │           └── lib.rs
 │       ├── tests/
@@ -162,7 +162,7 @@ require!(ctx.accounts.authority.key() == ctx.accounts.vault.authority, ErrorCode
 - [ ] Implement Anchor IDL parser
 - [ ] Test: parse a real program's IDL
 
-**Deliverable:** `solguard parse <idl.json>` outputs structured data
+**Deliverable:** `SolShield AI parse <idl.json>` outputs structured data
 
 ### Day 2 (Feb 4) — Rust Parsing
 - [ ] Integrate tree-sitter-rust
@@ -170,7 +170,7 @@ require!(ctx.accounts.authority.key() == ctx.accounts.vault.authority, ErrorCode
 - [ ] Implement Pattern #1: Missing owner check
 - [ ] Implement Pattern #2: Missing signer check
 
-**Deliverable:** `solguard audit ./program` finds owner/signer issues
+**Deliverable:** `SolShield AI audit ./program` finds owner/signer issues
 
 ### Day 3 (Feb 5) — More Patterns
 - [ ] Implement Pattern #3: Integer overflow
@@ -186,7 +186,7 @@ require!(ctx.accounts.authority.key() == ctx.accounts.vault.authority, ErrorCode
 - [ ] Add fix suggestions
 - [ ] Implement severity scoring
 
-**Deliverable:** `solguard audit` outputs AI-explained report
+**Deliverable:** `SolShield AI audit` outputs AI-explained report
 
 ### Day 5 (Feb 7) — CLI Polish + Web Start
 - [ ] Add JSON/Markdown/Terminal output formats
@@ -240,7 +240,7 @@ require!(ctx.accounts.authority.key() == ctx.accounts.vault.authority, ErrorCode
 
 ```bash
 # Clone and install
-cd projects/solguard
+cd projects/SolShield AI
 pnpm install
 
 # Start building CLI
@@ -248,7 +248,7 @@ cd packages/cli
 pnpm dev
 
 # Test on example
-solguard audit ../examples/vulnerable/token-vault
+SolShield AI audit ../examples/vulnerable/token-vault
 ```
 
 ---
@@ -302,7 +302,7 @@ HELIUS_API_KEY=...  # Optional, for enhanced RPC
 ## 💡 QUICK WINS FOR DAY 1
 
 1. **Monorepo setup** — pnpm workspaces, shared tsconfig
-2. **CLI skeleton** — `solguard --help` works
+2. **CLI skeleton** — `SolShield AI --help` works
 3. **IDL parser** — Read JSON, extract instructions
 4. **First pattern** — Missing signer detection
 5. **Test file** — One vulnerable program to test against
@@ -313,6 +313,6 @@ HELIUS_API_KEY=...  # Optional, for enhanced RPC
 
 Open this folder in Cursor. Start with `packages/cli`.
 
-The goal: By end of Day 1, `solguard audit ./example` should output SOMETHING useful, even if basic.
+The goal: By end of Day 1, `SolShield AI audit ./example` should output SOMETHING useful, even if basic.
 
 Ship fast, iterate faster.

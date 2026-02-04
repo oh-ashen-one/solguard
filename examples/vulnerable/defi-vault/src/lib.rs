@@ -4,7 +4,7 @@ use anchor_lang::solana_program::program::invoke;
 declare_id!("VuLnDeF1111111111111111111111111111111111");
 
 /// A vulnerable DeFi vault with multiple security issues
-/// Used for testing SolGuard pattern detection
+/// Used for testing SolShield AI pattern detection
 #[program]
 pub mod vulnerable_defi_vault {
     use super::*;

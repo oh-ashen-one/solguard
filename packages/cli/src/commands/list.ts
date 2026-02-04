@@ -66,7 +66,7 @@ export function listCommand(options: ListOptions = {}) {
   }
   
   if (format === 'markdown') {
-    console.log('# SolGuard Vulnerability Patterns\n');
+    console.log('# SolShield AI Vulnerability Patterns\n');
     console.log(`Total: ${filtered.length} patterns\n`);
     
     for (const p of filtered) {
@@ -92,7 +92,7 @@ export function listCommand(options: ListOptions = {}) {
   
   // Terminal format
   console.log('');
-  console.log(chalk.bold('  🛡️ SolGuard Vulnerability Patterns'));
+  console.log(chalk.bold('  🛡️ SolShield AI Vulnerability Patterns'));
   console.log(chalk.gray('  ─'.repeat(30)));
   console.log('');
   

@@ -1,25 +1,25 @@
-# 🛡️ SolGuard
+# 🛡️ SolShield AI
 
 ```
-███████╗ ██████╗ ██╗      ██████╗ ██╗   ██╗ █████╗ ██████╗ ██████╗ 
-██╔════╝██╔═══██╗██║     ██╔════╝ ██║   ██║██╔══██╗██╔══██╗██╔══██╗
-███████╗██║   ██║██║     ██║  ███╗██║   ██║███████║██████╔╝██║  ██║
-╚════██║██║   ██║██║     ██║   ██║██║   ██║██╔══██║██╔══██╗██║  ██║
-███████║╚██████╔╝███████╗╚██████╔╝╚██████╔╝██║  ██║██║  ██║██████╔╝
-╚══════╝ ╚═════╝ ╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ 
-                    AI-Powered Smart Contract Auditor
+███████╗ ██████╗ ██╗     ███████╗██╗  ██╗██╗███████╗██╗     ██████╗      █████╗ ██╗
+██╔════╝██╔═══██╗██║     ██╔════╝██║  ██║██║██╔════╝██║     ██╔══██╗    ██╔══██╗██║
+███████╗██║   ██║██║     ███████╗███████║██║█████╗  ██║     ██║  ██║    ███████║██║
+╚════██║██║   ██║██║     ╚════██║██╔══██║██║██╔══╝  ██║     ██║  ██║    ██╔══██║██║
+███████║╚██████╔╝███████╗███████║██║  ██║██║███████╗███████╗██████╔╝    ██║  ██║██║
+╚══════╝ ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═════╝     ╚═╝  ╚═╝╚═╝
+                        AI-Powered Smart Contract Auditor
 ```
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![CI](https://github.com/oh-ashen-one/solguard/actions/workflows/ci.yml/badge.svg)](https://github.com/oh-ashen-one/solguard/actions/workflows/ci.yml)
+[![CI](https://github.com/oh-ashen-one/solshield/actions/workflows/ci.yml/badge.svg)](https://github.com/oh-ashen-one/solshield/actions/workflows/ci.yml)
 [![Patterns](https://img.shields.io/badge/patterns-130-blue.svg)](#vulnerability-patterns)
 [![Commands](https://img.shields.io/badge/CLI%20commands-17-purple.svg)](#cli)
 [![Built by AI](https://img.shields.io/badge/Built%20by-AI%20Agent%20🤖-ff69b4.svg)](HACKATHON.md)
 
 ### 🚀 Try It Now (No Setup Required!)
 
-[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-GitHub%20Codespaces-blue?logo=github)](https://codespaces.new/oh-ashen-one/solguard?quickstart=1)
-[![Open in Gitpod](https://img.shields.io/badge/Open%20in-Gitpod-orange?logo=gitpod)](https://gitpod.io/#https://github.com/oh-ashen-one/solguard)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-GitHub%20Codespaces-blue?logo=github)](https://codespaces.new/oh-ashen-one/solshield?quickstart=1)
+[![Open in Gitpod](https://img.shields.io/badge/Open%20in-Gitpod-orange?logo=gitpod)](https://gitpod.io/#https://github.com/oh-ashen-one/solshield)
 
 > **For Hackathon Judges:** Click either badge above → Web UI opens automatically at port 3000 → Paste code and audit!
 
@@ -32,7 +32,7 @@
 | **Real utility?** | ✅ Would catch $495M+ in exploits ([proof](REAL-WORLD.md)) |
 | **Agent-built?** | ✅ 146 commits, 100% by AI ([story](HACKATHON.md)) |
 
-**Quick demo:** `solguard demo` — one command shows everything.
+**Quick demo:** `SolShield AI demo` — one command shows everything.
 
 ---
 
@@ -40,9 +40,9 @@
 
 > Built 100% by AI agents for the [Solana x OpenClaw Agent Hackathon 2026](https://colosseum.com/agent-hackathon)
 
-## What is SolGuard?
+## What is SolShield AI?
 
-SolGuard is an autonomous smart contract auditing system that:
+SolShield AI is an autonomous smart contract auditing system that:
 
 1. **Parses** Anchor IDL + Rust source code
 2. **Detects** vulnerabilities using **130 specialized patterns**
@@ -52,7 +52,7 @@ SolGuard is an autonomous smart contract auditing system that:
 
 **The pitch:** Manual audits cost $10K-$100K and take weeks. We do it in seconds for free (beta).
 
-> 💰 **[Real-world impact](REAL-WORLD.md):** SolGuard's patterns would have caught exploits totaling **$495M+** in losses (Wormhole, Mango, Cashio, and more).
+> 💰 **[Real-world impact](REAL-WORLD.md):** SolShield AI's patterns would have caught exploits totaling **$495M+** in losses (Wormhole, Mango, Cashio, and more).
 
 ## 🔍 Vulnerability Patterns (130)
 
@@ -121,41 +121,41 @@ SolGuard is an autonomous smart contract auditing system that:
 
 ```bash
 # Install from source (npm package coming soon)
-git clone https://github.com/oh-ashen-one/solguard.git
-cd solguard/packages/cli
+git clone https://github.com/oh-ashen-one/solshield.git
+cd SolShield AI/packages/cli
 npm install && npm run build && npm link
 
 # Audit a program
-solguard audit ./path/to/program
+SolShield AI audit ./path/to/program
 
 # Audit from GitHub directly
-solguard github coral-xyz/anchor
-solguard github https://github.com/user/repo --pr 123
+SolShield AI github coral-xyz/anchor
+SolShield AI github https://github.com/user/repo --pr 123
 
 # Fetch and audit on-chain programs
-solguard fetch <PROGRAM_ID> --rpc https://api.mainnet-beta.solana.com
+SolShield AI fetch <PROGRAM_ID> --rpc https://api.mainnet-beta.solana.com
 
 # Watch mode for development
-solguard watch ./program
+SolShield AI watch ./program
 
 # Generate audit certificate
-solguard certificate ./program --program-id <PUBKEY>
+SolShield AI certificate ./program --program-id <PUBKEY>
 
 # CI mode for GitHub Actions
-solguard ci . --fail-on high --sarif results.sarif
+SolShield AI ci . --fail-on high --sarif results.sarif
 
 # List all patterns
-solguard list
+SolShield AI list
 
 # Show stats
-solguard stats
+SolShield AI stats
 ```
 
 ### GitHub Actions Integration
 
 ```yaml
 # .github/workflows/audit.yml
-name: SolGuard Audit
+name: SolShield AI Audit
 on: [push, pull_request]
 
 jobs:
@@ -164,13 +164,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Install SolGuard
+      - name: Install SolShield AI
         run: |
-          git clone https://github.com/oh-ashen-one/solguard.git /tmp/solguard
-          cd /tmp/solguard/packages/cli && npm install && npm run build && npm link
+          git clone https://github.com/oh-ashen-one/solshield.git /tmp/SolShield AI
+          cd /tmp/SolShield AI/packages/cli && npm install && npm run build && npm link
         
       - name: Run Security Audit
-        run: solguard ci . --fail-on high --sarif results.sarif
+        run: SolShield AI ci . --fail-on high --sarif results.sarif
         
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
@@ -190,7 +190,7 @@ pnpm dev
 ## 📁 Project Structure
 
 ```
-solguard/
+SolShield AI/
 ├── packages/
 │   ├── cli/              # Command-line auditor
 │   │   └── src/
@@ -205,7 +205,7 @@ solguard/
 │   │
 │   └── program/          # Anchor on-chain registry
 │       └── programs/
-│           └── solguard/ # Audit storage + verification
+│           └── SolShield AI/ # Audit storage + verification
 │
 ├── examples/
 │   ├── vulnerable/       # Test programs with issues
@@ -264,7 +264,7 @@ solguard/
 
 ## ⛓️ Solana Integration
 
-SolGuard creates a **composable on-chain audit layer**:
+SolShield AI creates a **composable on-chain audit layer**:
 
 - **Audit Registry PDA** — Keyed by `program_id`, queryable by anyone
 - **Compressed NFT Certificates** — Visual proof with Metaplex cNFTs
@@ -273,7 +273,7 @@ SolGuard creates a **composable on-chain audit layer**:
 
 ```rust
 // Other programs can verify audits via CPI
-let audit_passed = solguard::verify_audit(ctx)?;
+let audit_passed = SolShield AI::verify_audit(ctx)?;
 require!(audit_passed, ErrorCode::NotAudited);
 ```
 
@@ -281,7 +281,7 @@ require!(audit_passed, ErrorCode::NotAudited);
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  🛡️ SOLGUARD AUDIT REPORT
+  🛡️ SolShield AI AUDIT REPORT
   ./examples/vulnerable/defi-vault
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -337,7 +337,7 @@ require!(audit_passed, ErrorCode::NotAudited);
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   Scanned with 130 patterns in 0.34s
-  Run `solguard audit --verbose` for full details
+  Run `SolShield AI audit --verbose` for full details
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -377,7 +377,7 @@ require!(audit_passed, ErrorCode::NotAudited);
 
 ---
 
-**Repo:** https://github.com/oh-ashen-one/solguard
+**Repo:** https://github.com/oh-ashen-one/solshield
 
 ## 📜 License
 

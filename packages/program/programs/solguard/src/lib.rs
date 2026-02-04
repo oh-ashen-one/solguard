@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 
-declare_id!("SoLGUARD1111111111111111111111111111111111");
+declare_id!("SolShield AI1111111111111111111111111111111111");
 
-/// SolGuard - On-Chain Audit Registry for Solana Programs
+/// SolShield AI - On-Chain Audit Registry for Solana Programs
 /// 
 /// Features:
 /// - Store audit results as PDAs keyed by program_id
@@ -12,7 +12,7 @@ declare_id!("SoLGUARD1111111111111111111111111111111111");
 /// - Dispute mechanism for challenging findings
 
 #[program]
-pub mod solguard {
+pub mod SolShield AI {
     use super::*;
 
     /// Register a new audit for a program
@@ -140,8 +140,8 @@ pub mod solguard {
         name: String,
         website: String,
     ) -> Result<()> {
-        require!(name.len() <= 32, SolGuardError::NameTooLong);
-        require!(website.len() <= 64, SolGuardError::WebsiteTooLong);
+        require!(name.len() <= 32, SolShield AIError::NameTooLong);
+        require!(website.len() <= 64, SolShield AIError::WebsiteTooLong);
         
         let auditor = &mut ctx.accounts.auditor_profile;
         auditor.authority = ctx.accounts.authority.key();
@@ -186,7 +186,7 @@ pub mod solguard {
         reason: String,
         evidence_hash: [u8; 32],
     ) -> Result<()> {
-        require!(reason.len() <= 256, SolGuardError::ReasonTooLong);
+        require!(reason.len() <= 256, SolShield AIError::ReasonTooLong);
         
         let dispute = &mut ctx.accounts.dispute;
         let clock = Clock::get()?;
@@ -538,7 +538,7 @@ pub enum DisputeStatus {
 }
 
 #[error_code]
-pub enum SolGuardError {
+pub enum SolShield AIError {
     #[msg("Auditor name exceeds 32 characters")]
     NameTooLong,
     #[msg("Website URL exceeds 64 characters")]

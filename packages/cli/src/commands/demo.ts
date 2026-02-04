@@ -5,12 +5,12 @@ import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
 
 /**
- * Demo command - runs a quick showcase of SolGuard capabilities
+ * Demo command - runs a quick showcase of SolShield AI capabilities
  */
 export async function demoCommand() {
   console.log(chalk.cyan(`
 ╔═══════════════════════════════════════════════════════════════╗
-║  🛡️  SolGuard Demo - AI-Powered Smart Contract Auditor       ║
+║  🛡️  SolShield AI Demo - AI-Powered Smart Contract Auditor       ║
 ║     Detecting Solana vulnerabilities in seconds               ║
 ╚═══════════════════════════════════════════════════════════════╝
 `));
@@ -108,11 +108,11 @@ export async function demoCommand() {
     // Call to action
     console.log(chalk.bold('  🚀 Try It Yourself'));
     console.log(chalk.gray('  ─'.repeat(30)));
-    console.log('  ' + chalk.cyan('solguard audit ./your-program'));
-    console.log('  ' + chalk.cyan('solguard github owner/repo'));
-    console.log('  ' + chalk.cyan('solguard score ./your-program'));
+    console.log('  ' + chalk.cyan('SolShield AI audit ./your-program'));
+    console.log('  ' + chalk.cyan('SolShield AI github owner/repo'));
+    console.log('  ' + chalk.cyan('SolShield AI score ./your-program'));
     console.log('');
-    console.log(chalk.dim('  https://github.com/oh-ashen-one/solguard'));
+    console.log(chalk.dim('  https://github.com/oh-ashen-one/solshield'));
     console.log('');
 
   } catch (error: any) {
@@ -135,11 +135,11 @@ async function runInlineDemo() {
   `;
 
   console.log(vulnerableCode);
-  console.log(chalk.yellow('  ⚠️  SolGuard detects: Missing Signer Check (SOL002)'));
+  console.log(chalk.yellow('  ⚠️  SolShield AI detects: Missing Signer Check (SOL002)'));
   console.log(chalk.dim('     Anyone can impersonate the authority!\n'));
   console.log(fixedCode);
   console.log(chalk.green('  ✅ Fixed! Authority must now sign the transaction.\n'));
   
-  console.log(chalk.bold('  🛡️ SolGuard detects 130 vulnerability patterns'));
-  console.log(chalk.dim('  Run: solguard audit ./your-program\n'));
+  console.log(chalk.bold('  🛡️ SolShield AI detects 130 vulnerability patterns'));
+  console.log(chalk.dim('  Run: SolShield AI audit ./your-program\n'));
 }

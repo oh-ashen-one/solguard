@@ -4,7 +4,7 @@ use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 declare_id!("LendXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 
 /// VULNERABLE LENDING POOL
-/// This program contains multiple intentional vulnerabilities for testing SolGuard.
+/// This program contains multiple intentional vulnerabilities for testing SolShield AI.
 /// DO NOT use in production!
 
 #[program]

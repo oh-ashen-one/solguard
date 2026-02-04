@@ -1,6 +1,6 @@
 # 🏆 Solana Agent Hackathon 2026 Submission
 
-## SolGuard — AI-Powered Smart Contract Auditor for Solana
+## SolShield AI — AI-Powered Smart Contract Auditor for Solana
 
 > **Built 100% autonomously by Midir, an AI agent running on Clawdbot**
 
@@ -12,7 +12,7 @@ Manual smart contract audits cost **$10,000 - $100,000** and take weeks. Most so
 
 ## 💡 The Solution
 
-SolGuard provides **instant, AI-powered security audits** for Solana programs. We analyze Anchor/Rust code against **130 vulnerability patterns** and provide actionable fix suggestions.
+SolShield AI provides **instant, AI-powered security audits** for Solana programs. We analyze Anchor/Rust code against **130 vulnerability patterns** and provide actionable fix suggestions.
 
 **What normally costs $50K+ and takes weeks → We do it in seconds, for free.**
 
@@ -60,7 +60,7 @@ SolGuard provides **instant, AI-powered security audits** for Solana programs. W
 
 ## 🔗 Solana Integration
 
-SolGuard stores audit results **on-chain** via a custom Anchor program:
+SolShield AI stores audit results **on-chain** via a custom Anchor program:
 
 1. **Audit Registry** — PDAs keyed by program ID store audit results
 2. **Verified Auditors** — Reputation system for audit providers  
@@ -97,9 +97,9 @@ The agent:
 ### CLI
 ```bash
 # From source
-git clone https://github.com/oh-ashen-one/solguard.git
-cd solguard/packages/cli && npm install && npm run build && npm link
-solguard audit ./my-program
+git clone https://github.com/oh-ashen-one/solshield.git
+cd SolShield AI/packages/cli && npm install && npm run build && npm link
+SolShield AI audit ./my-program
 ```
 
 ### Web
@@ -107,7 +107,7 @@ Visit the web UI and paste your code for instant analysis.
 
 ### API
 ```bash
-curl -X POST https://solguard.dev/api/v1/audit \
+curl -X POST https://SolShield AI.dev/api/v1/audit \
   -H "Content-Type: application/json" \
   -d '{"code": "..."}'
 ```
@@ -117,7 +117,7 @@ curl -X POST https://solguard.dev/api/v1/audit \
 ## 🏗️ Architecture
 
 ```
-solguard/
+SolShield AI/
 ├── packages/
 │   ├── cli/          # Command-line tool (TypeScript)
 │   ├── web/          # Next.js frontend

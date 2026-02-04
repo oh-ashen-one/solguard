@@ -2,9 +2,9 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "SolGuard: Audit Current File",
+      "label": "SolShield AI: Audit Current File",
       "type": "shell",
-      "command": "solguard",
+      "command": "SolShield AI",
       "args": ["audit", "${file}"],
       "problemMatcher": [],
       "presentation": {
@@ -13,9 +13,9 @@
       }
     },
     {
-      "label": "SolGuard: Audit Workspace",
+      "label": "SolShield AI: Audit Workspace",
       "type": "shell",
-      "command": "solguard",
+      "command": "SolShield AI",
       "args": ["audit", "${workspaceFolder}"],
       "problemMatcher": [],
       "presentation": {
@@ -24,9 +24,9 @@
       }
     },
     {
-      "label": "SolGuard: Watch Mode",
+      "label": "SolShield AI: Watch Mode",
       "type": "shell",
-      "command": "solguard",
+      "command": "SolShield AI",
       "args": ["watch", "${workspaceFolder}"],
       "isBackground": true,
       "problemMatcher": [],
@@ -36,9 +36,9 @@
       }
     },
     {
-      "label": "SolGuard: List Patterns",
+      "label": "SolShield AI: List Patterns",
       "type": "shell",
-      "command": "solguard",
+      "command": "SolShield AI",
       "args": ["list"],
       "problemMatcher": [],
       "presentation": {
@@ -47,9 +47,9 @@
       }
     },
     {
-      "label": "SolGuard: Show Stats",
+      "label": "SolShield AI: Show Stats",
       "type": "shell",
-      "command": "solguard",
+      "command": "SolShield AI",
       "args": ["stats"],
       "problemMatcher": [],
       "presentation": {

@@ -1,6 +1,6 @@
 //! Safe Token Vault - Secure Reference Implementation
 //! 
-//! This program demonstrates SECURE patterns that SolGuard validates.
+//! This program demonstrates SECURE patterns that SolShield AI validates.
 //! Use this as a reference for writing secure Solana programs.
 //! 
 //! Security measures:

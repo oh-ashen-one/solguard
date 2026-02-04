@@ -1,34 +1,34 @@
-# SolGuard Cheat Sheet
+# SolShield AI Cheat Sheet
 
 ## Quick Commands
 
 ```bash
 # Audit local program
-solguard audit ./my-program
+SolShield AI audit ./my-program
 
 # Audit from GitHub
-solguard github coral-xyz/anchor
-solguard github user/repo --pr 123
+SolShield AI github coral-xyz/anchor
+SolShield AI github user/repo --pr 123
 
 # Watch mode for development
-solguard watch ./program
+SolShield AI watch ./program
 
 # CI mode with SARIF
-solguard ci . --fail-on high --sarif results.sarif
+SolShield AI ci . --fail-on high --sarif results.sarif
 
 # List all 130 patterns
-solguard list
+SolShield AI list
 
 # Show audit stats
-solguard stats
+SolShield AI stats
 ```
 
 ## Output Formats
 
 ```bash
-solguard audit . --output terminal  # Default (colored)
-solguard audit . --output json      # Machine-readable
-solguard audit . --output markdown  # Documentation
+SolShield AI audit . --output terminal  # Default (colored)
+SolShield AI audit . --output json      # Machine-readable
+SolShield AI audit . --output markdown  # Documentation
 ```
 
 ## 130 Vulnerability Patterns
@@ -94,7 +94,7 @@ chmod +x .git/hooks/pre-push
 ## GitHub Actions
 
 ```yaml
-name: SolGuard Audit
+name: SolShield AI Audit
 on: [push, pull_request]
 
 jobs:
@@ -102,11 +102,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install SolGuard
+      - name: Install SolShield AI
         run: |
-          git clone https://github.com/oh-ashen-one/solguard.git /tmp/solguard
-          cd /tmp/solguard/packages/cli && npm install && npm run build && npm link
-      - run: solguard ci . --fail-on high --sarif results.sarif
+          git clone https://github.com/oh-ashen-one/solshield.git /tmp/SolShield AI
+          cd /tmp/SolShield AI/packages/cli && npm install && npm run build && npm link
+      - run: SolShield AI ci . --fail-on high --sarif results.sarif
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
@@ -116,16 +116,16 @@ jobs:
 
 ```bash
 # Health check
-curl https://solguard.dev/api/v1/audit
+curl https://SolShield AI.dev/api/v1/audit
 
 # Audit code
-curl -X POST https://solguard.dev/api/v1/audit \
+curl -X POST https://SolShield AI.dev/api/v1/audit \
   -H "Content-Type: application/json" \
   -d '{"code": "use anchor_lang::prelude::*; ..."}'
 ```
 
 ## Links
 
-- **GitHub:** https://github.com/oh-ashen-one/solguard
+- **GitHub:** https://github.com/oh-ashen-one/solshield
 - **Patterns:** See web UI for full searchable list
 - **API Docs:** /api page in web UI

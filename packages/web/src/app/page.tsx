@@ -37,7 +37,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🛡️</span>
-            <span className="text-xl font-bold">SolGuard</span>
+            <span className="text-xl font-bold">SolShield AI</span>
           </div>
           <nav className="flex items-center gap-6">
             <Link href="#features" className="text-zinc-400 hover:text-white transition">Features</Link>
@@ -45,7 +45,7 @@ export default function Home() {
             <Link href="#audit" className="text-zinc-400 hover:text-white transition">Try It</Link>
             <Link href="/api" className="text-zinc-400 hover:text-white transition">API</Link>
             <a 
-              href="https://github.com/oh-ashen-one/solguard" 
+              href="https://github.com/oh-ashen-one/solshield" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-zinc-400 hover:text-white transition"
@@ -85,7 +85,7 @@ export default function Home() {
             Try Free Audit
           </a>
           <a 
-            href="https://github.com/oh-ashen-one/solguard" 
+            href="https://github.com/oh-ashen-one/solshield" 
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto px-8 py-3 border border-zinc-700 hover:border-zinc-500 rounded-lg transition"
@@ -128,22 +128,22 @@ export default function Home() {
             <span className="ml-2 text-zinc-500 text-sm">Terminal</span>
           </div>
           <pre className="p-6 text-sm text-zinc-300 overflow-x-auto">
-{`$ git clone https://github.com/oh-ashen-one/solguard && cd solguard/packages/cli
+{`$ git clone https://github.com/oh-ashen-one/solshield && cd SolShield AI/packages/cli
 $ npm install && npm run build && npm link
 
-$ solguard demo
-🛡️ SolGuard Demo - Auditing examples/vulnerable/token-vault...
+$ SolShield AI demo
+🛡️ SolShield AI Demo - Auditing examples/vulnerable/token-vault...
 Found 4 critical, 8 high severity issues!
 [SOL002] Missing Signer Check - Anyone can impersonate authority
 💡 Fix: pub authority: Signer<'info>
 
-$ solguard audit ./my-program
-🛡️ SolGuard - Scanning... Found 3 critical issues
+$ SolShield AI audit ./my-program
+🛡️ SolShield AI - Scanning... Found 3 critical issues
 
-$ solguard github coral-xyz/anchor --pr 1234
+$ SolShield AI github coral-xyz/anchor --pr 1234
 Cloning... Analyzing 47 files... Done!
 
-$ solguard score ./program
+$ SolShield AI score ./program
 🏆 GRADE: A+ (100/100) - Ready for production`}
           </pre>
         </div>

@@ -119,7 +119,7 @@ export async function badgeCommand(path: string, options: BadgeOptions) {
     spinner.succeed('Badge generated!');
 
     // Generate badge URLs and markdown
-    const statusBadge = `https://img.shields.io/badge/SolGuard-${status}-${color}?style=${style}&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTEyIDFMMiA1djZjMCA1LjU1IDQuMjMgMTAuNzQgMTAgMTIgNS43Ny0xLjI2IDEwLTYuNDUgMTAtMTJWNUwxMiAxem0wIDEwLjk5aC04QzQuNTcgMTMuMiA4LjI4IDE1LjE1IDEyIDE2Ljg0VjEyem0wLTEuOTlWNGw3IDMuMTdWMTFoLTd6Ii8+PC9zdmc+`;
+    const statusBadge = `https://img.shields.io/badge/SolShield AI-${status}-${color}?style=${style}&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTEyIDFMMiA1djZjMCA1LjU1IDQuMjMgMTAuNzQgMTAgMTIgNS43Ny0xLjI2IDEwLTYuNDUgMTAtMTJWNUwxMiAxem0wIDEwLjk5aC04QzQuNTcgMTMuMiA4LjI4IDE1LjE1IDEyIDE2Ljg0VjEyem0wLTEuOTlWNGw3IDMuMTdWMTFoLTd6Ii8+PC9zdmc+`;
     
     const gradeBadge = `https://img.shields.io/badge/Security%20Grade-${grade}-${color}?style=${style}`;
     const scoreBadge = `https://img.shields.io/badge/Security%20Score-${score}%2F100-${color}?style=${style}`;
@@ -137,9 +137,9 @@ export async function badgeCommand(path: string, options: BadgeOptions) {
           score: scoreBadge,
         },
         markdown: {
-          status: `[![SolGuard](${statusBadge})](https://github.com/oh-ashen-one/solguard)`,
-          grade: `[![Security Grade](${gradeBadge})](https://github.com/oh-ashen-one/solguard)`,
-          score: `[![Security Score](${scoreBadge})](https://github.com/oh-ashen-one/solguard)`,
+          status: `[![SolShield AI](${statusBadge})](https://github.com/oh-ashen-one/solshield)`,
+          grade: `[![Security Grade](${gradeBadge})](https://github.com/oh-ashen-one/solshield)`,
+          score: `[![Security Score](${scoreBadge})](https://github.com/oh-ashen-one/solshield)`,
         },
         findings: {
           critical,
@@ -153,17 +153,17 @@ export async function badgeCommand(path: string, options: BadgeOptions) {
 
     // Terminal output
     console.log('');
-    console.log(chalk.bold('  🏷️  SolGuard Badges'));
+    console.log(chalk.bold('  🏷️  SolShield AI Badges'));
     console.log(chalk.gray('  ─'.repeat(25)));
     console.log('');
     console.log(chalk.bold('  Status Badge:'));
-    console.log(chalk.cyan(`  [![SolGuard](${statusBadge})](https://github.com/oh-ashen-one/solguard)`));
+    console.log(chalk.cyan(`  [![SolShield AI](${statusBadge})](https://github.com/oh-ashen-one/solshield)`));
     console.log('');
     console.log(chalk.bold('  Grade Badge:'));
-    console.log(chalk.cyan(`  [![Security Grade](${gradeBadge})](https://github.com/oh-ashen-one/solguard)`));
+    console.log(chalk.cyan(`  [![Security Grade](${gradeBadge})](https://github.com/oh-ashen-one/solshield)`));
     console.log('');
     console.log(chalk.bold('  Score Badge:'));
-    console.log(chalk.cyan(`  [![Security Score](${scoreBadge})](https://github.com/oh-ashen-one/solguard)`));
+    console.log(chalk.cyan(`  [![Security Score](${scoreBadge})](https://github.com/oh-ashen-one/solshield)`));
     console.log('');
     console.log(chalk.gray('  Copy any of the above into your README.md'));
     console.log('');
@@ -172,15 +172,15 @@ export async function badgeCommand(path: string, options: BadgeOptions) {
     console.log(chalk.bold('  Preview:'));
     let preview: string;
     if (status === 'secure') {
-      preview = chalk.bgGreen.black(` SolGuard: ${status} `);
+      preview = chalk.bgGreen.black(` SolShield AI: ${status} `);
     } else if (status === 'minor') {
-      preview = chalk.bgYellowBright.black(` SolGuard: ${status} `);
+      preview = chalk.bgYellowBright.black(` SolShield AI: ${status} `);
     } else if (status === 'warnings') {
-      preview = chalk.bgYellow.black(` SolGuard: ${status} `);
+      preview = chalk.bgYellow.black(` SolShield AI: ${status} `);
     } else if (status === 'issues') {
-      preview = chalk.bgRed.white(` SolGuard: ${status} `);
+      preview = chalk.bgRed.white(` SolShield AI: ${status} `);
     } else {
-      preview = chalk.bgRedBright.white(` SolGuard: ${status} `);
+      preview = chalk.bgRedBright.white(` SolShield AI: ${status} `);
     }
     console.log(`  ${preview}  Grade: ${grade}  Score: ${score}/100`);
     console.log('');
@@ -190,13 +190,13 @@ export async function badgeCommand(path: string, options: BadgeOptions) {
       const badgeContent = `# Security Badges
 
 ## Status Badge
-[![SolGuard](${statusBadge})](https://github.com/oh-ashen-one/solguard)
+[![SolShield AI](${statusBadge})](https://github.com/oh-ashen-one/solshield)
 
 ## Grade Badge  
-[![Security Grade](${gradeBadge})](https://github.com/oh-ashen-one/solguard)
+[![Security Grade](${gradeBadge})](https://github.com/oh-ashen-one/solshield)
 
 ## Score Badge
-[![Security Score](${scoreBadge})](https://github.com/oh-ashen-one/solguard)
+[![Security Score](${scoreBadge})](https://github.com/oh-ashen-one/solshield)
 
 ---
 
@@ -208,7 +208,7 @@ export async function badgeCommand(path: string, options: BadgeOptions) {
 - Score: ${score}/100
 - Grade: ${grade}
 
-*Generated by SolGuard on ${new Date().toISOString()}*
+*Generated by SolShield AI on ${new Date().toISOString()}*
 `;
       writeFileSync(options.output, badgeContent);
       console.log(chalk.green(`  ✓ Saved to ${options.output}`));

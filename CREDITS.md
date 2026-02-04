@@ -1,6 +1,6 @@
 # 🙏 Credits
 
-SolGuard was built using these amazing open-source projects:
+SolShield AI was built using these amazing open-source projects:
 
 ## Core Technologies
 

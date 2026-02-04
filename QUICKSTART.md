@@ -1,10 +1,10 @@
-# ⚡ SolGuard Quickstart
+# ⚡ SolShield AI Quickstart
 
 Get auditing in 30 seconds.
 
 ## Option 1: One-Click (Easiest)
 
-[![Open in Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github)](https://codespaces.new/oh-ashen-one/solguard?quickstart=1)
+[![Open in Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-blue?logo=github)](https://codespaces.new/oh-ashen-one/solshield?quickstart=1)
 
 Click → Wait 60s → Web UI opens → Paste code → Audit!
 
@@ -12,18 +12,18 @@ Click → Wait 60s → Web UI opens → Paste code → Audit!
 
 ```bash
 # Install from source
-git clone https://github.com/oh-ashen-one/solguard.git
-cd solguard/packages/cli
+git clone https://github.com/oh-ashen-one/solshield.git
+cd SolShield AI/packages/cli
 npm install && npm run build && npm link
 
 # Audit your program
-solguard audit ./my-program
+SolShield AI audit ./my-program
 
 # Audit from GitHub
-solguard github coral-xyz/anchor
+SolShield AI github coral-xyz/anchor
 
 # Watch mode (re-audits on save)
-solguard watch ./my-program
+SolShield AI watch ./my-program
 ```
 
 ## Option 3: Web UI (Local)
@@ -40,7 +40,7 @@ npm run dev
 ## What You'll See
 
 ```
-🛡️ SOLGUARD AUDIT REPORT
+🛡️ SolShield AI AUDIT REPORT
 ━━━━━━━━━━━━━━━━━━━━━━━━
 🔴 Critical: 2  🟠 High: 3  🟡 Medium: 1
 
@@ -53,6 +53,6 @@ npm run dev
 
 ## Next Steps
 
-- **130 patterns:** `solguard list`
+- **130 patterns:** `SolShield AI list`
 - **CI/CD:** [INTEGRATIONS.md](INTEGRATIONS.md)
 - **Full docs:** [README.md](README.md)

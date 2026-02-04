@@ -1,6 +1,6 @@
-# 🔍 SolGuard Pattern Reference
+# 🔍 SolShield AI Pattern Reference
 
-Complete list of all **130 vulnerability patterns** detected by SolGuard.
+Complete list of all **130 vulnerability patterns** detected by SolShield AI.
 
 ---
 
@@ -211,16 +211,16 @@ Complete list of all **130 vulnerability patterns** detected by SolGuard.
 
 ```bash
 # List all patterns
-solguard list
+SolShield AI list
 
 # Filter by severity
-solguard list --severity critical
+SolShield AI list --severity critical
 
 # Run specific patterns
-solguard audit . --patterns SOL001,SOL002,SOL003
+SolShield AI audit . --patterns SOL001,SOL002,SOL003
 
 # Exclude patterns
-solguard audit . --exclude SOL028
+SolShield AI audit . --exclude SOL028
 ```
 
 ---
@@ -237,4 +237,4 @@ solguard audit . --exclude SOL028
 
 ---
 
-*Run `solguard list` for the most up-to-date pattern list.*
+*Run `SolShield AI list` for the most up-to-date pattern list.*

@@ -1,5 +1,5 @@
 {
-  "name": "SolGuard Development",
+  "name": "SolShield AI Development",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
@@ -7,12 +7,12 @@
     }
   },
   "postCreateCommand": "cd packages/cli && npm install && npm run build && npm link && cd ../web && npm install",
-  "postStartCommand": "echo '🛡️ SolGuard ready! Web UI starting at port 3000...' && cd packages/web && npm run dev &",
-  "postAttachCommand": "echo '' && echo '╔════════════════════════════════════════════════════════════╗' && echo '║  🛡️ SOLGUARD - AI-Powered Smart Contract Auditor           ║' && echo '╠════════════════════════════════════════════════════════════╣' && echo '║  Web UI: Click port 3000 in Ports tab (or wait for popup)  ║' && echo '║  CLI:    solguard audit ./examples/vulnerable/token-vault  ║' && echo '║  Tests:  cd packages/cli && npm test                       ║' && echo '╚════════════════════════════════════════════════════════════╝' && echo ''",
+  "postStartCommand": "echo '🛡️ SolShield AI ready! Web UI starting at port 3000...' && cd packages/web && npm run dev &",
+  "postAttachCommand": "echo '' && echo '╔════════════════════════════════════════════════════════════╗' && echo '║  🛡️ SolShield AI - AI-Powered Smart Contract Auditor           ║' && echo '╠════════════════════════════════════════════════════════════╣' && echo '║  Web UI: Click port 3000 in Ports tab (or wait for popup)  ║' && echo '║  CLI:    SolShield AI audit ./examples/vulnerable/token-vault  ║' && echo '║  Tests:  cd packages/cli && npm test                       ║' && echo '╚════════════════════════════════════════════════════════════╝' && echo ''",
   "forwardPorts": [3000],
   "portsAttributes": {
     "3000": {
-      "label": "SolGuard Web UI",
+      "label": "SolShield AI Web UI",
       "onAutoForward": "openBrowser"
     }
   },

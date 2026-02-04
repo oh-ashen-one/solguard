@@ -221,7 +221,7 @@ export async function scoreCommand(path: string, options: ScoreOptions) {
 
     // Terminal output
     console.log('');
-    console.log(chalk.bold('  🛡️  SolGuard Security Score'));
+    console.log(chalk.bold('  🛡️  SolShield AI Security Score'));
     console.log(chalk.gray('  ─'.repeat(25)));
     console.log('');
     

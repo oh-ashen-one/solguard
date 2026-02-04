@@ -1,4 +1,4 @@
-//! Vulnerable Token Vault - Example for SolGuard Testing
+//! Vulnerable Token Vault - Example for SolShield AI Testing
 //! 
 //! This program contains INTENTIONAL vulnerabilities for testing.
 //! DO NOT use in production!

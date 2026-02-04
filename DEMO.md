@@ -1,22 +1,22 @@
-# 🎬 SolGuard Demo Guide
+# 🎬 SolShield AI Demo Guide
 
-> Quick guide for hackathon judges to evaluate SolGuard
+> Quick guide for hackathon judges to evaluate SolShield AI
 
 ---
 
 ## ⚡ FASTEST: One-Click Demo (No Setup!)
 
 ### Option A: GitHub Codespaces (Recommended)
-[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-GitHub%20Codespaces-blue?logo=github)](https://codespaces.new/oh-ashen-one/solguard?quickstart=1)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-GitHub%20Codespaces-blue?logo=github)](https://codespaces.new/oh-ashen-one/solshield?quickstart=1)
 
-1. Click the badge above (or [this link](https://codespaces.new/oh-ashen-one/solguard?quickstart=1))
+1. Click the badge above (or [this link](https://codespaces.new/oh-ashen-one/solshield?quickstart=1))
 2. Wait ~60 seconds for environment to spin up
 3. Web UI opens automatically at port 3000
 4. Click **"🔓 Vulnerable Vault"** → **"🔍 Run Security Audit"**
 5. See instant vulnerability detection!
 
 ### Option B: Gitpod
-[![Open in Gitpod](https://img.shields.io/badge/Open%20in-Gitpod-orange?logo=gitpod)](https://gitpod.io/#https://github.com/oh-ashen-one/solguard)
+[![Open in Gitpod](https://img.shields.io/badge/Open%20in-Gitpod-orange?logo=gitpod)](https://gitpod.io/#https://github.com/oh-ashen-one/solshield)
 
 1. Click the badge above
 2. Authorize Gitpod if prompted
@@ -45,13 +45,13 @@ pnpm build
 npm link
 
 # Audit our vulnerable example
-solguard audit ../examples/vulnerable/token-vault
+SolShield AI audit ../examples/vulnerable/token-vault
 
 # Get a letter grade (A-F) for quick assessment
-solguard score ../examples/vulnerable/token-vault
+SolShield AI score ../examples/vulnerable/token-vault
 # Output: Grade D (score deductions for critical issues)
 
-solguard score ../examples/safe/token-vault  
+SolShield AI score ../examples/safe/token-vault  
 # Output: Grade A+ (100/100) 🏆
 ```
 
@@ -95,7 +95,7 @@ Each finding includes:
 | `packages/cli/src/patterns/` | 130 vulnerability detectors |
 | `packages/cli/src/test/` | Test suite (19 tests) |
 | `packages/web/src/app/page.tsx` | Web UI with example buttons |
-| `packages/program/programs/solguard/src/lib.rs` | On-chain audit registry |
+| `packages/program/programs/SolShield AI/src/lib.rs` | On-chain audit registry |
 | `examples/vulnerable/` | Test programs with known issues |
 | `examples/safe/` | Secure reference implementations |
 
@@ -145,7 +145,7 @@ See [HACKATHON.md](HACKATHON.md) for the full agent journey.
 
 ## 📄 Sample Reports
 
-See what SolGuard output looks like:
+See what SolShield AI output looks like:
 - [Failed audit example](examples/sample-reports/vulnerable-vault-report.md) — 4 critical findings
 - [Passed audit example](examples/sample-reports/secure-vault-report.md) — Clean with certificate
 

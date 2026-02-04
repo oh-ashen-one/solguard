@@ -81,7 +81,7 @@ export async function fetchAndAuditCommand(programId: string, options: FetchOpti
     }
 
     // Save IDL to temp file
-    const tempDir = join(process.cwd(), '.solguard-temp');
+    const tempDir = join(process.cwd(), '.SolShield AI-temp');
     if (!existsSync(tempDir)) {
       mkdirSync(tempDir, { recursive: true });
     }
@@ -132,5 +132,5 @@ export function listKnownPrograms() {
     console.log(chalk.gray(`    ${program.id}\n`));
   }
 
-  console.log(chalk.dim('  Use: solguard fetch <program-id> to audit\n'));
+  console.log(chalk.dim('  Use: SolShield AI fetch <program-id> to audit\n'));
 }

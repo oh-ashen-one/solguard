@@ -1,13 +1,13 @@
-# Contributing to SolGuard
+# Contributing to SolShield AI
 
-Thank you for your interest in contributing to SolGuard! 🛡️
+Thank you for your interest in contributing to SolShield AI! 🛡️
 
 ## Quick Start
 
 ```bash
 # Clone the repo
-git clone https://github.com/oh-ashen-one/solguard
-cd solguard
+git clone https://github.com/oh-ashen-one/solshield
+cd SolShield AI
 
 # Install dependencies
 pnpm install
@@ -23,7 +23,7 @@ pnpm test
 ## Project Structure
 
 ```
-solguard/
+SolShield AI/
 ├── packages/
 │   ├── cli/          # TypeScript CLI
 │   ├── web/          # Next.js frontend
