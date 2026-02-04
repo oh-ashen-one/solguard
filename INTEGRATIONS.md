@@ -83,7 +83,7 @@ Run audits from your editor.
 - **Audit Current File** — Check the active file
 - **Audit Workspace** — Check entire project
 - **Watch Mode** — Continuous monitoring
-- **List Patterns** — Show all 130 patterns
+- **List Patterns** — Show all 142 patterns
 - **Show Stats** — Audit statistics
 
 ---

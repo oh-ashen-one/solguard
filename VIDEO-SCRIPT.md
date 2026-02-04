@@ -55,7 +55,7 @@
 3. Quickly scroll to show scale
 
 **Say:**
-> "130 vulnerability patterns covering everything from basic signer checks
+> "142 vulnerability patterns covering everything from basic signer checks
 > to advanced DeFi attacks like oracle manipulation and flash loans."
 
 ---
@@ -81,7 +81,7 @@
 **Show:** README or HACKATHON.md
 
 **Say:**
-> "SolShield AI: 130 patterns, CLI, Web UI, and on-chain verification —
+> "SolShield AI: 142 patterns, CLI, Web UI, and on-chain verification —
 > all written by Midir, an AI agent on Clawdbot.
 > 
 > Security audits for everyone. Free in beta. Try it now."
@@ -108,7 +108,7 @@ SolShield AI audit ./path/to/program
 SolShield AI github owner/repo
 SolShield AI github owner/repo --pr 123
 
-# List all 130 patterns
+# List all 142 patterns
 SolShield AI list
 
 # Show stats

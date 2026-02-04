@@ -1,6 +1,6 @@
 # 🔍 SolShield AI Pattern Reference
 
-Complete list of all **130 vulnerability patterns** detected by SolShield AI.
+Complete list of all **142 vulnerability patterns** detected by SolShield AI.
 
 ---
 

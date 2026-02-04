@@ -41,7 +41,7 @@ One command shows the full capability — audits included vulnerable example wit
 |------------|-------------|
 | **On-chain registry** | First auditor to store results on Solana |
 | **CPI verification** | Other programs can check audit status |
-| **130 patterns** | Largest coverage in Solana ecosystem |
+| **142 patterns** | Largest coverage in Solana ecosystem |
 | **Watch mode** | Real-time audit during development |
 | **AI-built** | 100% agent-coded, demonstrating capabilities |
 
@@ -56,7 +56,7 @@ One command shows the full capability — audits included vulnerable example wit
 | Small teams can't afford security | Now they can |
 | CI/CD has no security gates | SARIF + GitHub Actions |
 
-**Evidence:** [REAL-WORLD.md](REAL-WORLD.md) — Would have caught **$495M+** in exploits
+**Evidence:** [REAL-WORLD.md](REAL-WORLD.md) — Would have caught **$557M+** in exploits
 
 ---
 
@@ -92,7 +92,7 @@ SolShield AI/
 ├── docs/                  ← Additional documentation
 ├── DEMO.md                ← Demo walkthrough
 ├── BENCHMARKS.md          ← Performance data
-├── REAL-WORLD.md          ← $495M+ in exploits
+├── REAL-WORLD.md          ← $557M+ in exploits
 └── HACKATHON.md           ← Agent journey
 ```
 
@@ -104,7 +104,7 @@ This project was **100% built by AI agents**:
 
 1. **Research** — Agent studied Solana vulnerabilities
 2. **Architecture** — Agent designed the system
-3. **Implementation** — Agent wrote all 130 patterns
+3. **Implementation** — Agent wrote all 142 patterns
 4. **Testing** — Agent created test suite
 5. **Documentation** — Agent self-documented
 6. **Iteration** — Continuous review/build cycles

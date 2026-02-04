@@ -13,10 +13,10 @@ Resources for press, presentations, and sharing.
 "AI-Powered Smart Contract Auditor for Solana"
 
 ### Short Description
-> SolShield AI detects 130 vulnerability patterns in Solana smart contracts in under a second, for free.
+> SolShield AI detects 142 vulnerability patterns in Solana smart contracts in under a second, for free.
 
 ### Elevator Pitch
-> Manual security audits cost $10K-$100K and take weeks. SolShield AI does it instantly with 130 AI-powered vulnerability checks, catching issues that have caused over $495M in real-world exploits.
+> Manual security audits cost $10K-$100K and take weeks. SolShield AI does it instantly with 130 AI-powered vulnerability checks, catching issues that have caused over $557M in real-world exploits.
 
 ---
 
@@ -49,7 +49,7 @@ Resources for press, presentations, and sharing.
 | Vulnerability Patterns | 130 |
 | Audit Speed | < 1 second |
 | Cost | Free (beta) |
-| Preventable Exploits | $495M+ |
+| Preventable Exploits | $557M+ |
 | Commits | 122+ |
 | Tests | 19 (100% passing) |
 | Documentation Files | 27+ |
@@ -63,7 +63,7 @@ Resources for press, presentations, and sharing.
 "Ship secure code without waiting weeks for an audit."
 
 ### For Security Researchers
-"130 patterns covering everything from basic signer checks to advanced DeFi exploits."
+"142 patterns covering everything from basic signer checks to advanced DeFi exploits."
 
 ### For Hackathon Judges
 "100% AI-coded, production-ready security tooling for Solana."

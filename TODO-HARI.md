@@ -84,7 +84,7 @@ I'll update all the docs!
 
 ---
 
-**The code is ready. 141 commits. 130 patterns. 16 commands. 19 tests passing.**
+**The code is ready. 141 commits. 142 patterns. 16 commands. 19 tests passing.**
 
 **All we need is 25 minutes of your time.**
 

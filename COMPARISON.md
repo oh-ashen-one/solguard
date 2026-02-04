@@ -30,7 +30,7 @@ require!(passed, ErrorCode::NotAudited);
 
 No other tool stores audit results on-chain for composable verification.
 
-### 2. 130 Patterns (Largest Coverage)
+### 2. 142 patterns (Largest Coverage)
 - Core Security (SOL001-SOL015)
 - CPI Security (SOL040-SOL055)
 - DeFi Patterns (SOL056-SOL075)

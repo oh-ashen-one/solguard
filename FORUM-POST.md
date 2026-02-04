@@ -9,7 +9,7 @@
 Manual smart contract audits cost **$10K-$100K** and take weeks. SolShield AI does it in **seconds**.
 
 We built an autonomous auditing system with:
-- **130 vulnerability patterns** (SOL001-SOL130)
+- **142 vulnerability patterns** (SOL001-SOL130)
 - **CLI** for local files, GitHub repos, and on-chain programs  
 - **Web UI** for paste-and-audit simplicity
 - **CI/CD integration** with GitHub Actions and SARIF output
@@ -46,7 +46,7 @@ Full list: [patterns page](https://github.com/oh-ashen-one/solshield/blob/main/p
 
 ```
 📊 Stats
-├── 130 vulnerability patterns
+├── 142 vulnerability patterns
 ├── 16 CLI commands (audit, score, badge, fetch, github, watch, ci, compare, etc.)
 ├── 19 tests (all passing)
 ├── ~15,000 lines of TypeScript

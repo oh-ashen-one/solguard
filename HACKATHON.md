@@ -12,7 +12,7 @@ Manual smart contract audits cost **$10,000 - $100,000** and take weeks. Most so
 
 ## 💡 The Solution
 
-SolShield AI provides **instant, AI-powered security audits** for Solana programs. We analyze Anchor/Rust code against **130 vulnerability patterns** and provide actionable fix suggestions.
+SolShield AI provides **instant, AI-powered security audits** for Solana programs. We analyze Anchor/Rust code against **142 vulnerability patterns** and provide actionable fix suggestions.
 
 **What normally costs $50K+ and takes weeks → We do it in seconds, for free.**
 

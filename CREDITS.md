@@ -31,7 +31,7 @@ SolShield AI was built using these amazing open-source projects:
 
 ## Research Sources
 
-Our 130 patterns were informed by:
+Our 142 patterns were informed by:
 - Solana security documentation
 - Public audit reports
 - Post-mortem analyses

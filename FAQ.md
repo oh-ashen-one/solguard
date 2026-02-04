@@ -7,14 +7,14 @@ Frequently asked questions about SolShield AI.
 ## General
 
 ### What is SolShield AI?
-An AI-powered smart contract auditor for Solana that detects 130 vulnerability patterns in seconds.
+An AI-powered smart contract auditor for Solana that detects 142 vulnerability patterns in seconds.
 
 ### How is it different from manual audits?
 | Aspect | Manual Audit | SolShield AI |
 |--------|--------------|----------|
 | Time | 1-4 weeks | < 1 second |
 | Cost | $10K-$100K | Free (beta) |
-| Coverage | Varies | 130 patterns |
+| Coverage | Varies | 142 patterns |
 | Consistency | Human-dependent | Deterministic |
 
 ### Is it free?
@@ -28,7 +28,7 @@ SolShield AI is a first line of defense. For high-value protocols (>$10M TVL), w
 ## Technical
 
 ### What patterns does it detect?
-130 patterns covering:
+142 patterns covering:
 - Core Security (ownership, signers, initialization)
 - CPI Security (arbitrary CPI, reentrancy)
 - Arithmetic (overflow, rounding, precision)
@@ -102,7 +102,7 @@ We continuously improve pattern accuracy.
 ### Was this really built by an AI agent?
 Yes, 100%. Every line of code was written by Midir (an AI agent on Clawdbot). See [HACKATHON.md](HACKATHON.md) for the full story.
 
-### Why 130 patterns?
+### Why 142 patterns?
 Agents don't get tired. We researched every known Solana vulnerability class, audit reports, and post-mortems, then implemented detection for each.
 
 ### Is the on-chain program deployed?

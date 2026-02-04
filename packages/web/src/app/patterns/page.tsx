@@ -116,7 +116,7 @@ const patterns = [
   { id: 'SOL099', name: 'Atomic Operations', severity: 'high', category: 'Operations' },
   { id: 'SOL100', name: 'Init Order', severity: 'high', category: 'Account Safety' },
   
-  // Latest patterns (101-130)
+  // Latest patterns (101-142)
   { id: 'SOL101', name: 'Program Cache', severity: 'low', category: 'Performance' },
   { id: 'SOL102', name: 'Instruction Data', severity: 'high', category: 'Code Quality' },
   { id: 'SOL103', name: 'Anchor CPI Safety', severity: 'high', category: 'Anchor' },
@@ -146,7 +146,7 @@ const patterns = [
   { id: 'SOL127', name: 'Instruction Size', severity: 'medium', category: 'Operations' },
   { id: 'SOL128', name: 'Seed Length', severity: 'medium', category: 'PDA Security' },
   { id: 'SOL129', name: 'Token Decimals', severity: 'high', category: 'Token Security' },
-  { id: 'SOL130', name: 'Bump Storage', severity: 'high', category: 'PDA Security' },
+  { id: 'SOL142', name: 'Bump Storage', severity: 'high', category: 'PDA Security' },
 ];
 
 const severityColors: Record<string, string> = {
@@ -210,7 +210,7 @@ export default function PatternsPage() {
       <main className="max-w-6xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold mb-2">Vulnerability Patterns</h1>
         <p className="text-zinc-400 mb-8">
-          130 security patterns covering Solana smart contract vulnerabilities
+          142 security patterns covering Solana smart contract vulnerabilities
         </p>
 
         {/* Search & Filters */}
@@ -295,7 +295,7 @@ export default function PatternsPage() {
                 className={`border rounded-lg p-4 text-center transition ${severityBgColors[sev]} ${
                   selectedSeverity === sev ? 'ring-2 ring-offset-2 ring-offset-zinc-900' : ''
                 }`}
-                style={{ ['--tw-ring-color' as any]: sev === 'critical' ? 'rgb(239 68 68 / 0.5)' : sev === 'high' ? 'rgb(249 115 22 / 0.5)' : sev === 'medium' ? 'rgb(234 179 8 / 0.5)' : 'rgb(59 130 246 / 0.5)' }}
+                style={{ ['--tw-ring-color' as any]: sev === 'critical' ? 'rgb(239 68 68 / 0.5)' : sev === 'high' ? 'rgb(249 115 22 / 0.5)' : sev === 'medium' ? 'rgb(234 179 8 / 0.5)' : 'rgb(59 142 246 / 0.5)' }}
               >
                 <div className={`text-2xl font-bold ${
                   sev === 'critical' ? 'text-red-400' : 

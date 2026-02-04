@@ -16,7 +16,7 @@ SolShield AI watch ./program
 # CI mode with SARIF
 SolShield AI ci . --fail-on high --sarif results.sarif
 
-# List all 130 patterns
+# List all 142 patterns
 SolShield AI list
 
 # Show audit stats
@@ -31,7 +31,7 @@ SolShield AI audit . --output json      # Machine-readable
 SolShield AI audit . --output markdown  # Documentation
 ```
 
-## 130 Vulnerability Patterns
+## 142 vulnerability patterns
 
 ### By Category
 

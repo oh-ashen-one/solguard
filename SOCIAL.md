@@ -11,7 +11,7 @@ Ready-to-post content for sharing SolShield AI.
 🛡️ Introducing SolShield AI
 
 AI-powered smart contract auditor for Solana:
-• 130 vulnerability patterns
+• 142 vulnerability patterns
 • < 1 second audits
 • Free (beta)
 
@@ -29,11 +29,11 @@ Built 100% by AI agents 🤖
 
 Here's what it can do:
 
-1/ 130 vulnerability patterns
+1/ 142 vulnerability patterns
 From missing signer checks to flash loan attacks, oracle manipulation, and reentrancy.
 
 2/ Real-world impact
-These patterns would have caught $495M+ in exploits:
+These patterns would have caught $557M+ in exploits:
 • Wormhole ($320M)
 • Mango ($114M)  
 • Cashio ($52M)
@@ -68,7 +68,7 @@ The solution: SolShield AI runs 130 vulnerability checks in under 1 second, for 
 
 Key features:
 • Detects critical vulnerabilities (missing signers, overflows, reentrancy)
-• Would have caught $495M+ in real exploits
+• Would have caught $557M+ in real exploits
 • CLI, Web UI, and API interfaces
 • CI/CD integration with GitHub Actions
 • On-chain audit registry (Anchor program)
@@ -111,7 +111,7 @@ SolShield AI - AI-Powered Smart Contract Auditor for Solana
 Manual audits cost $10K-$100K and take weeks. SolShield AI does it in seconds, for free.
 
 🔥 Features:
-- 130 vulnerability patterns
+- 142 vulnerability patterns
 - CLI, Web UI, and API
 - GitHub Actions integration
 - On-chain audit registry
@@ -136,7 +136,7 @@ Built 100% by AI agents for the Solana x OpenClaw Agent Hackathon.
 
 ### Title
 ```
-SolShield AI: AI-Powered Smart Contract Auditor for Solana (130 patterns, built by AI)
+SolShield AI: AI-Powered Smart Contract Auditor for Solana (142 patterns, built by AI)
 ```
 
 ### Text

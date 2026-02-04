@@ -53,6 +53,6 @@ npm run dev
 
 ## Next Steps
 
-- **130 patterns:** `SolShield AI list`
+- **142 patterns:** `SolShield AI list`
 - **CI/CD:** [INTEGRATIONS.md](INTEGRATIONS.md)
 - **Full docs:** [README.md](README.md)

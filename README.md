@@ -12,7 +12,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/oh-ashen-one/solshield/actions/workflows/ci.yml/badge.svg)](https://github.com/oh-ashen-one/solshield/actions/workflows/ci.yml)
-[![Patterns](https://img.shields.io/badge/patterns-130-blue.svg)](#vulnerability-patterns)
+[![Patterns](https://img.shields.io/badge/patterns-142-blue.svg)](#vulnerability-patterns)
 [![Commands](https://img.shields.io/badge/CLI%20commands-17-purple.svg)](#cli)
 [![Built by AI](https://img.shields.io/badge/Built%20by-AI%20Agent%20🤖-ff69b4.svg)](HACKATHON.md)
 
@@ -29,7 +29,7 @@
 |------|----------|
 | **Does it work?** | ✅ 19 tests passing, one-click demo |
 | **Is it novel?** | ✅ First AI auditor with on-chain registry for Solana |
-| **Real utility?** | ✅ Would catch $495M+ in exploits ([proof](REAL-WORLD.md)) |
+| **Real utility?** | ✅ Would catch $557M+ in exploits ([proof](REAL-WORLD.md)) |
 | **Agent-built?** | ✅ 146 commits, 100% by AI ([story](HACKATHON.md)) |
 
 **Quick demo:** `SolShield AI demo` — one command shows everything.
@@ -52,11 +52,11 @@ SolShield AI is an autonomous smart contract auditing system that:
 
 **The pitch:** Manual audits cost $10K-$100K and take weeks. We do it in seconds for free (beta).
 
-> 💰 **[Real-world impact](REAL-WORLD.md):** SolShield AI's patterns would have caught exploits totaling **$495M+** in losses (Wormhole, Mango, Cashio, and more).
+> 💰 **[Real-world impact](REAL-WORLD.md):** SolShield AI's patterns would have caught exploits totaling **$557M+** in losses (Wormhole, Mango, Cashio, and more).
 
 ## 🔍 Vulnerability Patterns (130)
 
-> **130 patterns** covering Core Security, CPI, DeFi, NFT, Token, PDA, Anchor, and more.
+> **142 patterns** covering Core Security, CPI, DeFi, NFT, Token, PDA, Anchor, and more.
 > See [patterns page](packages/web/src/app/patterns/page.tsx) for the complete list.
 
 ### Sample Critical Patterns
@@ -235,7 +235,7 @@ SolShield AI/
 ┌─────────────────────────────────────────────────────────────────┐
 │                     DETECTION ENGINE                             │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │              130 VULNERABILITY PATTERNS                   │   │
+│  │              142 vulnerability patterns                   │   │
 │  │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐  │   │
 │  │  │ Core   │ │ CPI    │ │ Token  │ │ PDA    │ │ DeFi   │  │   │
 │  │  │Security│ │Security│ │Security│ │Security│ │Patterns│  │   │
@@ -336,14 +336,14 @@ require!(audit_passed, ErrorCode::NotAudited);
   [SOL018] Oracle Manipulation — Price feed has no staleness check
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Scanned with 130 patterns in 0.34s
+  Scanned with 142 patterns in 0.34s
   Run `SolShield AI audit --verbose` for full details
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 ## 🏆 What We Built
 
-- [x] **130 vulnerability patterns** (SOL001-SOL130) covering all major Solana security risks
+- [x] **142 vulnerability patterns** (SOL001-SOL130) covering all major Solana security risks
 - [x] **17 CLI commands** — demo, audit, score, badge, fetch, github, watch, ci, stats, list, compare, check, report, certificate, init, parse, programs
 - [x] **GitHub integration** — audit repos and PRs directly
 - [x] **CI mode** — GitHub Actions with SARIF code scanning

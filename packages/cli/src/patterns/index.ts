@@ -131,6 +131,19 @@ import { checkInstructionSize } from './instruction-size.js';
 import { checkAccountSeedLength } from './account-seed-length.js';
 import { checkTokenDecimalHandling } from './token-decimal-handling.js';
 import { checkAccountPdaBumpStorage } from './account-pda-bump-storage.js';
+// New patterns based on real-world exploits (SOL131-SOL142)
+import { checkTickAccountSpoofing } from './tick-account-spoofing.js';
+import { checkGovernanceInjection } from './governance-injection.js';
+import { checkBondingCurveManipulation } from './bonding-curve-manipulation.js';
+import { checkInfiniteMint } from './infinite-mint.js';
+import { checkLiquidationManipulation } from './liquidation-manipulation.js';
+import { checkSupplyChainAttack } from './supply-chain-attack.js';
+import { checkPrivateKeyExposure } from './private-key-exposure.js';
+import { checkInsiderThreat } from './insider-threat.js';
+import { checkTreasuryDrain } from './treasury-drain.js';
+import { checkClmmExploit } from './clmm-exploit.js';
+import { checkBotCompromise } from './bot-compromise.js';
+import { checkSignatureBypass } from './signature-bypass.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -926,6 +939,79 @@ const patterns: Pattern[] = [
     name: 'PDA Bump Storage',
     severity: 'low',
     run: checkAccountPdaBumpStorage,
+  },
+  // New patterns based on real-world exploits (2022-2025)
+  {
+    id: 'SOL131',
+    name: 'Tick Account Spoofing (Crema)',
+    severity: 'critical',
+    run: checkTickAccountSpoofing,
+  },
+  {
+    id: 'SOL132',
+    name: 'Governance Proposal Injection (Audius)',
+    severity: 'critical',
+    run: checkGovernanceInjection,
+  },
+  {
+    id: 'SOL133',
+    name: 'Bonding Curve Manipulation (Nirvana)',
+    severity: 'critical',
+    run: checkBondingCurveManipulation,
+  },
+  {
+    id: 'SOL134',
+    name: 'Infinite Mint Vulnerability (Cashio)',
+    severity: 'critical',
+    run: checkInfiniteMint,
+  },
+  {
+    id: 'SOL135',
+    name: 'Liquidation Threshold Manipulation (Solend)',
+    severity: 'critical',
+    run: checkLiquidationManipulation,
+  },
+  {
+    id: 'SOL136',
+    name: 'Supply Chain Attack Vector (Web3.js)',
+    severity: 'critical',
+    run: checkSupplyChainAttack,
+  },
+  {
+    id: 'SOL137',
+    name: 'Private Key Exposure (Slope/DEXX)',
+    severity: 'critical',
+    run: checkPrivateKeyExposure,
+  },
+  {
+    id: 'SOL138',
+    name: 'Insider Threat Vector (Pump.fun)',
+    severity: 'high',
+    run: checkInsiderThreat,
+  },
+  {
+    id: 'SOL139',
+    name: 'Treasury Drain Attack',
+    severity: 'critical',
+    run: checkTreasuryDrain,
+  },
+  {
+    id: 'SOL140',
+    name: 'CLMM/AMM Exploit (Crema/Raydium)',
+    severity: 'critical',
+    run: checkClmmExploit,
+  },
+  {
+    id: 'SOL141',
+    name: 'Bot/Automation Compromise (Banana Gun)',
+    severity: 'high',
+    run: checkBotCompromise,
+  },
+  {
+    id: 'SOL142',
+    name: 'Signature Verification Bypass (Wormhole)',
+    severity: 'critical',
+    run: checkSignatureBypass,
   },
 ];
 

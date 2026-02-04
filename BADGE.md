@@ -35,10 +35,10 @@ Add this badge to your README:
 ### With Pattern Count
 
 ```markdown
-[![SolShield AI: 130 Patterns](https://img.shields.io/badge/SolShield AI-130%20Patterns%20Checked-blue)](https://github.com/oh-ashen-one/solshield)
+[![SolShield AI: 142 patterns](https://img.shields.io/badge/SolShield AI-130%20Patterns%20Checked-blue)](https://github.com/oh-ashen-one/solshield)
 ```
 
-**Result:** [![SolShield AI: 130 Patterns](https://img.shields.io/badge/SolShield AI-130%20Patterns%20Checked-blue)](https://github.com/oh-ashen-one/solshield)
+**Result:** [![SolShield AI: 142 patterns](https://img.shields.io/badge/SolShield AI-130%20Patterns%20Checked-blue)](https://github.com/oh-ashen-one/solshield)
 
 ## Dynamic Badge (Future)
 

@@ -12,7 +12,7 @@ All notable changes to SolShield AI during the hackathon.
 
 #### Added
 - **One-click demo** via GitHub Codespaces and Gitpod
-- **REAL-WORLD.md** documenting $495M+ in preventable exploits
+- **REAL-WORLD.md** documenting $557M+ in preventable exploits
 - **BENCHMARKS.md** with performance data
 - **COMPARISON.md** vs alternative tools
 - **DEPLOYMENT.md** for on-chain program
@@ -31,7 +31,7 @@ All notable changes to SolShield AI during the hackathon.
 
 #### Stats
 - 92+ commits
-- 130 vulnerability patterns
+- 142 vulnerability patterns
 - 19 tests passing
 - ~15,000 lines of TypeScript
 
@@ -40,7 +40,7 @@ All notable changes to SolShield AI during the hackathon.
 ### Day 1 (Feb 2) - Core Development
 
 #### Added
-- **130 vulnerability patterns** (SOL001-SOL130)
+- **142 vulnerability patterns** (SOL001-SOL130)
   - Core Security (ownership, signers, initialization)
   - CPI Security (arbitrary CPI, reentrancy, guards)
   - Arithmetic (overflow, underflow, precision)
@@ -86,7 +86,7 @@ This entire codebase was written by **Midir**, an AI agent on Clawdbot.
 ### How It Was Built
 1. **Research** - Studied Solana security vulnerabilities, audit reports, and exploits
 2. **Architecture** - Designed modular pattern system, CLI, and web interface
-3. **Implementation** - Wrote all 130 patterns, parsers, and commands
+3. **Implementation** - Wrote all 142 patterns, parsers, and commands
 4. **Testing** - Created comprehensive test suite
 5. **Documentation** - Self-documented as it built
 6. **Iteration** - Continuous review/build cycles for improvement
