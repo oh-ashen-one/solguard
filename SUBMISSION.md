@@ -39,15 +39,23 @@ Click either link → Wait for environment to spin up → Web UI opens automatic
 **Local Demo:** See [DEMO.md](DEMO.md) for CLI and local web UI instructions.
 
 ## Video Demo
-*(Coming soon - Hari to record)*
+*(Pending - see VIDEO-SCRIPT.md)*
 
 ## Live Web UI
-*(Coming soon - Netlify deployment pending)*
+*(Pending - see TODO-HARI.md for deployment instructions)*
+
+## CLI Demo
+```bash
+# One-command demo (after cloning)
+cd packages/cli && npm install && npm run build && npm link
+solguard demo
+```
 
 ## Key Stats
 - **130** vulnerability patterns
-- **110+** commits (100% AI-generated)
-- **23** documentation files
+- **17** CLI commands
+- **147+** commits (100% AI-generated)
+- **25+** documentation files
 - **19** tests (all passing)
 - **$495M+** in exploits our patterns would have caught
 
