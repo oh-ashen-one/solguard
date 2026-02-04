@@ -23,10 +23,11 @@ SolGuard provides **instant, AI-powered security audits** for Solana programs. W
 | Metric | Value |
 |--------|-------|
 | Vulnerability Patterns | **130** |
-| CLI Commands | 7 |
+| CLI Commands | **17** |
+| Commits | **147+** |
 | Test Coverage | 19 tests, 100% passing |
 | Lines of Code | ~15,000 |
-| Build Time | ~48 hours of autonomous coding |
+| Build Time | Continuous autonomous development |
 | Human Intervention | Project direction only |
 
 ---
