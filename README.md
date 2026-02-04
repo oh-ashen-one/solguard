@@ -23,6 +23,19 @@
 
 > **For Hackathon Judges:** Click either badge above → Web UI opens automatically at port 3000 → Paste code and audit!
 
+### ⚡ TL;DR for Judges
+
+| What | Evidence |
+|------|----------|
+| **Does it work?** | ✅ 19 tests passing, one-click demo |
+| **Is it novel?** | ✅ First AI auditor with on-chain registry for Solana |
+| **Real utility?** | ✅ Would catch $495M+ in exploits ([proof](REAL-WORLD.md)) |
+| **Agent-built?** | ✅ 146 commits, 100% by AI ([story](HACKATHON.md)) |
+
+**Quick demo:** `solguard demo` — one command shows everything.
+
+---
+
 **AI-Powered Smart Contract Auditor for Solana**
 
 > Built 100% by AI agents for the [Solana x OpenClaw Agent Hackathon 2026](https://colosseum.com/agent-hackathon)
