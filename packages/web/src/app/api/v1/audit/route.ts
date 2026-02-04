@@ -91,12 +91,52 @@ const PATTERNS = [
     suggestion: 'Use ? operator or match/if-let for error handling.'
   },
   {
+    id: 'SOL029',
+    title: 'Signature Verification Bypass',
+    severity: 'critical',
+    pattern: /verify_signature|ed25519|secp256k1(?!.*require!|.*assert!|.*if\s+!)/i,
+    description: 'Signature verification without proper validation. Wormhole lost $326M to this.',
+    suggestion: 'Always verify signatures return true and revert on failure.'
+  },
+  {
+    id: 'SOL031',
+    title: 'Mint Authority Not Checked',
+    severity: 'critical',
+    pattern: /mint_to|MintTo(?!.*mint_authority|.*authority\s*==)/i,
+    description: 'Minting tokens without verifying mint authority could allow infinite mints.',
+    suggestion: 'Verify caller has mint authority before minting.'
+  },
+  {
+    id: 'SOL033',
+    title: 'Transfer Without Balance Check',
+    severity: 'high',
+    pattern: /transfer|Transfer(?!.*balance|.*amount\s*<=|.*sufficient)/i,
+    description: 'Token transfer without checking sufficient balance.',
+    suggestion: 'Verify sender has sufficient balance before transfer.'
+  },
+  {
     id: 'SOL035',
     title: 'Unbounded Loop',
     severity: 'medium',
     pattern: /for\s+\w+\s+in\s+\w+(?!.*\.iter\(\)\.take|.*\.len\(\)\s*<|.*MAX_)/,
     description: 'Loop without bounds could consume all compute budget.',
     suggestion: 'Add iteration limits to prevent denial of service.'
+  },
+  {
+    id: 'SOL039',
+    title: 'Hardcoded Secret',
+    severity: 'critical',
+    pattern: /secret|private_key|password|api_key.*=.*["'][a-zA-Z0-9]{16,}["']/i,
+    description: 'Hardcoded secret detected. This could be leaked from on-chain code.',
+    suggestion: 'Never store secrets in on-chain code. Use environment variables or secure vaults.'
+  },
+  {
+    id: 'SOL042',
+    title: 'Arbitrary CPI Target',
+    severity: 'critical',
+    pattern: /invoke.*program_id(?!.*==|.*require!|.*assert!)/,
+    description: 'CPI to arbitrary program without validation. Attacker could redirect calls.',
+    suggestion: 'Hardcode expected program IDs or validate against allowlist.'
   }
 ];
 
