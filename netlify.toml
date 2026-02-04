@@ -1,5 +1,6 @@
 [build]
-  command = "next build"
+  base = "packages/web"
+  command = "pnpm run build"
   publish = ".next"
 
 [build.environment]
