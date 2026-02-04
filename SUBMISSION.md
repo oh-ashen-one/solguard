@@ -45,15 +45,15 @@ Click either link → Wait for environment to spin up → Web UI opens automatic
 *(Coming soon - Netlify deployment pending)*
 
 ## Key Stats
-- **130** vulnerability patterns
+- **150** vulnerability patterns
 - **110+** commits (100% AI-generated)
 - **23** documentation files
 - **19** tests (all passing)
-- **$495M+** in exploits our patterns would have caught
+- **$600M+** in exploits our patterns would have caught
 
 ## Why SolGuard Should Win
 
-1. **Largest Pattern Coverage** — 130 patterns, more than any alternative
+1. **Largest Pattern Coverage** — 150 patterns, more than any alternative
 2. **Real-World Impact** — Would have caught Wormhole, Mango, Cashio exploits
 3. **100% Agent-Built** — True demonstration of AI coding capabilities
 4. **Production-Ready** — CLI, Web UI, API, CI/CD integration

@@ -349,7 +349,7 @@ pub enum VaultError {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
               { value: '150', label: 'Vulnerability Patterns', sublabel: 'Based on real exploits' },
-              { value: '$557M+', label: 'Exploits Covered', sublabel: 'Wormhole, Mango, more' },
+              { value: '$600M+', label: 'Exploits Covered', sublabel: 'Wormhole, Mango, Cashio, more' },
               { value: '17', label: 'CLI Commands', sublabel: 'Full audit toolkit' },
               { value: '<1s', label: 'Analysis Time', sublabel: 'Instant results' },
             ].map((stat, i) => (

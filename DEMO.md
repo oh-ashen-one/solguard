@@ -59,7 +59,7 @@ pnpm test
 
 ## 🔍 What to Look For
 
-### 1. Pattern Detection (130 patterns)
+### 1. Pattern Detection (150 patterns)
 The audit should detect:
 - **SOL002** - Missing signer checks
 - **SOL003** - Integer overflow risks  
@@ -85,7 +85,7 @@ Each finding includes:
 
 | File | Purpose |
 |------|---------|
-| `packages/cli/src/patterns/` | 130 vulnerability detectors |
+| `packages/cli/src/patterns/` | 150 vulnerability detectors |
 | `packages/cli/src/test/` | Test suite (19 tests) |
 | `packages/web/src/app/page.tsx` | Web UI with example buttons |
 | `packages/program/programs/solguard/src/lib.rs` | On-chain audit registry |
@@ -111,7 +111,7 @@ Each finding includes:
                       ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    DETECTION ENGINE                              │
-│            130 VULNERABILITY PATTERNS (SOL001-SOL130)           │
+│            150 VULNERABILITY PATTERNS (SOL001-SOL150)           │
 │   Core │ CPI │ Token │ PDA │ DeFi │ NFT │ Anchor │ Advanced    │
 └─────────────────────┬───────────────────────────────────────────┘
                       │

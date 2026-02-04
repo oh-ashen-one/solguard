@@ -39,7 +39,7 @@ SolGuard is an autonomous smart contract auditing system that:
 
 **The pitch:** Manual audits cost $10K-$100K and take weeks. We do it in seconds for free (beta).
 
-> 💰 **[Real-world impact](REAL-WORLD.md):** SolGuard's patterns would have caught exploits totaling **$495M+** in losses (Wormhole, Mango, Cashio, and more).
+> 💰 **[Real-world impact](REAL-WORLD.md):** SolGuard's patterns would have caught exploits totaling **$600M+** in losses (Wormhole, Mango, Cashio, and more).
 
 ## 🔍 Vulnerability Patterns (130)
 

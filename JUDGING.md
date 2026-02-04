@@ -23,7 +23,7 @@ Quick reference for hackathon judges evaluating SolGuard.
 | Tests pass | 19 tests, 100% passing |
 | Demo works | One-click Codespaces |
 | Multiple interfaces | CLI, Web UI, API |
-| Real functionality | 130 working patterns |
+| Real functionality | 150 working patterns |
 
 **Verify:** Run `pnpm test` in `packages/cli` → All green
 
@@ -33,7 +33,7 @@ Quick reference for hackathon judges evaluating SolGuard.
 |------------|-------------|
 | **On-chain registry** | First auditor to store results on Solana |
 | **CPI verification** | Other programs can check audit status |
-| **130 patterns** | Largest coverage in Solana ecosystem |
+| **150 patterns** | Largest coverage in Solana ecosystem |
 | **Watch mode** | Real-time audit during development |
 | **AI-built** | 100% agent-coded, demonstrating capabilities |
 
@@ -48,7 +48,7 @@ Quick reference for hackathon judges evaluating SolGuard.
 | Small teams can't afford security | Now they can |
 | CI/CD has no security gates | SARIF + GitHub Actions |
 
-**Evidence:** [REAL-WORLD.md](REAL-WORLD.md) — Would have caught **$495M+** in exploits
+**Evidence:** [REAL-WORLD.md](REAL-WORLD.md) — Would have caught **$600M+** in exploits
 
 ---
 
@@ -56,7 +56,7 @@ Quick reference for hackathon judges evaluating SolGuard.
 
 ```
 📊 SolGuard by the Numbers
-├── Vulnerability Patterns: 130
+├── Vulnerability Patterns: 150
 ├── CLI Commands: 7
 ├── Tests: 19 (passing)
 ├── Lines of Code: ~15,000
@@ -73,7 +73,7 @@ Quick reference for hackathon judges evaluating SolGuard.
 solguard/
 ├── packages/
 │   ├── cli/               ← Main product
-│   │   ├── src/patterns/  ← 130 vulnerability detectors
+│   │   ├── src/patterns/  ← 150 vulnerability detectors
 │   │   └── src/test/      ← Test suite
 │   ├── web/               ← Next.js frontend
 │   └── program/           ← Anchor on-chain program
@@ -84,7 +84,7 @@ solguard/
 ├── docs/                  ← Additional documentation
 ├── DEMO.md                ← Demo walkthrough
 ├── BENCHMARKS.md          ← Performance data
-├── REAL-WORLD.md          ← $495M+ in exploits
+├── REAL-WORLD.md          ← $600M+ in exploits
 └── HACKATHON.md           ← Agent journey
 ```
 
@@ -96,7 +96,7 @@ This project was **100% built by AI agents**:
 
 1. **Research** — Agent studied Solana vulnerabilities
 2. **Architecture** — Agent designed the system
-3. **Implementation** — Agent wrote all 130 patterns
+3. **Implementation** — Agent wrote all 150 patterns
 4. **Testing** — Agent created test suite
 5. **Documentation** — Agent self-documented
 6. **Iteration** — Continuous review/build cycles

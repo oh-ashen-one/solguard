@@ -147,6 +147,28 @@ const patterns = [
   { id: 'SOL128', name: 'Seed Length', severity: 'medium', category: 'PDA Security' },
   { id: 'SOL129', name: 'Token Decimals', severity: 'high', category: 'Token Security' },
   { id: 'SOL130', name: 'Bump Storage', severity: 'high', category: 'PDA Security' },
+  
+  // Real-world exploit patterns (131-150)
+  { id: 'SOL131', name: 'Tick Account Spoofing', severity: 'critical', category: 'DeFi' },
+  { id: 'SOL132', name: 'Governance Injection', severity: 'critical', category: 'Governance' },
+  { id: 'SOL133', name: 'Bonding Curve Attack', severity: 'critical', category: 'DeFi' },
+  { id: 'SOL134', name: 'Infinite Mint', severity: 'critical', category: 'Token Security' },
+  { id: 'SOL135', name: 'Liquidation Manipulation', severity: 'critical', category: 'DeFi' },
+  { id: 'SOL136', name: 'Supply Chain Attack', severity: 'high', category: 'Program Safety' },
+  { id: 'SOL137', name: 'Private Key Exposure', severity: 'critical', category: 'Core Security' },
+  { id: 'SOL138', name: 'Insider Threat', severity: 'critical', category: 'Governance' },
+  { id: 'SOL139', name: 'Treasury Drain', severity: 'critical', category: 'DeFi' },
+  { id: 'SOL140', name: 'CLMM/AMM Exploit', severity: 'critical', category: 'DeFi' },
+  { id: 'SOL141', name: 'Bot Compromise', severity: 'high', category: 'Operations' },
+  { id: 'SOL142', name: 'Signature Bypass', severity: 'critical', category: 'Core Security' },
+  { id: 'SOL143', name: 'LP Oracle Manipulation', severity: 'critical', category: 'DeFi' },
+  { id: 'SOL144', name: 'Unchecked Account CPI', severity: 'critical', category: 'CPI Security' },
+  { id: 'SOL145', name: 'Break Logic Bug', severity: 'medium', category: 'Code Quality' },
+  { id: 'SOL146', name: 'Simulation Detection', severity: 'critical', category: 'Core Security' },
+  { id: 'SOL147', name: 'Root of Trust', severity: 'critical', category: 'Core Security' },
+  { id: 'SOL148', name: 'SPL Lending Rounding', severity: 'critical', category: 'DeFi' },
+  { id: 'SOL149', name: 'Anchor Unchecked', severity: 'critical', category: 'Anchor' },
+  { id: 'SOL150', name: 'CPI Safety', severity: 'high', category: 'CPI Security' },
 ];
 
 const severityColors: Record<string, string> = {
@@ -217,7 +239,7 @@ export default function PatternsPage() {
       <main className="max-w-6xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold mb-2">Vulnerability Patterns</h1>
         <p className="text-zinc-400 mb-8">
-          142 security patterns covering Solana smart contract vulnerabilities
+          150 security patterns covering Solana smart contract vulnerabilities
         </p>
 
         {/* Search & Filters */}

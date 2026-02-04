@@ -1,6 +1,6 @@
 # 🔍 SolGuard Pattern Reference
 
-Complete list of all **130 vulnerability patterns** detected by SolGuard.
+Complete list of all **150 vulnerability patterns** detected by SolGuard.
 
 ---
 

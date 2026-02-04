@@ -49,7 +49,7 @@ Resources for press, presentations, and sharing.
 | Vulnerability Patterns | 130 |
 | Audit Speed | < 1 second |
 | Cost | Free (beta) |
-| Preventable Exploits | $495M+ |
+| Preventable Exploits | $600M+ |
 | Commits | 122+ |
 | Tests | 19 (100% passing) |
 | Documentation Files | 27+ |

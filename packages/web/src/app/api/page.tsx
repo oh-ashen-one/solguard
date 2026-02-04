@@ -47,7 +47,7 @@ export default function ApiDocs() {
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-emerald-400">130</div>
+            <div className="text-2xl font-bold text-emerald-400">150</div>
             <div className="text-sm text-zinc-400">Patterns</div>
           </div>
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 text-center">
@@ -78,7 +78,7 @@ export default function ApiDocs() {
             
             <p className="text-zinc-300 mb-6">
               Audit Rust/Anchor smart contract code and receive vulnerability findings. 
-              Scans against <Link href="/patterns" className="text-emerald-400 hover:underline">142 vulnerability patterns</Link>.
+              Scans against <Link href="/patterns" className="text-emerald-400 hover:underline">150 vulnerability patterns</Link>.
             </p>
 
             <h3 className="font-semibold mb-2 text-zinc-200">Request Body</h3>
@@ -148,7 +148,7 @@ export default function ApiDocs() {
   "status": "ok",
   "service": "SolGuard Audit API",
   "version": "1.0.0",
-  "patterns": 142
+  "patterns": 150
 }`}
             </pre>
           </section>
@@ -229,7 +229,7 @@ export default function ApiDocs() {
 
           {/* Patterns Link */}
           <section className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-xl p-6 border border-emerald-500/20">
-            <h2 className="text-xl font-semibold mb-2">142 vulnerability patterns</h2>
+            <h2 className="text-xl font-semibold mb-2">150 vulnerability patterns</h2>
             <p className="text-zinc-300 mb-4">
               SolGuard detects vulnerabilities across core security, CPI, DeFi, NFT, token, 
               PDA, Anchor, and more categories.

@@ -6,7 +6,7 @@ How does SolGuard compare to other Solana security tools?
 
 | Feature | SolGuard | Soteria | Sec3 | Manual Audit |
 |---------|----------|---------|------|--------------|
-| **Patterns** | 130 | ~20 | ~30 | Varies |
+| **Patterns** | 150 | ~20 | ~30 | Varies |
 | **Speed** | < 1 sec | Minutes | N/A | Weeks |
 | **Cost** | Free (beta) | Paid | Paid | $10K-$100K |
 | **CLI** | ✅ | ✅ | ❌ | N/A |
@@ -30,7 +30,7 @@ require!(passed, ErrorCode::NotAudited);
 
 No other tool stores audit results on-chain for composable verification.
 
-### 2. 130 Patterns (Largest Coverage)
+### 2. 150 Patterns (Largest Coverage)
 - Core Security (SOL001-SOL015)
 - CPI Security (SOL040-SOL055)
 - DeFi Patterns (SOL056-SOL075)

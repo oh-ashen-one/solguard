@@ -6,7 +6,7 @@ Where we're heading after the hackathon.
 
 ## Phase 1: Hackathon (Current) ✅
 
-- [x] 130 vulnerability patterns
+- [x] 150 vulnerability patterns
 - [x] CLI with 7 commands
 - [x] Web UI
 - [x] API endpoint
@@ -87,7 +87,7 @@ Where we're heading after the hackathon.
 
 | Metric | Hackathon | 6 Months | 1 Year |
 |--------|-----------|----------|--------|
-| Patterns | 130 | 180 | 250 |
+| Patterns | 150 | 180 | 250 |
 | Audits/month | - | 1,000 | 10,000 |
 | GitHub stars | - | 500 | 2,000 |
 | Programs audited | - | 100 | 1,000 |

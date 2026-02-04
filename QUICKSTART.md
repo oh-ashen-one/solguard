@@ -53,6 +53,6 @@ npm run dev
 
 ## Next Steps
 
-- **130 patterns:** `solguard list`
+- **150 patterns:** `solguard list`
 - **CI/CD:** [INTEGRATIONS.md](INTEGRATIONS.md)
 - **Full docs:** [README.md](README.md)

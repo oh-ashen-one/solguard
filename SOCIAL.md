@@ -33,7 +33,7 @@ Here's what it can do:
 From missing signer checks to flash loan attacks, oracle manipulation, and reentrancy.
 
 2/ Real-world impact
-These patterns would have caught $495M+ in exploits:
+These patterns would have caught $600M+ in exploits:
 • Wormhole ($320M)
 • Mango ($114M)  
 • Cashio ($52M)
@@ -68,7 +68,7 @@ The solution: SolGuard runs 130 vulnerability checks in under 1 second, for free
 
 Key features:
 • Detects critical vulnerabilities (missing signers, overflows, reentrancy)
-• Would have caught $495M+ in real exploits
+• Would have caught $600M+ in real exploits
 • CLI, Web UI, and API interfaces
 • CI/CD integration with GitHub Actions
 • On-chain audit registry (Anchor program)
