@@ -17,6 +17,16 @@ npm install && npm run build && npm link
 
 ## Commands
 
+### `demo` — Quick showcase
+
+```bash
+# Run interactive demo with included vulnerable example
+solguard demo
+
+# Shows: audit results, severity breakdown, fix suggestions
+# Great for first-time users or demos
+```
+
 ### `audit` — Analyze code for vulnerabilities
 
 ```bash
