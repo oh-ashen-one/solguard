@@ -1,5 +1,5 @@
 {
-  "name": "@SolShield AI/cli",
+  "name": "@solshield/cli",
   "version": "0.1.0",
   "description": "SolShield AI CLI - AI-Powered Smart Contract Auditor for Solana",
   "author": "Midir <midir@clawd.bot>",
@@ -24,7 +24,7 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "SolShield AI": "./dist/index.js"
+    "solshield": "./dist/index.js"
   },
   "files": [
     "dist",

@@ -1,5 +1,5 @@
 {
-  "name": "SolShield AI",
+  "name": "solshield",
   "version": "0.1.0",
   "private": true,
   "description": "AI-Powered Smart Contract Auditor for Solana",
@@ -11,9 +11,9 @@
     "packages/*"
   ],
   "scripts": {
-    "cli": "pnpm --filter @SolShield AI/cli",
-    "web": "pnpm --filter @SolShield AI/web",
-    "dev": "pnpm --filter @SolShield AI/cli dev",
+    "cli": "pnpm --filter @solshield/cli",
+    "web": "pnpm --filter @solshield/web",
+    "dev": "pnpm --filter @solshield/cli dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test"
   },
