@@ -194,12 +194,19 @@ export default function PatternsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-black text-white">
       <header className="border-b border-zinc-800">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl">🛡️</span>
-            <span className="text-xl font-bold">SolGuard</span>
+            <span className="text-xl md:text-2xl">🛡️</span>
+            <span className="text-lg md:text-xl font-bold">SolShield</span>
           </Link>
-          <nav className="flex items-center gap-6">
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-6">
+            <Link href="/" className="text-zinc-400 hover:text-white">Home</Link>
+            <Link href="/patterns" className="text-white font-medium">Patterns</Link>
+            <Link href="/api" className="text-zinc-400 hover:text-white">API</Link>
+          </nav>
+          {/* Mobile nav */}
+          <nav className="flex md:hidden items-center gap-3 text-sm">
             <Link href="/" className="text-zinc-400 hover:text-white">Home</Link>
             <Link href="/patterns" className="text-white font-medium">Patterns</Link>
             <Link href="/api" className="text-zinc-400 hover:text-white">API</Link>
