@@ -13,7 +13,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/oh-ashen-one/solguard/actions/workflows/ci.yml/badge.svg)](https://github.com/oh-ashen-one/solguard/actions/workflows/ci.yml)
 [![Patterns](https://img.shields.io/badge/patterns-130-blue.svg)](#vulnerability-patterns)
-[![Commands](https://img.shields.io/badge/CLI%20commands-16-purple.svg)](#cli)
+[![Commands](https://img.shields.io/badge/CLI%20commands-17-purple.svg)](#cli)
 [![Built by AI](https://img.shields.io/badge/Built%20by-AI%20Agent%20🤖-ff69b4.svg)](HACKATHON.md)
 
 ### 🚀 Try It Now (No Setup Required!)
@@ -183,7 +183,7 @@ solguard/
 │   │   └── src/
 │   │       ├── patterns/ # 130 vulnerability detectors
 │   │       ├── parsers/  # IDL + Rust parsing
-│   │       └── commands/ # 16 CLI commands
+│   │       └── commands/ # 17 CLI commands
 │   │
 │   ├── web/              # Next.js frontend
 │   │   └── src/app/
@@ -331,7 +331,7 @@ require!(audit_passed, ErrorCode::NotAudited);
 ## 🏆 What We Built
 
 - [x] **130 vulnerability patterns** (SOL001-SOL130) covering all major Solana security risks
-- [x] **16 CLI commands** — audit, score, badge, fetch, github, watch, ci, stats, list, compare, check, report, certificate, init, parse, programs
+- [x] **17 CLI commands** — demo, audit, score, badge, fetch, github, watch, ci, stats, list, compare, check, report, certificate, init, parse, programs
 - [x] **GitHub integration** — audit repos and PRs directly
 - [x] **CI mode** — GitHub Actions with SARIF code scanning
 - [x] **Web UI** with paste-to-audit, search/filter, example code

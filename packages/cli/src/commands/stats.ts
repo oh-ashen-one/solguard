@@ -70,8 +70,9 @@ export function statsCommand() {
   console.log('');
   
   // Commands
-  console.log(chalk.bold('  Available Commands (16):'));
+  console.log(chalk.bold('  Available Commands (17):'));
   console.log('');
+  console.log(chalk.cyan('  solguard demo'), '               Run quick demo');
   console.log(chalk.cyan('  solguard audit <path>'), '       Audit a program');
   console.log(chalk.cyan('  solguard score <path>'), '       Get security grade (A-F)');
   console.log(chalk.cyan('  solguard badge <path>'), '       Generate README badge');

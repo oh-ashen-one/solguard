@@ -15,6 +15,7 @@ import { compareCommand } from './commands/compare.js';
 import { listCommand } from './commands/list.js';
 import { scoreCommand } from './commands/score.js';
 import { badgeCommand } from './commands/badge.js';
+import { demoCommand } from './commands/demo.js';
 
 const program = new Command();
 
@@ -38,7 +39,7 @@ program
   .on('option:verbose-version', () => {
     console.log(`SolGuard v0.1.0`);
     console.log(`  Patterns: 130`);
-    console.log(`  Commands: 16`);
+    console.log(`  Commands: 17`);
     console.log(`  Built: 2026-02-02`);
     console.log(`  Node: ${process.version}`);
     console.log(`  Platform: ${process.platform}`);
@@ -100,6 +101,11 @@ program
   .command('stats')
   .description('Show SolGuard statistics and capabilities')
   .action(statsCommand);
+
+program
+  .command('demo')
+  .description('Run a quick demo showcasing SolGuard capabilities')
+  .action(demoCommand);
 
 program
   .command('score')
