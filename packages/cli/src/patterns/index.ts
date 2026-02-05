@@ -472,7 +472,9 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
   
   for (const pattern of ALL_PATTERNS) {
     try {
-      const regex = new RegExp(pattern.pattern.source, pattern.pattern.flags);
+      // Add 'g' flag for matchAll if not present
+      const flags = pattern.pattern.flags.includes('g') ? pattern.pattern.flags : pattern.pattern.flags + 'g';
+      const regex = new RegExp(pattern.pattern.source, flags);
       const matches = [...content.matchAll(regex)];
       
       for (const match of matches) {
