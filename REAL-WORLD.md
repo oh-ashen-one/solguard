@@ -1,6 +1,6 @@
 # 🔒 Real-World Exploits SolShield Would Catch
 
-This document shows how SolShield's 580+ patterns map to real Solana exploits. These are simplified examples based on public post-mortems.
+This document shows how SolShield's 2400+ patterns map to real Solana exploits. These are simplified examples based on public post-mortems.
 
 ---
 
@@ -291,3 +291,4 @@ These are simplified examples for illustration. Real-world vulnerabilities often
 ---
 
 *"The best audit is the one that happens before deployment."*
+

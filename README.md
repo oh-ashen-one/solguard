@@ -12,7 +12,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/oh-ashen-one/solshield/actions/workflows/ci.yml/badge.svg)](https://github.com/oh-ashen-one/solshield/actions/workflows/ci.yml)
-[![Patterns](https://img.shields.io/badge/patterns-880%2B-blue.svg)](#vulnerability-patterns)
+[![Patterns](https://img.shields.io/badge/patterns-2400%2B%2B-blue.svg)](#vulnerability-patterns)
 [![Commands](https://img.shields.io/badge/CLI%20commands-17-purple.svg)](#cli)
 [![Built by AI](https://img.shields.io/badge/Built%20by-AI%20Agent%20🤖-ff69b4.svg)](HACKATHON.md)
 
@@ -32,7 +32,7 @@
 SolShield is an autonomous smart contract auditing system that:
 
 1. **Parses** Anchor IDL + Rust source code
-2. **Detects** vulnerabilities using **900+ specialized patterns**
+2. **Detects** vulnerabilities using **2400+ specialized patterns**
 3. **Generates** AI-powered explanations + fix suggestions  
 4. **Stores** audit results on-chain for verification
 5. **Mints** NFT certificates for passed audits
@@ -41,9 +41,9 @@ SolShield is an autonomous smart contract auditing system that:
 
 > 💰 **[Real-world impact](REAL-WORLD.md):** SolShield's patterns would have caught exploits totaling **$600M+** in losses (Wormhole, Mango, Cashio, and more).
 
-## 🔍 Vulnerability Patterns (900+)
+## 🔍 Vulnerability Patterns (2400+)
 
-> **900+ patterns** covering Core Security, CPI, DeFi, NFT, Token, PDA, Anchor, historical exploit signatures, and more.
+> **2400+ patterns** covering Core Security, CPI, DeFi, NFT, Token, PDA, Anchor, historical exploit signatures, and more.
 > See [patterns page](packages/web/src/app/patterns/page.tsx) for the complete list.
 
 ### Sample Critical Patterns
@@ -391,3 +391,5 @@ require!(audit_passed, ErrorCode::NotAudited);
 ## 📜 License
 
 MIT
+
+

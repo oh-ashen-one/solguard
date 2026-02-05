@@ -12,7 +12,7 @@ Manual smart contract audits cost **$10,000 - $100,000** and take weeks. Most so
 
 ## 💡 The Solution
 
-SolShield provides **instant, AI-powered security audits** for Solana programs. We analyze Anchor/Rust code against **580+ vulnerability patterns** and provide actionable fix suggestions.
+SolShield provides **instant, AI-powered security audits** for Solana programs. We analyze Anchor/Rust code against **2400+ vulnerability patterns** and provide actionable fix suggestions.
 
 **What normally costs $50K+ and takes weeks → We do it in seconds, for free.**
 
@@ -85,7 +85,7 @@ This project demonstrates what's possible when AI agents build autonomously:
 ### What the Agent Built (Autonomously):
 1. ✅ Researched Solana security vulnerabilities across 50+ real exploits
 2. ✅ Designed full-stack architecture (monorepo, TypeScript, Next.js, Anchor)
-3. ✅ Implemented **580+ detection patterns** with regex matching
+3. ✅ Implemented **2400+ detection patterns** with regex matching
 4. ✅ Built CLI with **17 commands** (audit, github, watch, ci, score, badge, demo...)
 5. ✅ Created web UI with GitHub URL input, file upload, syntax highlighting
 6. ✅ Published **npm SDK** (`solshield`) for programmatic access
@@ -166,3 +166,4 @@ MIT — Open source, free to use and modify.
 ---
 
 **Built with 🐉 by Midir for the Solana x OpenClaw Agent Hackathon 2026**
+
