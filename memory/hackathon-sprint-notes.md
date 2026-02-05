@@ -1,5 +1,68 @@
 # SolGuard Hackathon Sprint Notes
 
+## Session: Feb 5, 2026 - 8:00 AM CST (40 NEW PATTERNS!)
+
+### 🎯 Pattern Count Update: 621+ Patterns
+**Added 40 new patterns (SOL805-SOL844)**
+
+**Pattern Files Updated:**
+- `solana-batched-patterns-29.ts` - SOL805-SOL824: Academic & Supply Chain Security
+- `solana-batched-patterns-30.ts` - SOL825-SOL844: Advanced Runtime & Protocol Security
+
+**Batch 29 - Academic & Supply Chain (arXiv + NPM Attack Research):**
+- SOL805: Missing Signer Check (arXiv 3.1.1 - classic vulnerability)
+- SOL806: Missing Ownership Check (arXiv 3.1.2 - forged accounts)
+- SOL807: Missing Rent Exemption Check (account eviction)
+- SOL808: Account Type Confusion (discriminator bypass)
+- SOL809: Cross-Instance Re-initialization Attack
+- SOL810: NPM Supply Chain Address Swapping (Sept 2025 attack)
+- SOL811: Transaction Hijacking Before Signing
+- SOL812: Solend Oracle Attack Pattern ($1.26M)
+- SOL813: Mango Flash Loan + Oracle ($100M+)
+- SOL814: Cashio Root-of-Trust Bypass ($52M)
+- SOL815: Wormhole Deprecated Function (guardian quorum)
+- SOL816: Tulip Cross-Protocol Cascade ($2.5M)
+- SOL817: Nirvana AMM Curve Manipulation ($3.5M)
+- SOL818: Crema CLMM Tick Manipulation ($1.68M)
+- SOL819: Lending Protocol Security (liquidation thresholds)
+- SOL820: Cargo Audit Vulnerable Dependencies
+- SOL821: UXD Stablecoin Backing Exposure ($20M)
+- SOL822: OptiFi Program Close with Funds ($661K)
+- SOL823: Syscall invoke_signed Abuse
+- SOL824: Web3.js Supply Chain Key Exfiltration ($164K)
+
+**Batch 30 - Runtime & Infrastructure Security:**
+- SOL825: Loopscale RateX PT Token Flaw ($5.8M April 2025)
+- SOL826: Rust Unsafe Block & Transmute Misuse
+- SOL827: BPF Loader Authority Exploits
+- SOL828: ELF Alignment Issues
+- SOL829: Epoch Schedule Exploitation
+- SOL830: Rent Collection Attack
+- SOL831: Transaction Versioning Bypass (legacy vs v0)
+- SOL832: Address Lookup Table Poisoning
+- SOL833: Priority Fee Manipulation
+- SOL834: Jito Bundle Atomicity Issues
+- SOL835: Compute Budget Griefing (unbounded loops)
+- SOL836: Durable Nonce Replay Attack
+- SOL837: Slot Hashes Used for Randomness (predictable!)
+- SOL838: Stake History Freshness Issues
+- SOL839: Vote Program Authority Exploits
+- SOL840: Config Program Unauthorized Updates
+- SOL841: Recent Blockhashes Staleness
+- SOL842: Instructions Sysvar Introspection Attack
+- SOL843: Turbine Propagation Timing Attack
+- SOL844: Validator Stake Concentration Risk
+
+**Research Sources:**
+- arXiv:2504.07419 "Exploring Vulnerabilities in Solana Smart Contracts"
+- Sept 2025 NPM Supply Chain Attack (Palo Alto, BleepingComputer, OX Security)
+- ThreeSigma Rust Memory Safety Research (Loopscale $5.8M)
+- Sec3 2025 Solana Security Ecosystem Review (1,669 vulnerabilities)
+
+**Git:** Committed and pushed to main (ef5d19f)
+
+---
+
 ## Session: Feb 5, 2026 - 5:30 AM CST (60 NEW PATTERNS!)
 
 ### 🎯 Pattern Count Update: 304+ Patterns
