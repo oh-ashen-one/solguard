@@ -273,6 +273,15 @@ import { checkOwnershipPhishing, checkProgramAccountConfusion, checkAmmPoolDrain
 // New patterns SOL291-SOL310 (Feb 4 2026 - Evening build session batch 10)
 import { checkJitCacheVulnerability, checkDurableNonceMisuse, checkDuplicateBlockPattern, checkTurbinePropagation as checkTurbinePropagationV2, checkElfAlignment as checkElfAlignmentV2, checkCheckedMathEnforcement, checkSeedPredictability, checkCpiReturnInjection, checkAccountLifetime as checkAccountLifetimeV2, checkAnchorConstraintOrdering, checkMissingRentCheck as checkMissingRentCheckV2, checkSystemProgramInvocation, checkTokenProgramVersion, checkLookupTablePoisoning, checkComputeExhaustion, checkPriorityFeeManipulation, checkVersionedTransactionHandling, checkSignerSeedValidationComplete, checkAccountLamportDrain, checkInstructionSysvarSpoofing } from './solana-batched-patterns-10.js';
 
+// New patterns SOL311-SOL330 (Feb 4 2026 - Night build session batch 11)
+import { checkPortMaxWithdrawBug, checkJetGovernanceVuln, checkSemanticInconsistency, checkTokenApproveRevocation, checkLpTokenFairPricing, checkSignatureSetFabrication, checkCandyMachineZeroAccount, checkRevertExploit, checkSimulationDetectionBypass, checkAuthorityDelegationChain, checkQuarryRewardDistribution, checkStableSwapInvariant, checkMarinadeStakePoolSecurity, checkWhirlpoolTickArraySecurity, checkPythOracleIntegration, checkDriftOracleGuardrails, checkSolidoLiquidStaking, checkSquadsMultisigReplay, checkStreamflowVestingSecurity, checkPhoenixOrderBookSecurity } from './solana-batched-patterns-11.js';
+
+// New patterns SOL331-SOL350 (Feb 4 2026 - Night build session batch 12)
+import { checkHedgeProtocolStability, checkMeanFinanceDCA, checkHubbleLendingIsolation, checkInvariantCLMM, checkLarixLiquidation, checkLightProtocolZK, checkFranciumLeverageVault, checkFriktionOptionsVault, checkGenopetsStakingDuration, checkGooseFXSwapInvariant, checkCropperAMMSecurity, checkParrotCollateralTypes, checkAldrinOrderMatching, checkAudiusStorageSlot, checkSwimCrossChainMessage, checkSynthetifySyntheticMinting, checkUXDRedeemablePeg, checkWormholeVAAParsing, checkDebridgeMessageVerification, checkCashmereMultisigThreshold } from './solana-batched-patterns-12.js';
+
+// New patterns SOL351-SOL370 (Feb 4 2026 - Night build session batch 13)
+import { checkAnchorInitIfNeeded, checkAccountCloseLamportDust, checkPdaSeedCollision, checkBorshDeserializationDoS, checkInvokeSignedSeedsMismatch, checkTokenAuthorityConfusion, checkWritableNotMutable, checkAccountCreationRentExemption, checkRecursiveCpiDepth, checkClockSysvarReliability, checkProgramLogSizeLimit, checkHeapMemoryExhaustion, checkAccountDataSizeChange, checkCpiAccountOrdering, checkProgramIdHardcoding, checkSysvarDeprecation, checkTokenAmountTruncation, checkNativeSolWrappedConfusion, checkToken2022TransferHook, checkMetadataUriValidation } from './solana-batched-patterns-13.js';
+
 export interface PatternInput {
   idl: ParsedIdl | null;
   rust: ParsedRust | null;
@@ -1784,6 +1793,367 @@ const patterns: Pattern[] = [
     name: 'Instruction Sysvar Spoofing',
     severity: 'critical',
     run: checkInstructionSysvarSpoofing,
+  },
+  // NEW PATTERNS SOL311-SOL370 (Feb 4 2026 - Night build session)
+  {
+    id: 'SOL311',
+    name: 'Port Max Withdraw Bug Pattern',
+    severity: 'high',
+    run: checkPortMaxWithdrawBug,
+  },
+  {
+    id: 'SOL312',
+    name: 'Jet Governance Vulnerability',
+    severity: 'high',
+    run: checkJetGovernanceVuln,
+  },
+  {
+    id: 'SOL313',
+    name: 'Semantic Inconsistency (Stake Pool)',
+    severity: 'high',
+    run: checkSemanticInconsistency,
+  },
+  {
+    id: 'SOL314',
+    name: 'Token Approval Revocation Missing',
+    severity: 'medium',
+    run: checkTokenApproveRevocation,
+  },
+  {
+    id: 'SOL315',
+    name: 'LP Token Fair Pricing ($200M Risk)',
+    severity: 'critical',
+    run: checkLpTokenFairPricing,
+  },
+  {
+    id: 'SOL316',
+    name: 'Signature Set Fabrication (Wormhole)',
+    severity: 'critical',
+    run: checkSignatureSetFabrication,
+  },
+  {
+    id: 'SOL317',
+    name: 'Candy Machine Zero Account Exploit',
+    severity: 'high',
+    run: checkCandyMachineZeroAccount,
+  },
+  {
+    id: 'SOL318',
+    name: 'Transaction Revert Exploit (Cope Roulette)',
+    severity: 'high',
+    run: checkRevertExploit,
+  },
+  {
+    id: 'SOL319',
+    name: 'Simulation Detection Bypass',
+    severity: 'medium',
+    run: checkSimulationDetectionBypass,
+  },
+  {
+    id: 'SOL320',
+    name: 'Authority Delegation Chain Vulnerability',
+    severity: 'critical',
+    run: checkAuthorityDelegationChain,
+  },
+  {
+    id: 'SOL321',
+    name: 'Quarry Reward Distribution Issue',
+    severity: 'high',
+    run: checkQuarryRewardDistribution,
+  },
+  {
+    id: 'SOL322',
+    name: 'Saber Stable Swap Invariant',
+    severity: 'high',
+    run: checkStableSwapInvariant,
+  },
+  {
+    id: 'SOL323',
+    name: 'Marinade Stake Pool Security',
+    severity: 'high',
+    run: checkMarinadeStakePoolSecurity,
+  },
+  {
+    id: 'SOL324',
+    name: 'Orca Whirlpool Tick Array Security',
+    severity: 'high',
+    run: checkWhirlpoolTickArraySecurity,
+  },
+  {
+    id: 'SOL325',
+    name: 'Pyth Oracle Confidence Check',
+    severity: 'high',
+    run: checkPythOracleIntegration,
+  },
+  {
+    id: 'SOL326',
+    name: 'Drift Protocol Oracle Guardrails',
+    severity: 'high',
+    run: checkDriftOracleGuardrails,
+  },
+  {
+    id: 'SOL327',
+    name: 'Solido Liquid Staking Security',
+    severity: 'high',
+    run: checkSolidoLiquidStaking,
+  },
+  {
+    id: 'SOL328',
+    name: 'Squads Multisig Replay Prevention',
+    severity: 'critical',
+    run: checkSquadsMultisigReplay,
+  },
+  {
+    id: 'SOL329',
+    name: 'Streamflow Vesting Security',
+    severity: 'high',
+    run: checkStreamflowVestingSecurity,
+  },
+  {
+    id: 'SOL330',
+    name: 'Phoenix Order Book Security',
+    severity: 'high',
+    run: checkPhoenixOrderBookSecurity,
+  },
+  {
+    id: 'SOL331',
+    name: 'Hedge Protocol CDP Stability',
+    severity: 'critical',
+    run: checkHedgeProtocolStability,
+  },
+  {
+    id: 'SOL332',
+    name: 'Mean Finance DCA Security',
+    severity: 'high',
+    run: checkMeanFinanceDCA,
+  },
+  {
+    id: 'SOL333',
+    name: 'Hubble Lending Pool Isolation',
+    severity: 'high',
+    run: checkHubbleLendingIsolation,
+  },
+  {
+    id: 'SOL334',
+    name: 'Invariant CLMM Fee Growth',
+    severity: 'high',
+    run: checkInvariantCLMM,
+  },
+  {
+    id: 'SOL335',
+    name: 'Larix Liquidation Incentive',
+    severity: 'high',
+    run: checkLarixLiquidation,
+  },
+  {
+    id: 'SOL336',
+    name: 'Light Protocol ZK Proof Verification',
+    severity: 'critical',
+    run: checkLightProtocolZK,
+  },
+  {
+    id: 'SOL337',
+    name: 'Francium Leverage Vault Controls',
+    severity: 'high',
+    run: checkFranciumLeverageVault,
+  },
+  {
+    id: 'SOL338',
+    name: 'Friktion Options Vault Epoch',
+    severity: 'high',
+    run: checkFriktionOptionsVault,
+  },
+  {
+    id: 'SOL339',
+    name: 'Genopets NFT Staking Duration',
+    severity: 'medium',
+    run: checkGenopetsStakingDuration,
+  },
+  {
+    id: 'SOL340',
+    name: 'GooseFX Swap Invariant Check',
+    severity: 'high',
+    run: checkGooseFXSwapInvariant,
+  },
+  {
+    id: 'SOL341',
+    name: 'Cropper AMM Fee Precision',
+    severity: 'medium',
+    run: checkCropperAMMSecurity,
+  },
+  {
+    id: 'SOL342',
+    name: 'Parrot Multi-Collateral Risk',
+    severity: 'high',
+    run: checkParrotCollateralTypes,
+  },
+  {
+    id: 'SOL343',
+    name: 'Aldrin DEX Order Partial Fill',
+    severity: 'medium',
+    run: checkAldrinOrderMatching,
+  },
+  {
+    id: 'SOL344',
+    name: 'Audius Storage Slot Authorization',
+    severity: 'high',
+    run: checkAudiusStorageSlot,
+  },
+  {
+    id: 'SOL345',
+    name: 'Swim Cross-Chain Message Validation',
+    severity: 'critical',
+    run: checkSwimCrossChainMessage,
+  },
+  {
+    id: 'SOL346',
+    name: 'Synthetify Debt Pool Tracking',
+    severity: 'high',
+    run: checkSynthetifySyntheticMinting,
+  },
+  {
+    id: 'SOL347',
+    name: 'UXD Redeemable Peg Mechanism',
+    severity: 'high',
+    run: checkUXDRedeemablePeg,
+  },
+  {
+    id: 'SOL348',
+    name: 'Wormhole VAA Guardian Quorum',
+    severity: 'critical',
+    run: checkWormholeVAAParsing,
+  },
+  {
+    id: 'SOL349',
+    name: 'Debridge Double-Claim Prevention',
+    severity: 'critical',
+    run: checkDebridgeMessageVerification,
+  },
+  {
+    id: 'SOL350',
+    name: 'Cashmere Multisig Threshold Bounds',
+    severity: 'critical',
+    run: checkCashmereMultisigThreshold,
+  },
+  {
+    id: 'SOL351',
+    name: 'Anchor init_if_needed Race Condition',
+    severity: 'high',
+    run: checkAnchorInitIfNeeded,
+  },
+  {
+    id: 'SOL352',
+    name: 'Account Close Lamport Dust',
+    severity: 'medium',
+    run: checkAccountCloseLamportDust,
+  },
+  {
+    id: 'SOL353',
+    name: 'PDA Seed Collision Risk',
+    severity: 'high',
+    run: checkPdaSeedCollision,
+  },
+  {
+    id: 'SOL354',
+    name: 'Borsh Deserialization DoS',
+    severity: 'medium',
+    run: checkBorshDeserializationDoS,
+  },
+  {
+    id: 'SOL355',
+    name: 'Invoke Signed Seeds Validation',
+    severity: 'info',
+    run: checkInvokeSignedSeedsMismatch,
+  },
+  {
+    id: 'SOL356',
+    name: 'Token Account Authority Confusion',
+    severity: 'high',
+    run: checkTokenAuthorityConfusion,
+  },
+  {
+    id: 'SOL357',
+    name: 'Writable Account Not Mutable',
+    severity: 'high',
+    run: checkWritableNotMutable,
+  },
+  {
+    id: 'SOL358',
+    name: 'Account Creation Rent Exemption',
+    severity: 'medium',
+    run: checkAccountCreationRentExemption,
+  },
+  {
+    id: 'SOL359',
+    name: 'Recursive CPI Depth Exhaustion',
+    severity: 'medium',
+    run: checkRecursiveCpiDepth,
+  },
+  {
+    id: 'SOL360',
+    name: 'Clock Sysvar Time Manipulation',
+    severity: 'medium',
+    run: checkClockSysvarReliability,
+  },
+  {
+    id: 'SOL361',
+    name: 'Excessive Program Logging',
+    severity: 'low',
+    run: checkProgramLogSizeLimit,
+  },
+  {
+    id: 'SOL362',
+    name: 'Heap Memory Exhaustion Risk',
+    severity: 'medium',
+    run: checkHeapMemoryExhaustion,
+  },
+  {
+    id: 'SOL363',
+    name: 'Account Data Size Without Realloc',
+    severity: 'high',
+    run: checkAccountDataSizeChange,
+  },
+  {
+    id: 'SOL364',
+    name: 'CPI Account Ordering Dependency',
+    severity: 'info',
+    run: checkCpiAccountOrdering,
+  },
+  {
+    id: 'SOL365',
+    name: 'Hardcoded Program IDs',
+    severity: 'medium',
+    run: checkProgramIdHardcoding,
+  },
+  {
+    id: 'SOL366',
+    name: 'Deprecated Sysvar Account Usage',
+    severity: 'low',
+    run: checkSysvarDeprecation,
+  },
+  {
+    id: 'SOL367',
+    name: 'Token Amount Truncation',
+    severity: 'medium',
+    run: checkTokenAmountTruncation,
+  },
+  {
+    id: 'SOL368',
+    name: 'Native SOL / Wrapped SOL Handling',
+    severity: 'medium',
+    run: checkNativeSolWrappedConfusion,
+  },
+  {
+    id: 'SOL369',
+    name: 'Token-2022 Transfer Hook Missing',
+    severity: 'high',
+    run: checkToken2022TransferHook,
+  },
+  {
+    id: 'SOL370',
+    name: 'Metadata URI Validation',
+    severity: 'low',
+    run: checkMetadataUriValidation,
   },
 ];
 
