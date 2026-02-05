@@ -1,5 +1,69 @@
 # SolGuard Hackathon Sprint Notes
 
+## Session: Feb 5, 2026 - 1:30 PM CST (140 NEW PATTERNS!)
+
+### 🎯 Pattern Count Update: 3,920+ Patterns
+**Added 140 new patterns (SOL1861-SOL2000)**
+
+**Pattern Files Created:**
+- `solana-batched-patterns-51.ts` - SOL1861-SOL1930 (70 patterns): Cantina Security Guide + arXiv
+- `solana-batched-patterns-52.ts` - SOL1931-SOL2000 (70 patterns): Real-World Exploit Deep Dives
+
+**Batch 51 - Cantina Security Guide + arXiv (SOL1861-SOL1930):**
+Source: Cantina "Securing Solana: A Developer's Guide" + arXiv:2504.07419
+
+- SOL1861-1863: Account Data Matching (admin check, config update, permission verification)
+- SOL1864-1866: Account Data Reallocation (zero init, frequent realloc, size bounds)
+- SOL1867-1869: Account Reloading After CPI (stale data, result verification)
+- SOL1870-1872: Arbitrary CPI (target validation, dynamic invocation, unconstrained programs)
+- SOL1873-1875: Computational Unit (CU) Exhaustion (unbounded loops, nested loops, recursion)
+- SOL1876-1877: Dependencies (outdated Anchor, missing cargo audit)
+- SOL1878-1880: Attacker-Controlled Model (type verification, owner check, signer status)
+- SOL1881-1883: Integer/Arithmetic (release mode wrapping, fixed-point precision, division order)
+- SOL1884-1886: Reentrancy (state after CPI, guard missing, CPI depth)
+- SOL1887-1890: Cross-Instance Reinitialization, Deprecated APIs
+- SOL1891-1896: Oracle & Lending (single source, staleness, collateral ratio, liquidation bonus)
+- SOL1897-1900: AMM (constant product, LP inflation, slippage, sandwich protection)
+- SOL1901-1915: Staking, Bridge, NFT, Token-2022, Governance patterns
+- SOL1916-1930: Testing, Deployment, Misc (devnet addresses, debug code, randomness, dust)
+
+**Batch 52 - Real-World Exploit Deep Dives (SOL1931-SOL2000):**
+Source: Helius Complete History, sannykim/solsec, Sec3 2025
+
+**Major Exploits Covered (Deep Dive):**
+- SOL1931-1933: Wormhole ($326M) - SignatureSet spoofing, guardian bypass, VAA validation
+- SOL1934-1937: Mango Markets ($116M) - Self-trading, oracle manipulation, unrealized PnL, position size
+- SOL1938-1940: Cashio ($52.8M) - Root of trust, nested account chain, infinite mint
+- SOL1941-1943: Crema Finance ($8.8M) - Fake tick account, fee accumulator, flash loan claim
+- SOL1944-1946: Slope Wallet ($8M) - Seed logging, unencrypted storage, telemetry
+- SOL1947-1948: Nirvana ($3.5M) - Bonding curve flash loan, instant price impact
+- SOL1949-1950: Raydium ($4.4M) - Admin key, trojan upgrade
+- SOL1951-1953: DEXX ($30M) - Hot wallet, centralized custody, commingled funds
+- SOL1954-1955: Loopscale ($5.8M) - PT token pricing, undercollateralization
+- SOL1956-1957: Pump.fun ($1.9M) - Insider wallet, migration flash loan
+- SOL1958-1959: Audius ($6.1M) - Governance hijack, treasury reconfiguration
+- SOL1960-1961: Cypher ($1.35M) - Sub-account isolation, insider access
+- SOL1962-1963: Web3.js ($164K) - NPM compromise, key exfiltration
+- SOL1964-1977: io.net Sybil, Banana Gun, OptiFi, Thunder, Solareum, Saga DAO, Tulip, UXD, Jito, Phantom, Candy Machine, Grape
+- SOL1979-1984: Advanced attacks (JIT liquidity, order flow, MEV boost, sequencer, time-bandit, PBS)
+- SOL1985-2000: Protocol-specific (Pyth, Switchboard, Marinade, Jupiter, cNFT, Drift, Solend, Port, Jet, Stake Pool, Neodyme $2.6B)
+
+**Research Sources:**
+- Cantina "Securing Solana: A Developer's Guide" (comprehensive Solana security patterns)
+- arXiv:2504.07419 "Exploring Vulnerabilities in Solana Smart Contracts"
+- Helius Blog "Complete History of Solana Hacks"
+- sannykim/solsec GitHub resource collection
+- Sec3 2025 Solana Security Ecosystem Review
+
+**Key Stats:**
+- Now covering 20+ major exploits with deep-dive patterns
+- Total documented losses covered: ~$600M+
+- Pattern categories: 40+ distinct security categories
+
+**Git:** Committed and pushed to main
+
+---
+
 ## Session: Feb 5, 2026 - 1:00 PM CST (140 NEW PATTERNS!)
 
 ### 🎯 Pattern Count Update: 3,780+ Patterns

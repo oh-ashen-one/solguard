@@ -587,7 +587,7 @@ export function listPatterns(): Pattern[] {
 }
 
 // Export total pattern count (including dynamic imports when available)
-// Updated: Feb 5, 2026 1:00 PM - Added SOL1721-SOL1860 (140 new patterns)
+// Updated: Feb 5, 2026 1:30 PM - Added SOL1861-SOL2000 (140 new patterns)
 // New batches: 
 //   - solana-batched-patterns-41.ts (SOL1161-SOL1230): CPI, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance
 //   - solana-batched-patterns-42.ts (SOL1231-SOL1300): DeFi (AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming)
@@ -599,6 +599,8 @@ export function listPatterns(): Pattern[] {
 //   - solana-batched-patterns-48.ts (SOL1651-SOL1720): Advanced DeFi Patterns, Economic Attacks, Governance
 //   - solana-batched-patterns-49.ts (SOL1721-SOL1790): Helius Exploit DB 2020-2023 (Wormhole $326M, Mango $116M, Cashio $52M, etc.)
 //   - solana-batched-patterns-50.ts (SOL1791-SOL1860): Helius Exploit DB 2024-2025 (DEXX $30M, Loopscale $5.8M, Pump.fun $1.9M, etc.)
-// Categories covered: CPI Security, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance, AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming, Real Exploits, Sec3 Categories, BPF/Runtime, Memory, Compute, Validators, Anchor, Serialization, Phishing, MEV, Sybil, Honeypot, Cross-Chain, Helius Complete History, Wallet Security, Insider Threats
-// 50 batched files × ~70 patterns each + 50 core + 250+ individual patterns = 3780+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 3730; // 3780+ total with all batched patterns
+//   - solana-batched-patterns-51.ts (SOL1861-SOL1930): Cantina Security Guide, arXiv Paper, Advanced Protocol Patterns
+//   - solana-batched-patterns-52.ts (SOL1931-SOL2000): Real-World Exploit Deep Dives (Wormhole, Mango, Cashio, Crema, Slope, Nirvana, Raydium, DEXX, Loopscale, Pump.fun, Audius, Cypher, Web3.js + Advanced Attack Vectors)
+// Categories covered: CPI Security, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance, AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming, Real Exploits, Sec3 Categories, BPF/Runtime, Memory, Compute, Validators, Anchor, Serialization, Phishing, MEV, Sybil, Honeypot, Cross-Chain, Helius Complete History, Wallet Security, Insider Threats, Cantina Guide, Account Data Matching, Reallocation, CPI Reload, Reentrancy Deep Dive, Exploit Deep Dives (20+ major exploits), JIT Liquidity, PBS, Sequencer Risks
+// 52 batched files × ~70 patterns each + 50 core + 250+ individual patterns = 3920+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 3870; // 3920+ total with all batched patterns
