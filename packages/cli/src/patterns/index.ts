@@ -568,12 +568,14 @@ export function listPatterns(): Pattern[] {
 }
 
 // Export total pattern count (including dynamic imports when available)
-// Updated: Feb 5, 2026 11:00 AM - Added SOL1161-SOL1440 (280 new patterns)
+// Updated: Feb 5, 2026 11:30 AM - Added SOL1441-SOL1580 (140 new patterns)
 // New batches: 
 //   - solana-batched-patterns-41.ts (SOL1161-SOL1230): CPI, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance
 //   - solana-batched-patterns-42.ts (SOL1231-SOL1300): DeFi (AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming)
 //   - solana-batched-patterns-43.ts (SOL1301-SOL1370): Real-World Exploits 2024-2025, Sec3 2025 Categories
 //   - solana-batched-patterns-44.ts (SOL1371-SOL1440): Infrastructure, BPF, Memory, Compute, Validators, Anchor, Serialization
-// Categories covered: CPI Security, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance, AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming, Real Exploits, Sec3 Categories, BPF/Runtime, Memory, Compute, Validators, Anchor, Serialization
-// 44 batched files × ~70 patterns each + 50 core + 250+ individual patterns = 3360+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 3310; // 3360+ total with all batched patterns
+//   - solana-batched-patterns-45.ts (SOL1441-SOL1510): 2025 Developer Education, DEXX $30M, Access Control Deep Dive
+//   - solana-batched-patterns-46.ts (SOL1511-SOL1580): Phishing/Social Engineering, SlowMist $3M, MEV, Sybil, Honeypots
+// Categories covered: CPI Security, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance, AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming, Real Exploits, Sec3 Categories, BPF/Runtime, Memory, Compute, Validators, Anchor, Serialization, Phishing, MEV, Sybil, Honeypot, Cross-Chain
+// 46 batched files × ~70 patterns each + 50 core + 250+ individual patterns = 3500+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 3450; // 3500+ total with all batched patterns
