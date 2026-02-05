@@ -23,7 +23,7 @@ Quick reference for hackathon judges evaluating SolGuard.
 | Tests pass | 19 tests, 100% passing |
 | Demo works | One-click Codespaces |
 | Multiple interfaces | CLI, Web UI, API |
-| Real functionality | 130 working patterns |
+| Real functionality | 150 working patterns |
 
 **Verify:** Run `pnpm test` in `packages/cli` → All green
 
@@ -33,7 +33,7 @@ Quick reference for hackathon judges evaluating SolGuard.
 |------------|-------------|
 | **On-chain registry** | First auditor to store results on Solana |
 | **CPI verification** | Other programs can check audit status |
-| **130 patterns** | Largest coverage in Solana ecosystem |
+| **150 patterns** | Largest coverage in Solana ecosystem |
 | **Watch mode** | Real-time audit during development |
 | **AI-built** | 100% agent-coded, demonstrating capabilities |
 
@@ -56,7 +56,7 @@ Quick reference for hackathon judges evaluating SolGuard.
 
 ```
 📊 SolGuard by the Numbers
-├── Vulnerability Patterns: 130
+├── Vulnerability Patterns: 150
 ├── CLI Commands: 7
 ├── Tests: 19 (passing)
 ├── Lines of Code: ~15,000

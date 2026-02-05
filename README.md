@@ -12,7 +12,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/oh-ashen-one/solguard/actions/workflows/ci.yml/badge.svg)](https://github.com/oh-ashen-one/solguard/actions/workflows/ci.yml)
-[![Patterns](https://img.shields.io/badge/patterns-130-blue.svg)](#vulnerability-patterns)
+[![Patterns](https://img.shields.io/badge/patterns-150-blue.svg)](#vulnerability-patterns)
 [![Commands](https://img.shields.io/badge/CLI%20commands-7-purple.svg)](#cli)
 [![Built by AI](https://img.shields.io/badge/Built%20by-AI%20Agent%20🤖-ff69b4.svg)](HACKATHON.md)
 
@@ -32,7 +32,7 @@
 SolGuard is an autonomous smart contract auditing system that:
 
 1. **Parses** Anchor IDL + Rust source code
-2. **Detects** vulnerabilities using **130 specialized patterns**
+2. **Detects** vulnerabilities using **150 specialized patterns**
 3. **Generates** AI-powered explanations + fix suggestions  
 4. **Stores** audit results on-chain for verification
 5. **Mints** NFT certificates for passed audits
@@ -101,6 +101,30 @@ SolGuard is an autonomous smart contract auditing system that:
 | ID | Pattern | Description |
 |----|---------|-------------|
 | SOL028 | Event Emission | Missing events for indexing |
+
+### NEW: DeFi & Protocol-Specific Patterns (SOL131-SOL150)
+| ID | Pattern | Description |
+|----|---------|-------------|
+| SOL131 | Jito Bundle Security | MEV protection, sandwich attacks |
+| SOL132 | Solana Blink/Actions | Action endpoint security |
+| SOL133 | Token-2022 Advanced | Permanent delegate, transfer hooks |
+| SOL134 | Bonding Curve | Pump.fun style curve manipulation |
+| SOL135 | DEX Aggregator | Jupiter/aggregator integration |
+| SOL136 | cNFT Security | Compressed NFT merkle proofs |
+| SOL137 | Stake Pool Advanced | Liquid staking, LST security |
+| SOL138 | Program Migration | Version fields, migration safety |
+| SOL139 | Pyth Integration | Confidence, staleness, expo handling |
+| SOL140 | Permissionless Cranking | Keeper incentives, liquidations |
+| SOL141 | Perpetual DEX | Funding rates, position limits |
+| SOL142 | Restaking | Slashing, AVS validation |
+| SOL143 | Intent-Based | Solver security, execution |
+| SOL144 | Prediction Market | Resolution, dispute mechanisms |
+| SOL145 | Cross-Margin | Portfolio margin, correlation |
+| SOL146 | Yield Aggregator | Vault share inflation, harvests |
+| SOL147 | Real World Assets | RWA custody, compliance |
+| SOL148 | DAO Treasury | Governance, timelock, flash loans |
+| SOL149 | NFT Lending | Floor price, liquidation |
+| SOL150 | SocialFi | Key trading, front-running |
 
 ## 🚀 Quick Start
 

@@ -131,6 +131,26 @@ import { checkInstructionSize } from './instruction-size.js';
 import { checkAccountSeedLength } from './account-seed-length.js';
 import { checkTokenDecimalHandling } from './token-decimal-handling.js';
 import { checkAccountPdaBumpStorage } from './account-pda-bump-storage.js';
+import { checkJitoBundles } from './jito-bundles.js';
+import { checkBlinkActions } from './blink-actions.js';
+import { checkToken2022Advanced } from './token-2022-advanced.js';
+import { checkBondingCurve } from './bonding-curve.js';
+import { checkDexAggregator } from './dex-aggregator.js';
+import { checkCnftSecurity } from './cnft-security.js';
+import { checkStakePoolAdvanced } from './stake-pool-advanced.js';
+import { checkProgramMigration } from './program-migration.js';
+import { checkPythIntegration } from './pyth-integration.js';
+import { checkPermissionlessCranking } from './permissionless-cranking.js';
+import { checkPerpetualDex } from './perpetual-dex.js';
+import { checkRestaking } from './restaking.js';
+import { checkIntentBased } from './intent-based.js';
+import { checkPredictionMarket } from './prediction-market.js';
+import { checkCrossMargin } from './cross-margin.js';
+import { checkYieldAggregator } from './yield-aggregator.js';
+import { checkRealWorldAssets } from './real-world-assets.js';
+import { checkDaoTreasury } from './dao-treasury.js';
+import { checkNftLending } from './nft-lending.js';
+import { checkSocialFi } from './social-fi.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -926,6 +946,126 @@ const patterns: Pattern[] = [
     name: 'PDA Bump Storage',
     severity: 'low',
     run: checkAccountPdaBumpStorage,
+  },
+  {
+    id: 'SOL131',
+    name: 'Jito Bundle Security',
+    severity: 'high',
+    run: checkJitoBundles,
+  },
+  {
+    id: 'SOL132',
+    name: 'Solana Blink/Actions Security',
+    severity: 'high',
+    run: checkBlinkActions,
+  },
+  {
+    id: 'SOL133',
+    name: 'Advanced Token-2022 Extensions',
+    severity: 'critical',
+    run: checkToken2022Advanced,
+  },
+  {
+    id: 'SOL134',
+    name: 'Bonding Curve Security',
+    severity: 'critical',
+    run: checkBondingCurve,
+  },
+  {
+    id: 'SOL135',
+    name: 'DEX Aggregator Security',
+    severity: 'critical',
+    run: checkDexAggregator,
+  },
+  {
+    id: 'SOL136',
+    name: 'Compressed NFT (cNFT) Security',
+    severity: 'high',
+    run: checkCnftSecurity,
+  },
+  {
+    id: 'SOL137',
+    name: 'Advanced Stake Pool Security',
+    severity: 'high',
+    run: checkStakePoolAdvanced,
+  },
+  {
+    id: 'SOL138',
+    name: 'Program Migration Security',
+    severity: 'high',
+    run: checkProgramMigration,
+  },
+  {
+    id: 'SOL139',
+    name: 'Pyth Oracle Integration',
+    severity: 'critical',
+    run: checkPythIntegration,
+  },
+  {
+    id: 'SOL140',
+    name: 'Permissionless Cranking',
+    severity: 'high',
+    run: checkPermissionlessCranking,
+  },
+  {
+    id: 'SOL141',
+    name: 'Perpetual DEX Security',
+    severity: 'critical',
+    run: checkPerpetualDex,
+  },
+  {
+    id: 'SOL142',
+    name: 'Restaking Security',
+    severity: 'critical',
+    run: checkRestaking,
+  },
+  {
+    id: 'SOL143',
+    name: 'Intent-Based Protocol Security',
+    severity: 'high',
+    run: checkIntentBased,
+  },
+  {
+    id: 'SOL144',
+    name: 'Prediction Market Security',
+    severity: 'high',
+    run: checkPredictionMarket,
+  },
+  {
+    id: 'SOL145',
+    name: 'Cross-Margin Security',
+    severity: 'high',
+    run: checkCrossMargin,
+  },
+  {
+    id: 'SOL146',
+    name: 'Yield Aggregator Security',
+    severity: 'critical',
+    run: checkYieldAggregator,
+  },
+  {
+    id: 'SOL147',
+    name: 'Real World Asset (RWA) Security',
+    severity: 'critical',
+    run: checkRealWorldAssets,
+  },
+  {
+    id: 'SOL148',
+    name: 'DAO Treasury Security',
+    severity: 'critical',
+    run: checkDaoTreasury,
+  },
+  {
+    id: 'SOL149',
+    name: 'NFT Lending Security',
+    severity: 'critical',
+    run: checkNftLending,
+  },
+  {
+    id: 'SOL150',
+    name: 'SocialFi Security',
+    severity: 'high',
+    run: checkSocialFi,
   },
 ];
 
