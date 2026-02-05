@@ -32,7 +32,7 @@ All notable changes to SolShield during the hackathon.
 #### Stats
 - 92+ commits
 - 150 vulnerability patterns
-- 19 tests passing
+- 31 tests passing
 - ~15,000 lines of TypeScript
 
 ---
@@ -68,7 +68,7 @@ All notable changes to SolShield during the hackathon.
   - Dispute mechanism
   - CPI verification for other programs
   - Audit history with versioning
-- **Test Suite** - 19 tests, all passing
+- **Test Suite** - 31 tests, all passing
 - **CI/CD** - GitHub Actions workflow
 
 #### Technical Highlights

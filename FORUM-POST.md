@@ -48,7 +48,7 @@ Full list: [patterns page](https://github.com/oh-ashen-one/SolShield/blob/main/p
 📊 Stats
 ├── 150 vulnerability patterns
 ├── 7 CLI commands (audit, fetch, github, watch, ci, stats, list)
-├── 19 tests (all passing)
+├── 31 tests (all passing)
 ├── ~15,000 lines of TypeScript
 └── Full Anchor program for on-chain registry
 ```

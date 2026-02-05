@@ -52,7 +52,7 @@ SolShield audit ../examples/vulnerable/token-vault
 ```bash
 cd packages/cli
 pnpm test
-# All 19 tests should pass
+# All 31 tests should pass
 ```
 
 ---
@@ -86,7 +86,7 @@ Each finding includes:
 | File | Purpose |
 |------|---------|
 | `packages/cli/src/patterns/` | 150 vulnerability detectors |
-| `packages/cli/src/test/` | Test suite (19 tests) |
+| `packages/cli/src/test/` | Test suite (31 tests) |
 | `packages/web/src/app/page.tsx` | Web UI with example buttons |
 | `packages/program/programs/SolShield/src/lib.rs` | On-chain audit registry |
 | `examples/vulnerable/` | Test programs with known issues |

@@ -20,7 +20,7 @@ Quick reference for hackathon judges evaluating SolShield.
 | Check | Evidence |
 |-------|----------|
 | Code compiles | [![CI](https://github.com/oh-ashen-one/SolShield/actions/workflows/ci.yml/badge.svg)](https://github.com/oh-ashen-one/SolShield/actions) |
-| Tests pass | 19 tests, 100% passing |
+| Tests pass | 31 tests, 100% passing |
 | Demo works | One-click Codespaces |
 | Multiple interfaces | CLI, Web UI, API |
 | Real functionality | 150 working patterns |

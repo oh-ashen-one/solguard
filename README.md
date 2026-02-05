@@ -359,7 +359,7 @@ require!(audit_passed, ErrorCode::NotAudited);
 - [x] **Web UI** with paste-to-audit, search/filter, example code
 - [x] **On-chain audit registry** — full Anchor program with disputes, history
 - [x] **API endpoint** — REST API for programmatic audits
-- [x] **19 tests** — all passing, CI/CD pipeline
+- [x] **31 tests** — all passing, CI/CD pipeline
 
 ### 🚀 Roadmap (Post-Hackathon)
 - [ ] Deploy Anchor program to devnet/mainnet ([deployment guide](DEPLOYMENT.md))

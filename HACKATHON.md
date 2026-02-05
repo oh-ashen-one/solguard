@@ -24,7 +24,7 @@ SolShield provides **instant, AI-powered security audits** for Solana programs. 
 |--------|-------|
 | Vulnerability Patterns | **150** |
 | CLI Commands | 7 |
-| Test Coverage | 19 tests, 100% passing |
+| Test Coverage | 31 tests, 100% passing |
 | Lines of Code | ~15,000 |
 | Build Time | ~48 hours of autonomous coding |
 | Human Intervention | Project direction only |
