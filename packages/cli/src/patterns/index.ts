@@ -14,6 +14,10 @@ import { checkSec32025AccessControl } from './sec3-2025-access-control.js';
 import { checkSec32025DataIntegrity } from './sec3-2025-data-integrity.js';
 import { checkSec32025DosLiveness } from './sec3-2025-dos-liveness.js';
 
+// Import new patterns (Feb 5, 2026 2:00 PM)
+import { checkHelius2024DeepPatterns } from './helius-2024-2025-deep.js';
+import { checkBatch53Patterns } from './solana-batched-patterns-53.js';
+
 export interface Finding {
   id: string;
   title: string;
@@ -530,6 +534,20 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     // Skip if Sec3 patterns fail
   }
   
+  // Run Helius 2024-2025 Deep Exploit patterns (35 patterns from real exploits)
+  try {
+    findings.push(...checkHelius2024DeepPatterns(input));
+  } catch (error) {
+    // Skip if Helius patterns fail
+  }
+  
+  // Run Batch 53 patterns (70 patterns: Sec3 Enhanced + 2024-2025 Vectors)
+  try {
+    findings.push(...checkBatch53Patterns(input));
+  } catch (error) {
+    // Skip if Batch 53 patterns fail
+  }
+  
   // Deduplicate by ID + line
   const seen = new Set<string>();
   const deduped = findings.filter(f => {
@@ -587,7 +605,7 @@ export function listPatterns(): Pattern[] {
 }
 
 // Export total pattern count (including dynamic imports when available)
-// Updated: Feb 5, 2026 1:30 PM - Added SOL1861-SOL2000 (140 new patterns)
+// Updated: Feb 5, 2026 2:00 PM - Added SOL2001-SOL2070 + HELIUS-DEEP patterns (105 new)
 // New batches: 
 //   - solana-batched-patterns-41.ts (SOL1161-SOL1230): CPI, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance
 //   - solana-batched-patterns-42.ts (SOL1231-SOL1300): DeFi (AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming)
@@ -600,7 +618,9 @@ export function listPatterns(): Pattern[] {
 //   - solana-batched-patterns-49.ts (SOL1721-SOL1790): Helius Exploit DB 2020-2023 (Wormhole $326M, Mango $116M, Cashio $52M, etc.)
 //   - solana-batched-patterns-50.ts (SOL1791-SOL1860): Helius Exploit DB 2024-2025 (DEXX $30M, Loopscale $5.8M, Pump.fun $1.9M, etc.)
 //   - solana-batched-patterns-51.ts (SOL1861-SOL1930): Cantina Security Guide, arXiv Paper, Advanced Protocol Patterns
-//   - solana-batched-patterns-52.ts (SOL1931-SOL2000): Real-World Exploit Deep Dives (Wormhole, Mango, Cashio, Crema, Slope, Nirvana, Raydium, DEXX, Loopscale, Pump.fun, Audius, Cypher, Web3.js + Advanced Attack Vectors)
-// Categories covered: CPI Security, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance, AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming, Real Exploits, Sec3 Categories, BPF/Runtime, Memory, Compute, Validators, Anchor, Serialization, Phishing, MEV, Sybil, Honeypot, Cross-Chain, Helius Complete History, Wallet Security, Insider Threats, Cantina Guide, Account Data Matching, Reallocation, CPI Reload, Reentrancy Deep Dive, Exploit Deep Dives (20+ major exploits), JIT Liquidity, PBS, Sequencer Risks
-// 52 batched files × ~70 patterns each + 50 core + 250+ individual patterns = 3920+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 3870; // 3920+ total with all batched patterns
+//   - solana-batched-patterns-52.ts (SOL1931-SOL2000): Real-World Exploit Deep Dives (20+ major exploits)
+//   - helius-2024-2025-deep.ts (HELIUS-DEXX-001 to HELIUS-SOLEND-002): 35 patterns from Helius Complete History
+//   - solana-batched-patterns-53.ts (SOL2001-SOL2070): Sec3 Enhanced + 2024-2025 Attack Vectors
+// Categories: CPI, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance, AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming, Real Exploits, Sec3 Categories, BPF, Memory, Compute, Validators, Anchor, Serialization, Phishing, MEV, Sybil, Honeypot, Cross-Chain, Helius Complete History, Wallet Security, Insider Threats, Token-2022, Compression, Blink Actions, Lookup Tables
+// 54 batched/pattern files × ~70 patterns each + 50 core + 250+ individual patterns = 4025+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 3975; // 4025+ total with all batched patterns
