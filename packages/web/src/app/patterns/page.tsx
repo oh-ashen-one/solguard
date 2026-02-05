@@ -225,13 +225,11 @@ export default function PatternsPage() {
           <nav className="hidden md:flex items-center gap-6">
             <Link href="/" className="text-zinc-400 hover:text-white">Home</Link>
             <Link href="/patterns" className="text-white font-medium">Patterns</Link>
-            <Link href="/api" className="text-zinc-400 hover:text-white">API</Link>
           </nav>
           {/* Mobile nav */}
           <nav className="flex md:hidden items-center gap-3 text-sm">
             <Link href="/" className="text-zinc-400 hover:text-white">Home</Link>
             <Link href="/patterns" className="text-white font-medium">Patterns</Link>
-            <Link href="/api" className="text-zinc-400 hover:text-white">API</Link>
           </nav>
         </div>
       </header>

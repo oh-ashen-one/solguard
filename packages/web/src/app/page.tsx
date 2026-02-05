@@ -272,7 +272,6 @@ pub enum VaultError {
           <nav className="hidden md:flex items-center gap-8">
             <Link href="#features" className="text-sm text-zinc-400 hover:text-white transition-colors">Features</Link>
             <Link href="/patterns" className="text-sm text-zinc-400 hover:text-white transition-colors">Patterns</Link>
-            <Link href="/api" className="text-sm text-zinc-400 hover:text-white transition-colors">API</Link>
             <a 
               href="https://github.com/oh-ashen-one/solshield" 
               target="_blank" 
