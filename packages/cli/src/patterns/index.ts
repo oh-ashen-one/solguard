@@ -368,6 +368,16 @@ import { checkInputLengthOverflow, checkNumericRangeValidation, checkPubkeyForma
 // NEW PATTERNS SOL717-SOL736 (Feb 5 2026 4AM - Access Control & Authorization)
 import { checkRoleBasedAccessControl, checkHardcodedAdminAddress, checkMissingMultisigCritical, checkAuthorityDelegationChainV2, checkMissingAuthorityExpiryV2, checkSignerBypassCpi, checkOwnerCheckDerivedAccount, checkPermissionEscalationInit, checkUnprotectedEmergencyFunctions, checkTimelockBypassParameterV2, checkCrossProgramAuthorityConfusion, checkPdaSignerSeedsMismatch, checkOwnershipTransferConfirmation, checkInsufficientPauseProtection, checkGovernanceQuorumManipulationV2, checkMissingFunctionSelectorValidation, checkReentrancyStateUpdateOrder, checkTokenAccountAuthorityValidation, checkUpgradeAuthorityRestriction, checkMissingEventAuthorityChange } from './solana-batched-patterns-24.js';
 
+// NEW PATTERNS SOL737-SOL775 (Feb 5 2026 5AM - Helius Complete History + Recent Exploits)
+import { checkAllBatch25Patterns } from './solana-batched-patterns-25.js';
+import { checkPrivateKeySecurityPatterns } from './dexx-private-key-leak.js';
+import { checkCremaStyleExploits } from './crema-tick-spoofing.js';
+import { checkNirvanaStyleExploits } from './nirvana-bonding-curve-attack.js';
+import { checkSolendStyleExploits } from './solend-auth-bypass-2021.js';
+import { checkThunderStyleExploits } from './thunder-terminal-exploit.js';
+import { checkOptiFiStyleBugs } from './optifi-close-bug.js';
+import { checkCypherStyleInsiderThreats } from './cypher-insider-theft.js';
+
 export interface PatternInput {
   idl: ParsedIdl | null;
   rust: ParsedRust | null;
@@ -2716,6 +2726,16 @@ const patterns: Pattern[] = [
   { id: 'SOL734', name: 'Token Account Authority Not Validated', severity: 'high', run: checkTokenAccountAuthorityValidation },
   { id: 'SOL735', name: 'Upgrade Authority Not Restricted', severity: 'high', run: checkUpgradeAuthorityRestriction },
   { id: 'SOL736', name: 'Missing Event on Authority Change', severity: 'medium', run: checkMissingEventAuthorityChange },
+  
+  // NEW PATTERNS SOL737-SOL775 (Feb 5 2026 5AM - Helius Complete Exploit History)
+  { id: 'SOL737', name: 'DEXX Private Key Leak Pattern ($30M)', severity: 'critical', run: checkPrivateKeySecurityPatterns },
+  { id: 'SOL738', name: 'Crema Finance CLMM Tick Spoofing ($8.8M)', severity: 'critical', run: checkCremaStyleExploits },
+  { id: 'SOL739', name: 'Nirvana Bonding Curve Flash Loan ($3.5M)', severity: 'critical', run: checkNirvanaStyleExploits },
+  { id: 'SOL740', name: 'Solend Auth Bypass Pattern ($2M risk)', severity: 'critical', run: checkSolendStyleExploits },
+  { id: 'SOL741', name: 'Thunder Terminal MongoDB Injection ($240K)', severity: 'high', run: checkThunderStyleExploits },
+  { id: 'SOL742', name: 'OptiFi Program Close Lockup ($661K)', severity: 'critical', run: checkOptiFiStyleBugs },
+  { id: 'SOL743', name: 'Cypher Insider Theft Pattern ($317K)', severity: 'critical', run: checkCypherStyleInsiderThreats },
+  { id: 'SOL744', name: 'Helius Batch 25 Patterns (38 patterns)', severity: 'high', run: checkAllBatch25Patterns },
 ];
 
 export async function runPatterns(input: PatternInput): Promise<Finding[]> {
