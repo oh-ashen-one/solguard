@@ -568,10 +568,12 @@ export function listPatterns(): Pattern[] {
 }
 
 // Export total pattern count (including dynamic imports when available)
-// Updated: Feb 5, 2026 10:30 AM - Added SOL1021-SOL1150 (130 new patterns)
+// Updated: Feb 5, 2026 11:00 AM - Added SOL1161-SOL1440 (280 new patterns)
 // New batches: 
-//   - solana-batched-patterns-39.ts (SOL1021-SOL1080): Sec3 2025 Report patterns
-//   - solana-batched-patterns-40.ts (SOL1081-SOL1150): Protocol-specific deep patterns
-// Categories covered: Business Logic, Input Validation, Access Control, Lending, DEX, Staking, Bridges, NFT, Gaming, Governance
-// 40 batched files × ~50-70 patterns each + 50 core + 250+ individual patterns = 2530+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 2480; // 2530+ total with all batched patterns
+//   - solana-batched-patterns-41.ts (SOL1161-SOL1230): CPI, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance
+//   - solana-batched-patterns-42.ts (SOL1231-SOL1300): DeFi (AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming)
+//   - solana-batched-patterns-43.ts (SOL1301-SOL1370): Real-World Exploits 2024-2025, Sec3 2025 Categories
+//   - solana-batched-patterns-44.ts (SOL1371-SOL1440): Infrastructure, BPF, Memory, Compute, Validators, Anchor, Serialization
+// Categories covered: CPI Security, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance, AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming, Real Exploits, Sec3 Categories, BPF/Runtime, Memory, Compute, Validators, Anchor, Serialization
+// 44 batched files × ~70 patterns each + 50 core + 250+ individual patterns = 3360+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 3310; // 3360+ total with all batched patterns

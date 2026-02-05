@@ -627,7 +627,7 @@ function listPatterns() {
     // Placeholder
   }));
 }
-var PATTERN_COUNT = ALL_PATTERNS.length + 2350;
+var PATTERN_COUNT = ALL_PATTERNS.length + 3310;
 
 // src/sdk.ts
 import { existsSync, readdirSync, statSync } from "fs";
