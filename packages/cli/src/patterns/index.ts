@@ -341,6 +341,15 @@ import { checkMangoMarketsPatterns } from './mango-markets-patterns.js';
 import { checkZellicAnchorPatterns } from './zellic-anchor-patterns.js';
 import { checkOttersecAuditPatterns } from './ottersec-audit-patterns.js';
 
+// New patterns SOL593-SOL612 (Feb 5 2026 2:30AM - Business Logic Patterns from Sec3 Report)
+import { checkIncorrectStateMachine, checkMissingInvariantChecks, checkUnrestrictedParameterUpdate, checkIncorrectAccounting, checkMissingSettlementValidation, checkInconsistentFeeCalculation, checkMissingCooldownPeriod, checkIncorrectShareCalculation, checkMissingEpochBoundary, checkIncorrectOrderMatching, checkMissingPositionLimits, checkIncorrectLiquidationPriority, checkMissingPartialFillHandling, checkIncorrectUtilizationRate, checkMissingDustThreshold, checkIncorrectRebaseHandling, checkMissingCrossCollateralValidation, checkIncorrectInterestAccrual, checkMissingReserveFactor, checkIncorrectSlashingCondition } from './solana-batched-patterns-18.js';
+
+// New patterns SOL613-SOL632 (Feb 5 2026 2:30AM - Access Control & Input Validation from Sec3 Report)
+import { checkMissingRBAC, checkHardcodedAuthorityAddress, checkMissingMultisigRequirement, checkUnrestrictedDelegateAuthority, checkMissingAuthoritySeparation, checkInsufficientInputLengthValidation, checkMissingNumericBounds, checkUnvalidatedStringInput, checkMissingZeroAddressCheck, checkInsufficientArrayIndexValidation, checkMissingTimestampFutureValidation, checkUnvalidatedPercentageInput, checkMissingPubkeyValidation, checkTimelockBypassParameter, checkMissingReentrancyGuardStateChange, checkInsufficientMerkleProofValidation, checkMissingEnumExhaustiveness, checkMissingProgramIdValidationCpi, checkMissingAuthorityExpiry, checkUnsafeTypeConversion } from './solana-batched-patterns-19.js';
+
+// New patterns SOL633-SOL652 (Feb 5 2026 2:30AM - Data Integrity & DoS from Sec3 Report)
+import { checkUncheckedDivisionRemainder, checkMissingDataVersionCheck, checkInconsistentSerialization, checkMissingChecksumValidation, checkRaceConditionParallelUpdates, checkMissingAtomicUpdate, checkIncorrectBitManipulation, checkMissingDataMigration, checkComputeUnitExhaustion, checkAccountCreationDos, checkLogSpamAttack, checkMemoryAllocationDos, checkStackOverflowRecursion, checkBlockingOperationCriticalPath, checkQueueGriefingAttack, checkOracleLivenessDependency, checkInsufficientGasReserve, checkSignatureVerificationDos, checkIntegerUnderflowUnsigned, checkHashCollisionRisk } from './solana-batched-patterns-20.js';
+
 export interface PatternInput {
   idl: ParsedIdl | null;
   rust: ParsedRust | null;
@@ -2529,6 +2538,72 @@ const patterns: Pattern[] = [
   { id: 'SOL590', name: 'Mango Markets Exploit Patterns', severity: 'critical', run: checkMangoMarketsPatterns },
   { id: 'SOL591', name: 'Zellic Anchor Vulnerability Patterns', severity: 'critical', run: checkZellicAnchorPatterns },
   { id: 'SOL592', name: 'OtterSec Audit Methodology Patterns', severity: 'high', run: checkOttersecAuditPatterns },
+  
+  // NEW PATTERNS SOL593-SOL612 (Feb 5 2026 2:30AM - Business Logic Patterns from Sec3 2025 Report)
+  { id: 'SOL593', name: 'Incorrect State Machine Transitions', severity: 'high', run: checkIncorrectStateMachine },
+  { id: 'SOL594', name: 'Missing Invariant Checks', severity: 'critical', run: checkMissingInvariantChecks },
+  { id: 'SOL595', name: 'Unrestricted Protocol Parameter Updates', severity: 'high', run: checkUnrestrictedParameterUpdate },
+  { id: 'SOL596', name: 'Incorrect Accounting Updates', severity: 'critical', run: checkIncorrectAccounting },
+  { id: 'SOL597', name: 'Missing Settlement Validation', severity: 'high', run: checkMissingSettlementValidation },
+  { id: 'SOL598', name: 'Inconsistent Fee Calculation', severity: 'medium', run: checkInconsistentFeeCalculation },
+  { id: 'SOL599', name: 'Missing Cooldown Period', severity: 'medium', run: checkMissingCooldownPeriod },
+  { id: 'SOL600', name: 'Incorrect Share Calculation', severity: 'critical', run: checkIncorrectShareCalculation },
+  { id: 'SOL601', name: 'Missing Epoch Boundary Handling', severity: 'medium', run: checkMissingEpochBoundary },
+  { id: 'SOL602', name: 'Incorrect Order Matching Logic', severity: 'high', run: checkIncorrectOrderMatching },
+  { id: 'SOL603', name: 'Missing Position Size Limits', severity: 'high', run: checkMissingPositionLimits },
+  { id: 'SOL604', name: 'Incorrect Liquidation Priority', severity: 'high', run: checkIncorrectLiquidationPriority },
+  { id: 'SOL605', name: 'Missing Partial Fill Handling', severity: 'medium', run: checkMissingPartialFillHandling },
+  { id: 'SOL606', name: 'Incorrect Utilization Rate Calculation', severity: 'high', run: checkIncorrectUtilizationRate },
+  { id: 'SOL607', name: 'Missing Dust Threshold Handling', severity: 'low', run: checkMissingDustThreshold },
+  { id: 'SOL608', name: 'Incorrect Rebase Token Handling', severity: 'high', run: checkIncorrectRebaseHandling },
+  { id: 'SOL609', name: 'Missing Cross-Collateral Validation', severity: 'high', run: checkMissingCrossCollateralValidation },
+  { id: 'SOL610', name: 'Incorrect Interest Accrual', severity: 'high', run: checkIncorrectInterestAccrual },
+  { id: 'SOL611', name: 'Missing Reserve Factor Application', severity: 'medium', run: checkMissingReserveFactor },
+  { id: 'SOL612', name: 'Incorrect Slashing Condition', severity: 'critical', run: checkIncorrectSlashingCondition },
+  
+  // NEW PATTERNS SOL613-SOL632 (Feb 5 2026 2:30AM - Access Control & Input Validation from Sec3 Report)
+  { id: 'SOL613', name: 'Missing Role-Based Access Control', severity: 'high', run: checkMissingRBAC },
+  { id: 'SOL614', name: 'Hardcoded Authority Address', severity: 'medium', run: checkHardcodedAuthorityAddress },
+  { id: 'SOL615', name: 'Missing Multi-Signature Requirement', severity: 'high', run: checkMissingMultisigRequirement },
+  { id: 'SOL616', name: 'Unrestricted Delegate Authority', severity: 'medium', run: checkUnrestrictedDelegateAuthority },
+  { id: 'SOL617', name: 'Missing Authority Separation', severity: 'medium', run: checkMissingAuthoritySeparation },
+  { id: 'SOL618', name: 'Insufficient Input Length Validation', severity: 'high', run: checkInsufficientInputLengthValidation },
+  { id: 'SOL619', name: 'Missing Numeric Bounds Validation', severity: 'medium', run: checkMissingNumericBounds },
+  { id: 'SOL620', name: 'Unvalidated String Input', severity: 'medium', run: checkUnvalidatedStringInput },
+  { id: 'SOL621', name: 'Missing Zero Address Check', severity: 'high', run: checkMissingZeroAddressCheck },
+  { id: 'SOL622', name: 'Insufficient Array Index Validation', severity: 'high', run: checkInsufficientArrayIndexValidation },
+  { id: 'SOL623', name: 'Missing Timestamp Future Validation', severity: 'medium', run: checkMissingTimestampFutureValidation },
+  { id: 'SOL624', name: 'Unvalidated Percentage Input', severity: 'medium', run: checkUnvalidatedPercentageInput },
+  { id: 'SOL625', name: 'Missing Pubkey Format Validation', severity: 'medium', run: checkMissingPubkeyValidation },
+  { id: 'SOL626', name: 'Timelock Bypass via Parameter', severity: 'critical', run: checkTimelockBypassParameter },
+  { id: 'SOL627', name: 'Missing Reentrancy Guard on State Changes', severity: 'high', run: checkMissingReentrancyGuardStateChange },
+  { id: 'SOL628', name: 'Insufficient Merkle Proof Validation', severity: 'high', run: checkInsufficientMerkleProofValidation },
+  { id: 'SOL629', name: 'Missing Enum Variant Exhaustiveness', severity: 'medium', run: checkMissingEnumExhaustiveness },
+  { id: 'SOL630', name: 'Missing Program ID Validation in CPIs', severity: 'critical', run: checkMissingProgramIdValidationCpi },
+  { id: 'SOL631', name: 'Missing Authority Expiry Check', severity: 'medium', run: checkMissingAuthorityExpiry },
+  { id: 'SOL632', name: 'Unsafe Type Conversion', severity: 'high', run: checkUnsafeTypeConversion },
+  
+  // NEW PATTERNS SOL633-SOL652 (Feb 5 2026 2:30AM - Data Integrity & DoS from Sec3 Report)
+  { id: 'SOL633', name: 'Unchecked Division Remainder', severity: 'medium', run: checkUncheckedDivisionRemainder },
+  { id: 'SOL634', name: 'Missing Data Version Check', severity: 'medium', run: checkMissingDataVersionCheck },
+  { id: 'SOL635', name: 'Inconsistent Serialization Format', severity: 'medium', run: checkInconsistentSerialization },
+  { id: 'SOL636', name: 'Missing Checksum Validation', severity: 'medium', run: checkMissingChecksumValidation },
+  { id: 'SOL637', name: 'Race Condition in Parallel Updates', severity: 'high', run: checkRaceConditionParallelUpdates },
+  { id: 'SOL638', name: 'Missing Atomic Update Guarantee', severity: 'high', run: checkMissingAtomicUpdate },
+  { id: 'SOL639', name: 'Incorrect Bit Manipulation', severity: 'medium', run: checkIncorrectBitManipulation },
+  { id: 'SOL640', name: 'Missing Data Migration Path', severity: 'medium', run: checkMissingDataMigration },
+  { id: 'SOL641', name: 'Compute Unit Exhaustion', severity: 'high', run: checkComputeUnitExhaustion },
+  { id: 'SOL642', name: 'Account Creation DoS', severity: 'medium', run: checkAccountCreationDos },
+  { id: 'SOL643', name: 'Log Spam Attack', severity: 'low', run: checkLogSpamAttack },
+  { id: 'SOL644', name: 'Memory Allocation DoS', severity: 'high', run: checkMemoryAllocationDos },
+  { id: 'SOL645', name: 'Stack Overflow via Recursion', severity: 'high', run: checkStackOverflowRecursion },
+  { id: 'SOL646', name: 'Blocking Operation in Critical Path', severity: 'medium', run: checkBlockingOperationCriticalPath },
+  { id: 'SOL647', name: 'Queue Griefing Attack', severity: 'medium', run: checkQueueGriefingAttack },
+  { id: 'SOL648', name: 'Oracle Liveness Dependency', severity: 'high', run: checkOracleLivenessDependency },
+  { id: 'SOL649', name: 'Insufficient Gas Reserve', severity: 'medium', run: checkInsufficientGasReserve },
+  { id: 'SOL650', name: 'Signature Verification DoS', severity: 'high', run: checkSignatureVerificationDos },
+  { id: 'SOL651', name: 'Integer Underflow on Unsigned', severity: 'critical', run: checkIntegerUnderflowUnsigned },
+  { id: 'SOL652', name: 'Hash Collision Risk', severity: 'medium', run: checkHashCollisionRisk },
 ];
 
 export async function runPatterns(input: PatternInput): Promise<Finding[]> {
