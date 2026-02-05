@@ -570,4 +570,5 @@ export function listPatterns(): Pattern[] {
 // Export total pattern count (including dynamic imports when available)
 // Updated: Feb 5, 2026 09:30 AM - Added SOL905-SOL1020 (116 new patterns from Helius exploit history & Sec3 2025 report)
 // New batches: solana-batched-patterns-37.ts (SOL905-SOL960), solana-batched-patterns-38.ts (SOL961-SOL1020)
-export const PATTERN_COUNT = ALL_PATTERNS.length + 1870; // 1920+ total with all batched patterns
+// 38 batched files × ~50-60 patterns each + 50 core + 250+ individual patterns = 2400+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 2350; // 2400+ total with all batched patterns
