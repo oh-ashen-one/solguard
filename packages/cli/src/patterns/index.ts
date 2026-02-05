@@ -298,6 +298,30 @@ import { checkDaoTreasury } from './dao-treasury.js';
 import { checkRestaking } from './restaking.js';
 import { checkRealWorldAssets } from './real-world-assets.js';
 
+// New patterns SOL501-SOL560 (Feb 5 2026 - Hackathon push to 500+)
+import { checkPrivilegedKeyManagement, checkSinglePointAuthority, checkKeyRotationMechanism, checkInsecureUpgradeAuthority, checkHotWalletConcentration, checkMissingEmergencyPause, checkInsufficientEventLogging, checkSocialEngineeringAttackSurface, checkPhishingVulnerableApproval, checkDomainSpoofingVulnerability, checkMissingRateLimiting, checkUnprotectedConfigUpdate, checkImproperAccessControlHierarchy, checkUnverifiedExternalCallResult, checkMissingWithdrawalDelay, checkInsecureRandomNumberGeneration, checkCrossProgramStateInconsistency, checkUnprotectedInitialization, checkMissingSanityChecks, checkTimestampDependencyWithoutBounds } from './solana-batched-patterns-15.js';
+
+import { checkFlashLoanReentrancy, checkPriceFeedStaleness, checkInsufficientLiquidityCheck, checkUnboundedLoopCriticalPath, checkMissingSlippageProtection, checkSandwichAttackVuln, checkImproperDecimalHandling, checkVaultShareManipulation, checkInterestRateManipulation, checkLiquidationThresholdBypass, checkRewardCalculationRounding, checkGovernanceQuorumManipulation, checkNftMetadataManipulation, checkRoyaltyBypassPattern, checkUnstakingCooldownBypass, checkFeeManipulationAttack, checkImproperTokenTransferValidation, checkMerkleProofManipulation, checkCrossMarginCollateralRisk, checkFundingRateManipulation } from './solana-batched-patterns-16.js';
+
+import { checkUnprotectedAdminFunctions, checkMissingInputLengthValidation, checkAccountDataSizeMismatch, checkDeprecatedSolanaApiUsage, checkMissingProgramDeploymentCheck, checkUnsafeTypeCasting, checkMissingAccountOwnershipValidation, checkImproperBumpSeedValidation, checkInsufficientEntropyInSeeds, checkMissingCloseAccountCleanup, checkComputeBudgetExhaustion, checkUnsafeArithmeticTokenCalc, checkMissingAccountDiscriminator, checkImproperErrorHandlingCpi, checkReentrancyThroughCallback, checkMissingRentExemptionCheck, checkUnsafeDeserializationPattern, checkMissingTokenAccountFreezeCheck, checkImproperAuthorityDelegation, checkMissingStateMachineValidation } from './solana-batched-patterns-17.js';
+
+// New patterns SOL301-SOL315 (Feb 5 2026 - Real-world exploit research session)
+import { checkCandyMachineExploit } from './candy-machine-exploit.js';
+import { checkMaliciousLendingMarket } from './malicious-lending-market.js';
+import { checkTokenApprovalDrain } from './token-approval-drain.js';
+import { checkSemanticInconsistency as checkSemanticInconsistencyV2 } from './semantic-inconsistency.js';
+import { checkLpFairPricing } from './lp-fair-pricing.js';
+import { checkRevertExploit as checkRevertExploitV2 } from './revert-exploit.js';
+import { checkCheckedMathValidation } from './checked-math-validation.js';
+import { checkCrossChainDelegation } from './cross-chain-delegation.js';
+import { checkIncineratorAttack } from './incinerator-attack.js';
+import { checkExploitChaining } from './exploit-chaining.js';
+import { checkStakePoolSecurity } from './stake-pool-security.js';
+import { checkProgramUpgradeSecurity } from './program-upgrade-security.js';
+import { checkSimulationBypass } from './simulation-bypass.js';
+import { checkOracleTwapManipulation } from './oracle-twap-manipulation.js';
+import { checkNpmSupplyChain } from './npm-supply-chain.js';
+
 export interface PatternInput {
   idl: ParsedIdl | null;
   rust: ParsedRust | null;
@@ -2389,6 +2413,84 @@ const patterns: Pattern[] = [
     severity: 'critical',
     run: checkRealWorldAssets,
   },
+  // NEW PATTERNS SOL501-SOL560 (Feb 5 2026 - Hackathon 500+ push)
+  { id: 'SOL501', name: 'Privileged Key Management', severity: 'critical', run: checkPrivilegedKeyManagement },
+  { id: 'SOL502', name: 'Single Point of Failure Authority', severity: 'high', run: checkSinglePointAuthority },
+  { id: 'SOL503', name: 'Missing Key Rotation Mechanism', severity: 'medium', run: checkKeyRotationMechanism },
+  { id: 'SOL504', name: 'Insecure Upgrade Authority', severity: 'critical', run: checkInsecureUpgradeAuthority },
+  { id: 'SOL505', name: 'Hot Wallet Concentration Risk', severity: 'high', run: checkHotWalletConcentration },
+  { id: 'SOL506', name: 'Missing Emergency Pause', severity: 'high', run: checkMissingEmergencyPause },
+  { id: 'SOL507', name: 'Insufficient Event Logging', severity: 'medium', run: checkInsufficientEventLogging },
+  { id: 'SOL508', name: 'Social Engineering Attack Surface', severity: 'high', run: checkSocialEngineeringAttackSurface },
+  { id: 'SOL509', name: 'Phishing-Vulnerable Approval Pattern', severity: 'high', run: checkPhishingVulnerableApproval },
+  { id: 'SOL510', name: 'Domain Spoofing Vulnerability', severity: 'medium', run: checkDomainSpoofingVulnerability },
+  { id: 'SOL511', name: 'Missing Rate Limiting', severity: 'medium', run: checkMissingRateLimiting },
+  { id: 'SOL512', name: 'Unprotected Configuration Update', severity: 'high', run: checkUnprotectedConfigUpdate },
+  { id: 'SOL513', name: 'Improper Access Control Hierarchy', severity: 'medium', run: checkImproperAccessControlHierarchy },
+  { id: 'SOL514', name: 'Unverified External Call Result', severity: 'high', run: checkUnverifiedExternalCallResult },
+  { id: 'SOL515', name: 'Missing Withdrawal Delay', severity: 'medium', run: checkMissingWithdrawalDelay },
+  { id: 'SOL516', name: 'Insecure Random Number Generation', severity: 'critical', run: checkInsecureRandomNumberGeneration },
+  { id: 'SOL517', name: 'Cross-Program State Inconsistency', severity: 'high', run: checkCrossProgramStateInconsistency },
+  { id: 'SOL518', name: 'Unprotected Initialization', severity: 'critical', run: checkUnprotectedInitialization },
+  { id: 'SOL519', name: 'Missing Sanity Checks on Inputs', severity: 'medium', run: checkMissingSanityChecks },
+  { id: 'SOL520', name: 'Timestamp Dependency Without Bounds', severity: 'medium', run: checkTimestampDependencyWithoutBounds },
+  { id: 'SOL521', name: 'Flash Loan Re-entrancy Risk', severity: 'critical', run: checkFlashLoanReentrancy },
+  { id: 'SOL522', name: 'Price Feed Staleness Not Checked', severity: 'high', run: checkPriceFeedStaleness },
+  { id: 'SOL523', name: 'Insufficient Liquidity Check', severity: 'high', run: checkInsufficientLiquidityCheck },
+  { id: 'SOL524', name: 'Unbounded Loop in Critical Path', severity: 'high', run: checkUnboundedLoopCriticalPath },
+  { id: 'SOL525', name: 'Missing Slippage Protection', severity: 'high', run: checkMissingSlippageProtection },
+  { id: 'SOL526', name: 'Sandwich Attack Vulnerability', severity: 'high', run: checkSandwichAttackVuln },
+  { id: 'SOL527', name: 'Improper Decimal Handling', severity: 'high', run: checkImproperDecimalHandling },
+  { id: 'SOL528', name: 'Vault Share Manipulation Risk', severity: 'critical', run: checkVaultShareManipulation },
+  { id: 'SOL529', name: 'Interest Rate Manipulation Risk', severity: 'high', run: checkInterestRateManipulation },
+  { id: 'SOL530', name: 'Liquidation Threshold Bypass Risk', severity: 'critical', run: checkLiquidationThresholdBypass },
+  { id: 'SOL531', name: 'Reward Calculation Rounding Issues', severity: 'medium', run: checkRewardCalculationRounding },
+  { id: 'SOL532', name: 'Governance Quorum Manipulation', severity: 'high', run: checkGovernanceQuorumManipulation },
+  { id: 'SOL533', name: 'NFT Metadata Manipulation Risk', severity: 'medium', run: checkNftMetadataManipulation },
+  { id: 'SOL534', name: 'Royalty Bypass Pattern', severity: 'medium', run: checkRoyaltyBypassPattern },
+  { id: 'SOL535', name: 'Unstaking Cooldown Bypass', severity: 'medium', run: checkUnstakingCooldownBypass },
+  { id: 'SOL536', name: 'Fee Manipulation Attack Vector', severity: 'high', run: checkFeeManipulationAttack },
+  { id: 'SOL537', name: 'Improper Token Transfer Validation', severity: 'high', run: checkImproperTokenTransferValidation },
+  { id: 'SOL538', name: 'Merkle Proof Manipulation Risk', severity: 'high', run: checkMerkleProofManipulation },
+  { id: 'SOL539', name: 'Cross-Margin Collateral Risk', severity: 'high', run: checkCrossMarginCollateralRisk },
+  { id: 'SOL540', name: 'Funding Rate Manipulation', severity: 'high', run: checkFundingRateManipulation },
+  { id: 'SOL541', name: 'Unprotected Admin Functions', severity: 'critical', run: checkUnprotectedAdminFunctions },
+  { id: 'SOL542', name: 'Missing Input Length Validation', severity: 'medium', run: checkMissingInputLengthValidation },
+  { id: 'SOL543', name: 'Account Data Size Mismatch', severity: 'high', run: checkAccountDataSizeMismatch },
+  { id: 'SOL544', name: 'Deprecated Solana API Usage', severity: 'low', run: checkDeprecatedSolanaApiUsage },
+  { id: 'SOL545', name: 'Missing Program Deployment Check', severity: 'high', run: checkMissingProgramDeploymentCheck },
+  { id: 'SOL546', name: 'Unsafe Type Casting', severity: 'high', run: checkUnsafeTypeCasting },
+  { id: 'SOL547', name: 'Missing Account Ownership Validation', severity: 'critical', run: checkMissingAccountOwnershipValidation },
+  { id: 'SOL548', name: 'Improper Bump Seed Validation', severity: 'high', run: checkImproperBumpSeedValidation },
+  { id: 'SOL549', name: 'Insufficient Entropy in PDA Seeds', severity: 'medium', run: checkInsufficientEntropyInSeeds },
+  { id: 'SOL550', name: 'Missing Close Account Data Cleanup', severity: 'medium', run: checkMissingCloseAccountCleanup },
+  { id: 'SOL551', name: 'Vulnerable to Compute Budget Exhaustion', severity: 'medium', run: checkComputeBudgetExhaustion },
+  { id: 'SOL552', name: 'Unsafe Arithmetic in Token Calculations', severity: 'high', run: checkUnsafeArithmeticTokenCalc },
+  { id: 'SOL553', name: 'Missing Account Discriminator', severity: 'high', run: checkMissingAccountDiscriminator },
+  { id: 'SOL554', name: 'Improper Error Handling in CPI', severity: 'high', run: checkImproperErrorHandlingCpi },
+  { id: 'SOL555', name: 'Reentrancy Through CPI Callback', severity: 'critical', run: checkReentrancyThroughCallback },
+  { id: 'SOL556', name: 'Missing Rent Exemption Check', severity: 'medium', run: checkMissingRentExemptionCheck },
+  { id: 'SOL557', name: 'Unsafe Deserialization Pattern', severity: 'high', run: checkUnsafeDeserializationPattern },
+  { id: 'SOL558', name: 'Missing Token Account Freeze Check', severity: 'medium', run: checkMissingTokenAccountFreezeCheck },
+  { id: 'SOL559', name: 'Improper Authority Delegation', severity: 'high', run: checkImproperAuthorityDelegation },
+  { id: 'SOL560', name: 'Missing State Machine Validation', severity: 'high', run: checkMissingStateMachineValidation },
+  
+  // NEW PATTERNS SOL561-SOL575 (Feb 5 2026 - Real-world exploit research session)
+  { id: 'SOL561', name: 'Candy Machine Exploit Pattern', severity: 'critical', run: checkCandyMachineExploit },
+  { id: 'SOL562', name: 'Malicious Lending Market Creation', severity: 'critical', run: checkMaliciousLendingMarket },
+  { id: 'SOL563', name: 'Token Approval Drain Attack', severity: 'high', run: checkTokenApprovalDrain },
+  { id: 'SOL564', name: 'Semantic Inconsistency Detection V2', severity: 'critical', run: checkSemanticInconsistencyV2 },
+  { id: 'SOL565', name: 'LP Token Fair Pricing Vulnerability', severity: 'critical', run: checkLpFairPricing },
+  { id: 'SOL566', name: 'Reverting Transaction Exploit V2', severity: 'critical', run: checkRevertExploitV2 },
+  { id: 'SOL567', name: 'Checked Math Validation Comprehensive', severity: 'critical', run: checkCheckedMathValidation },
+  { id: 'SOL568', name: 'Cross-Chain Delegation Verification', severity: 'critical', run: checkCrossChainDelegation },
+  { id: 'SOL569', name: 'Incinerator/Burn Attack Detection', severity: 'high', run: checkIncineratorAttack },
+  { id: 'SOL570', name: 'Exploit Chaining Detection', severity: 'critical', run: checkExploitChaining },
+  { id: 'SOL571', name: 'Stake Pool Security Comprehensive', severity: 'critical', run: checkStakePoolSecurity },
+  { id: 'SOL572', name: 'Program Upgrade Security', severity: 'critical', run: checkProgramUpgradeSecurity },
+  { id: 'SOL573', name: 'Simulation Bypass Detection', severity: 'critical', run: checkSimulationBypass },
+  { id: 'SOL574', name: 'Oracle TWAP Manipulation', severity: 'critical', run: checkOracleTwapManipulation },
+  { id: 'SOL575', name: 'NPM Supply Chain Attack Detection', severity: 'critical', run: checkNpmSupplyChain },
 ];
 
 export async function runPatterns(input: PatternInput): Promise<Finding[]> {
