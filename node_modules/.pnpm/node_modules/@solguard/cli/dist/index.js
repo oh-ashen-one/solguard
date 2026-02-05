@@ -3,7 +3,7 @@ import {
   getPatternById,
   listPatterns,
   runPatterns
-} from "./chunk-MG3ANP4E.js";
+} from "./chunk-4II7CU6Y.js";
 import {
   parseIdl
 } from "./chunk-HWAQQY7Q.js";
@@ -440,15 +440,15 @@ import { join as join3 } from "path";
 
 // src/certificate/metadata.ts
 import { createHash } from "crypto";
-function generateCertificateMetadata(result, programId, imageUri = "https://solguard.dev/certificate.png") {
+function generateCertificateMetadata(result, programId, imageUri = "https://solshieldai.netlify.app/certificate.png") {
   const passed = result.passed;
   const findingsHash = createHash("sha256").update(JSON.stringify(result.findings)).digest("hex").slice(0, 16);
   return {
-    name: `SolGuard Audit: ${programId.slice(0, 8)}...`,
+    name: `SolShield Audit: ${programId.slice(0, 8)}...`,
     symbol: "AUDIT",
-    description: passed ? `\u2705 This program passed the SolGuard security audit with no critical or high severity issues.` : `\u26A0\uFE0F This program was audited by SolGuard. ${result.summary.critical} critical and ${result.summary.high} high severity issues were found.`,
+    description: passed ? `\u2705 This program passed the SolShield security audit with no critical or high severity issues.` : `\u26A0\uFE0F This program was audited by SolShield. ${result.summary.critical} critical and ${result.summary.high} high severity issues were found.`,
     image: imageUri,
-    external_url: `https://solguard.dev/audit/${programId}`,
+    external_url: `https://solshieldai.netlify.app/audit/${programId}`,
     attributes: [
       {
         trait_type: "Status",
@@ -584,7 +584,7 @@ function generateCertificateSvg(programId, passed, summary, timestamp) {
   <text x="200" y="370" text-anchor="middle" fill="#71717A" font-family="system-ui" font-size="11">Audited on ${date}</text>
   
   <!-- Footer -->
-  <text x="200" y="450" text-anchor="middle" fill="#52525B" font-family="system-ui" font-size="10">Powered by AI \u2022 solguard.dev</text>
+  <text x="200" y="450" text-anchor="middle" fill="#52525B" font-family="system-ui" font-size="10">Powered by AI \u2022 solshieldai.netlify.app</text>
   <text x="200" y="470" text-anchor="middle" fill="#3F3F46" font-family="system-ui" font-size="8">This certificate is stored on the Solana blockchain</text>
 </svg>
   `.trim();
@@ -602,7 +602,7 @@ async function certificateCommand(path, options) {
     };
     try {
       const { parseRustFiles: parseRustFiles2 } = await import("./rust-LZBLPUB7.js");
-      const { runPatterns: runPatterns2 } = await import("./patterns-2HFGU2WH.js");
+      const { runPatterns: runPatterns2 } = await import("./patterns-NICIL4SE.js");
       const { existsSync: existsSync7, statSync: statSync6, readdirSync: readdirSync6 } = await import("fs");
       if (!existsSync7(path)) {
         throw new Error(`Path not found: ${path}`);
@@ -2663,7 +2663,7 @@ program.command("report").description("Generate HTML audit report").argument("<p
   const { join: join9, basename } = await import("path");
   const { parseRustFiles: parseRustFiles2 } = await import("./rust-LZBLPUB7.js");
   const { parseIdl: parseIdl2 } = await import("./idl-YYKIXDKT.js");
-  const { runPatterns: runPatterns2 } = await import("./patterns-2HFGU2WH.js");
+  const { runPatterns: runPatterns2 } = await import("./patterns-NICIL4SE.js");
   if (!existsSync7(path)) {
     console.error(chalk9.red(`Path not found: ${path}`));
     process.exit(1);

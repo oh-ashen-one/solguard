@@ -118,6 +118,31 @@ import { checkInstructionSysvar } from './instruction-sysvar.js';
 import { checkStateTransition } from './state-transition.js';
 import { checkAccountDataMatch } from './account-data-match.js';
 import { checkTokenFreeze } from './token-freeze.js';
+import { checkDeprecatedFunction } from './deprecated-function.js';
+import { checkStaleData } from './stale-data.js';
+import { checkFrontRunning } from './front-running.js';
+import { checkMissingConstraint } from './missing-constraint.js';
+import { checkUnsafeDeserialization } from './unsafe-deserialization.js';
+import { checkRewardDistribution } from './reward-distribution.js';
+import { checkCollateralValidation } from './collateral-validation.js';
+import { checkFeeExtraction } from './fee-extraction.js';
+import { checkNftRoyalty } from './nft-royalty.js';
+import { checkLiquidityPool } from './liquidity-pool.js';
+import { checkAccountOwnership } from './account-ownership.js';
+import { checkInstructionGuard } from './instruction-guard.js';
+import { checkDelegationAttack } from './delegation-attack.js';
+import { checkOracleSafety } from './oracle-safety.js';
+import { checkEscrowSafety } from './escrow-safety.js';
+import { checkBorrowRate } from './borrow-rate.js';
+import { checkVoteManipulation } from './vote-manipulation.js';
+import { checkEmergencyWithdraw } from './emergency-withdraw.js';
+import { checkPermitSecurity } from './permit-security.js';
+import { checkCallbackAttack } from './callback-attack.js';
+import { checkPositionManagement } from './position-management.js';
+import { checkTokenStandard } from './token-standard.js';
+import { checkClockExploit } from './clock-exploit.js';
+import { checkSeedCollision } from './seed-collision.js';
+import { checkCalculationPrecision } from './calculation-precision.js';
 import { checkZeroCopyAccount } from './zero-copy-account.js';
 import { checkProgramUpgrade } from './program-upgrade.js';
 import { checkAccountConstraintCombo } from './account-constraint-combo.js';
@@ -151,6 +176,79 @@ import { checkRootOfTrust } from './root-of-trust.js';
 import { checkSplLendingRounding } from './spl-lending-rounding.js';
 import { checkAnchorUncheckedAccount } from './anchor-unchecked-account.js';
 import { checkCrossProgamInvocationSafety } from './cross-program-invocation-check.js';
+
+// New patterns SOL176-SOL300 (Real-world exploits and advanced checks)
+import { checkMongodbInjection } from './mongodb-injection.js';
+import { checkSessionTokenSecurity } from './session-token-security.js';
+import { checkBondingCurveExploit } from './bonding-curve-exploit.js';
+import { checkAdminAuthenticationBypass } from './admin-authentication-bypass.js';
+import { checkFlashLoanAttack } from './flash-loan-attack.js';
+import { checkGuardianValidation } from './guardian-validation.js';
+import { checkWalletKeyExposure } from './wallet-key-exposure.js';
+import { checkLiquidationThreshold } from './liquidation-threshold.js';
+import { checkFakeCollateralMint } from './fake-collateral-mint.js';
+import { checkEmployeeInsiderAttack } from './employee-insider-attack.js';
+import { checkDaoProposalAttack } from './dao-proposal-attack.js';
+import { checkPriceOracleTwap } from './price-oracle-twap.js';
+import { checkTickAccountValidation } from './tick-account-validation.js';
+import { checkNftMintingDos } from './nft-minting-dos.js';
+import { checkDependencyHijacking } from './dependency-hijacking.js';
+import { checkFrontendPhishing } from './frontend-phishing.js';
+import { checkDdosProtection } from './ddos-protection.js';
+import { checkJitCacheBug } from './jit-cache-bug.js';
+import { checkDurableNonceSafety } from './durable-nonce-safety.js';
+import { checkDuplicateBlockCheck } from './duplicate-block-check.js';
+import { checkTurbinePropagation } from './turbine-propagation.js';
+import { checkElfAlignment } from './elf-alignment.js';
+import { checkTradingBotSecurity } from './trading-bot-security.js';
+import { checkDexxExploit } from './dexx-exploit.js';
+import { checkNoonesExploit } from './noones-exploit.js';
+import { checkLoopscaleExploit } from './loopscale-exploit.js';
+import { checkSolareumExploit } from './solareum-exploit.js';
+import { checkOptifiLockup } from './optifi-lockup.js';
+import { checkTulipExploit } from './tulip-exploit.js';
+import { checkUxdExploit } from './uxd-exploit.js';
+import { checkIoNetExploit } from './io-net-exploit.js';
+import { checkAuroryExploit } from './aurory-exploit.js';
+import { checkSvtTokenExploit } from './svt-token-exploit.js';
+import { checkSagaDaoExploit } from './saga-dao-exploit.js';
+import { checkThunderTerminal } from './thunder-terminal.js';
+import { checkRaydiumExploit } from './raydium-exploit.js';
+import { checkSolendV2Exploit } from './solend-v2-exploit.js';
+import { checkCypherV2Exploit } from './cypher-v2-exploit.js';
+import { checkSeedInjection } from './seed-injection.js';
+import { checkAccountDusting } from './account-dusting.js';
+import { checkPhantomDos } from './phantom-dos.js';
+import { checkGrapeProtocol } from './grape-protocol.js';
+import { checkIntegerTruncation } from './integer-truncation.js';
+import { checkDivisionBeforeMultiplication } from './division-before-multiplication.js';
+import { checkAccountDiscriminatorLength } from './account-discriminator-length.js';
+import { checkMissingReturn } from './missing-return.js';
+import { checkUnsafeUnwrap } from './unsafe-unwrap.js';
+import { checkUnsafeExpect } from './unsafe-expect.js';
+import { checkUncheckedReturn } from './unchecked-return.js';
+import { checkUninitializedMemory } from './uninitialized-memory.js';
+import { checkUnsafeSlice, checkHardcodedAddress, checkExcessiveAccounts, checkDeprecatedInstruction, checkMissingClose, checkDecimalMismatch, checkMissingSysvarClock, checkUnboundedString, checkVecNoCapacity, checkMissingRentCheck } from './solana-batched-patterns.js';
+import { checkFloatingPoint, checkModuloBias, checkWeakRandomness, checkMagicNumber, checkUncheckedArrayIndex, checkEmptyErrorMessage, checkDeadCode, checkInfiniteLoopRisk, checkUnboundedRecursion, checkUncheckedArithmetic } from './solana-batched-patterns-2.js';
+import { checkMissingBumpValidation, checkExcessiveGas, checkCloneInsteadCopy, checkMissingAuthorityRotation, checkUnprotectedInitialize, checkMissingProgramIdCheck, checkUnvalidatedAccountData, checkTimestampDrift, checkMissingInstructionSysvar, checkExcessiveNesting } from './solana-batched-patterns-3.js';
+import { checkUnvalidatedTokenMint, checkMissingDelegateCheck, checkStaleAccountReference, checkMissingCloseAuthority, checkUnguardedStateTransition, checkMissingEventEmission, checkHardcodedFee, checkMissingSlippage, checkUnvalidatedPriceFeed, checkMissingPriceStaleness } from './solana-batched-patterns-4.js';
+import { checkMissingBalanceCheck, checkUnsafeTokenBurn, checkMissingAnchorError, checkMissingAccessList, checkUncappedSupply, checkMissingPause, checkMissingUpgradeGuard, checkMissingReentrancyGuard, checkMissingDecimalNormalization, checkExposedInternalFunction } from './solana-batched-patterns-5.js';
+import { checkUnsafeSignerSeeds, checkMissingValidationCombo, checkUnsafeLamportMath, checkMissingKeyDerivationSalt, checkImplicitTrust, checkMissingInstructionDataValidation, checkMissingAccountLengthCheck, checkUnsafeCastingFromBytes, checkMissingCpiProgramCheck, checkMissingWritableCheck } from './solana-batched-patterns-6.js';
+import { checkTokenAccountState, checkMissingAssociatedTokenCheck, checkMissingMetadataValidation, checkMissingEditionCheck, checkMissingMasterEdition, checkMissingTokenRecord, checkUnsafeCompression, checkMissingCreatorVerification, checkMissingRoyaltyCheck, checkUnsafeCollectionUpdate, checkMissingDelegateAuthority, checkMissingLockCheck, checkMissingUseAuthority, checkExcessiveAccountRent, checkMissingReallocCheck } from './solana-batched-patterns-7.js';
+
+// New patterns SOL233-SOL250 (Feb 2026 - Real-world exploits from research)
+import { checkWeb3jsSupplyChain } from './web3js-supply-chain.js';
+import { checkJitoDdos } from './jito-ddos.js';
+import { checkParclFrontend } from './parcl-frontend.js';
+import { checkMangoOracleExploit } from './mango-oracle-exploit.js';
+import { checkSlopeWalletLeak } from './slope-wallet-leak.js';
+import { checkPumpFunExploit } from './pump-fun-exploit.js';
+import { checkWormholeGuardian } from './wormhole-guardian.js';
+import { checkBananaGunExploit } from './banana-gun-exploit.js';
+import { checkNirvanaBondingCurve } from './nirvana-bonding-curve.js';
+import { checkAudiusGovernance } from './audius-governance.js';
+import { checkTokenRevokeSafety } from './token-revoke-safety.js';
+import { checkSynthetifyDao } from './synthetify-dao.js';
 
 export interface PatternInput {
   idl: ParsedIdl | null;
@@ -1066,6 +1164,229 @@ const patterns: Pattern[] = [
     name: 'Cross-Program Invocation Safety',
     severity: 'high',
     run: checkCrossProgamInvocationSafety,
+  },
+  {
+    id: 'SOL151',
+    name: 'Deprecated Function Usage',
+    severity: 'critical',
+    run: checkDeprecatedFunction,
+  },
+  {
+    id: 'SOL152',
+    name: 'Stale Data Vulnerability',
+    severity: 'critical',
+    run: checkStaleData,
+  },
+  {
+    id: 'SOL153',
+    name: 'Front-Running Attack Vector',
+    severity: 'critical',
+    run: checkFrontRunning,
+  },
+  {
+    id: 'SOL154',
+    name: 'Missing Anchor Constraints',
+    severity: 'high',
+    run: checkMissingConstraint,
+  },
+  {
+    id: 'SOL155',
+    name: 'Unsafe Deserialization',
+    severity: 'critical',
+    run: checkUnsafeDeserialization,
+  },
+  {
+    id: 'SOL156',
+    name: 'Reward Distribution Vulnerability',
+    severity: 'high',
+    run: checkRewardDistribution,
+  },
+  {
+    id: 'SOL157',
+    name: 'Collateral Validation Bypass',
+    severity: 'critical',
+    run: checkCollateralValidation,
+  },
+  {
+    id: 'SOL158',
+    name: 'Fee Extraction Attack',
+    severity: 'high',
+    run: checkFeeExtraction,
+  },
+  {
+    id: 'SOL159',
+    name: 'NFT Royalty Bypass',
+    severity: 'high',
+    run: checkNftRoyalty,
+  },
+  {
+    id: 'SOL160',
+    name: 'Liquidity Pool Manipulation',
+    severity: 'critical',
+    run: checkLiquidityPool,
+  },
+  {
+    id: 'SOL161',
+    name: 'Account Ownership Validation',
+    severity: 'critical',
+    run: checkAccountOwnership,
+  },
+  {
+    id: 'SOL162',
+    name: 'Instruction Guard Protection',
+    severity: 'high',
+    run: checkInstructionGuard,
+  },
+  {
+    id: 'SOL163',
+    name: 'Delegation Attack Vector',
+    severity: 'high',
+    run: checkDelegationAttack,
+  },
+  {
+    id: 'SOL164',
+    name: 'Oracle Safety Validation',
+    severity: 'critical',
+    run: checkOracleSafety,
+  },
+  {
+    id: 'SOL165',
+    name: 'Escrow Safety Check',
+    severity: 'critical',
+    run: checkEscrowSafety,
+  },
+  {
+    id: 'SOL166',
+    name: 'Borrow Rate Manipulation',
+    severity: 'high',
+    run: checkBorrowRate,
+  },
+  {
+    id: 'SOL167',
+    name: 'Vote Manipulation Attack',
+    severity: 'critical',
+    run: checkVoteManipulation,
+  },
+  {
+    id: 'SOL168',
+    name: 'Emergency Withdraw Safety',
+    severity: 'high',
+    run: checkEmergencyWithdraw,
+  },
+  {
+    id: 'SOL169',
+    name: 'Permit/Signature Security',
+    severity: 'critical',
+    run: checkPermitSecurity,
+  },
+  {
+    id: 'SOL170',
+    name: 'Callback Attack Vector',
+    severity: 'critical',
+    run: checkCallbackAttack,
+  },
+  {
+    id: 'SOL171',
+    name: 'Position Management Safety',
+    severity: 'high',
+    run: checkPositionManagement,
+  },
+  {
+    id: 'SOL172',
+    name: 'Token Standard Compliance',
+    severity: 'high',
+    run: checkTokenStandard,
+  },
+  {
+    id: 'SOL173',
+    name: 'Clock/Time Exploit',
+    severity: 'high',
+    run: checkClockExploit,
+  },
+  {
+    id: 'SOL174',
+    name: 'PDA Seed Collision',
+    severity: 'high',
+    run: checkSeedCollision,
+  },
+  {
+    id: 'SOL175',
+    name: 'Calculation Precision Loss',
+    severity: 'high',
+    run: checkCalculationPrecision,
+  },
+  // NEW PATTERNS SOL233-SOL250 (Feb 2026 - Real-world exploit research)
+  {
+    id: 'SOL233',
+    name: 'Web3.js Supply Chain Attack',
+    severity: 'critical',
+    run: checkWeb3jsSupplyChain,
+  },
+  {
+    id: 'SOL236',
+    name: 'Jito/MEV DDoS Protection',
+    severity: 'high',
+    run: checkJitoDdos,
+  },
+  {
+    id: 'SOL238',
+    name: 'Parcl Frontend Security',
+    severity: 'high',
+    run: checkParclFrontend,
+  },
+  {
+    id: 'SOL239',
+    name: 'Mango Oracle Exploit',
+    severity: 'critical',
+    run: checkMangoOracleExploit,
+  },
+  {
+    id: 'SOL240',
+    name: 'Slope Wallet Key Leakage',
+    severity: 'critical',
+    run: checkSlopeWalletLeak,
+  },
+  {
+    id: 'SOL241',
+    name: 'Pump.fun Employee Exploit',
+    severity: 'high',
+    run: checkPumpFunExploit,
+  },
+  {
+    id: 'SOL242',
+    name: 'Wormhole Guardian Bypass',
+    severity: 'critical',
+    run: checkWormholeGuardian,
+  },
+  {
+    id: 'SOL243',
+    name: 'Banana Gun Bot Exploit',
+    severity: 'high',
+    run: checkBananaGunExploit,
+  },
+  {
+    id: 'SOL245',
+    name: 'Nirvana Bonding Curve Attack',
+    severity: 'critical',
+    run: checkNirvanaBondingCurve,
+  },
+  {
+    id: 'SOL246',
+    name: 'Audius Governance Exploit',
+    severity: 'critical',
+    run: checkAudiusGovernance,
+  },
+  {
+    id: 'SOL247',
+    name: 'Token Revoke Safety',
+    severity: 'high',
+    run: checkTokenRevokeSafety,
+  },
+  {
+    id: 'SOL248',
+    name: 'Synthetify DAO Hidden Proposal',
+    severity: 'high',
+    run: checkSynthetifyDao,
   },
 ];
 
