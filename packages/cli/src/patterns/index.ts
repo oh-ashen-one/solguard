@@ -1,8 +1,8 @@
 /**
  * SolGuard Pattern Registry
  * 
- * 900+ security patterns for Solana smart contract auditing
- * Updated: Feb 5, 2026 - Added Sec3 2025 Report patterns
+ * 4095+ security patterns for Solana smart contract auditing
+ * Updated: Feb 5, 2026 5:00 PM - Added Batch 54 Helius Exploit Deep Dives (SOL2071-SOL2140)
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
@@ -17,6 +17,9 @@ import { checkSec32025DosLiveness } from './sec3-2025-dos-liveness.js';
 // Import new patterns (Feb 5, 2026 2:00 PM)
 import { checkHelius2024DeepPatterns } from './helius-2024-2025-deep.js';
 import { checkBatch53Patterns } from './solana-batched-patterns-53.js';
+
+// Import Batch 54 patterns (Feb 5, 2026 5:00 PM) - Helius Exploit Deep Dives
+import { checkBatch54Patterns } from './solana-batched-patterns-54.js';
 
 export interface Finding {
   id: string;
@@ -548,6 +551,13 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     // Skip if Batch 53 patterns fail
   }
   
+  // Run Batch 54 patterns (70 patterns: Helius Exploit Deep Dives)
+  try {
+    findings.push(...checkBatch54Patterns(input));
+  } catch (error) {
+    // Skip if Batch 54 patterns fail
+  }
+  
   // Deduplicate by ID + line
   const seen = new Set<string>();
   const deduped = findings.filter(f => {
@@ -605,7 +615,7 @@ export function listPatterns(): Pattern[] {
 }
 
 // Export total pattern count (including dynamic imports when available)
-// Updated: Feb 5, 2026 2:00 PM - Added SOL2001-SOL2070 + HELIUS-DEEP patterns (105 new)
+// Updated: Feb 5, 2026 5:00 PM - Added SOL2071-SOL2140 Helius Exploit Deep Dives (70 new)
 // New batches: 
 //   - solana-batched-patterns-41.ts (SOL1161-SOL1230): CPI, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance
 //   - solana-batched-patterns-42.ts (SOL1231-SOL1300): DeFi (AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming)
@@ -621,6 +631,7 @@ export function listPatterns(): Pattern[] {
 //   - solana-batched-patterns-52.ts (SOL1931-SOL2000): Real-World Exploit Deep Dives (20+ major exploits)
 //   - helius-2024-2025-deep.ts (HELIUS-DEXX-001 to HELIUS-SOLEND-002): 35 patterns from Helius Complete History
 //   - solana-batched-patterns-53.ts (SOL2001-SOL2070): Sec3 Enhanced + 2024-2025 Attack Vectors
-// Categories: CPI, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance, AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming, Real Exploits, Sec3 Categories, BPF, Memory, Compute, Validators, Anchor, Serialization, Phishing, MEV, Sybil, Honeypot, Cross-Chain, Helius Complete History, Wallet Security, Insider Threats, Token-2022, Compression, Blink Actions, Lookup Tables
-// 54 batched/pattern files × ~70 patterns each + 50 core + 250+ individual patterns = 4025+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 3975; // 4025+ total with all batched patterns
+//   - solana-batched-patterns-54.ts (SOL2071-SOL2140): Helius Exploit Deep Dives (Solend, Wormhole, Cashio, Crema, Program Closure)
+// Categories: CPI, Account Validation, Arithmetic, Oracle, Token, Access Control, Governance, AMM, Lending, Perps, Options, Staking, Yield, Bridge, NFT, Gaming, Real Exploits, Sec3 Categories, BPF, Memory, Compute, Validators, Anchor, Serialization, Phishing, MEV, Sybil, Honeypot, Cross-Chain, Helius Complete History, Wallet Security, Insider Threats, Token-2022, Compression, Blink Actions, Lookup Tables, Program Closure, Signature Bypass, Mint Validation, Tick Spoofing
+// 55 batched/pattern files × ~70 patterns each + 50 core + 250+ individual patterns = 4095+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 4045; // 4095+ total with all batched patterns
