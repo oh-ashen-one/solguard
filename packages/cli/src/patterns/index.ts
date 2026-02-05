@@ -2,9 +2,17 @@
  * SolGuard Pattern Registry
  * 
  * 900+ security patterns for Solana smart contract auditing
+ * Updated: Feb 5, 2026 - Added Sec3 2025 Report patterns
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
+
+// Import Sec3 2025 Report pattern functions (based on 163 audits, 1,669 vulnerabilities)
+import { checkSec32025BusinessLogic } from './sec3-2025-business-logic.js';
+import { checkSec32025InputValidation } from './sec3-2025-input-validation.js';
+import { checkSec32025AccessControl } from './sec3-2025-access-control.js';
+import { checkSec32025DataIntegrity } from './sec3-2025-data-integrity.js';
+import { checkSec32025DosLiveness } from './sec3-2025-dos-liveness.js';
 
 export interface Finding {
   id: string;
@@ -509,6 +517,17 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     } catch (error) {
       // Skip pattern if regex fails
     }
+  }
+  
+  // Run Sec3 2025 Report pattern functions (50 patterns from 163 audit analysis)
+  try {
+    findings.push(...checkSec32025BusinessLogic(input));
+    findings.push(...checkSec32025InputValidation(input));
+    findings.push(...checkSec32025AccessControl(input));
+    findings.push(...checkSec32025DataIntegrity(input));
+    findings.push(...checkSec32025DosLiveness(input));
+  } catch (error) {
+    // Skip if Sec3 patterns fail
   }
   
   // Deduplicate by ID + line

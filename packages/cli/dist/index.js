@@ -136,6 +136,713 @@ function extractImplMethods(content, startIndex) {
   return methods;
 }
 
+// src/patterns/sec3-2025-business-logic.ts
+function checkSec32025BusinessLogic(input) {
+  const findings = [];
+  if (input.rust?.content) {
+    const content = input.rust.content;
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const context = lines.slice(Math.max(0, i - 5), Math.min(lines.length, i + 10)).join("\n");
+      if ((line.includes("state =") || line.includes("status =")) && line.includes("::") && !context.includes("require!") && !context.includes("assert!") && !context.includes("match state")) {
+        findings.push({
+          id: "SEC3-BL001",
+          title: "State Transition Without Validation",
+          severity: "high",
+          description: "State changes without validating allowed transitions. Attackers can skip intermediate states.",
+          location: { file: input.path, line: i + 1 },
+          suggestion: "Add state machine validation: require!(current_state == AllowedPreviousState, InvalidTransition)",
+          cwe: "CWE-840"
+        });
+      }
+      if ((line.includes("/ 100") || line.includes("/ 10000") || line.includes("/ 10_000")) && !line.includes("checked_")) {
+        if (!context.includes("saturating") && !context.includes("checked_div")) {
+          findings.push({
+            id: "SEC3-BL002",
+            title: "Percentage Calculation Without Safe Math",
+            severity: "medium",
+            description: "Percentage/basis point calculations should use checked math to prevent rounding exploits.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Use checked_mul then checked_div, or dedicated percentage math library.",
+            cwe: "CWE-682"
+          });
+        }
+      }
+      if (line.includes("pub fn process_order") || line.includes("fn execute_order") || line.includes("fn fill_order")) {
+        if (!context.includes("expired") && !context.includes("expiry") && !context.includes("deadline")) {
+          findings.push({
+            id: "SEC3-BL003",
+            title: "Order Processing Without Expiry Check",
+            severity: "high",
+            description: "Order execution without expiry validation allows stale order exploitation.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Always check: require!(order.expiry > clock.unix_timestamp, OrderExpired)",
+            cwe: "CWE-613"
+          });
+        }
+      }
+      if ((line.includes("pub fn withdraw") || line.includes("fn withdraw")) && !line.includes("//")) {
+        if (!context.includes("cooldown") && !context.includes("lock_") && !context.includes("timelock") && !context.includes("unlock_time")) {
+          findings.push({
+            id: "SEC3-BL004",
+            title: "Withdrawal Without Timelock Check",
+            severity: "medium",
+            description: "Withdrawal function without timelock/cooldown validation.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Consider adding withdrawal cooldowns: require!(clock.unix_timestamp > user.last_deposit + COOLDOWN)",
+            cwe: "CWE-362"
+          });
+        }
+      }
+      if ((line.includes("reward") || line.includes("yield")) && (line.includes(" * ") || line.includes(" / "))) {
+        if (!context.includes("last_update") && !context.includes("accumulated") && !context.includes("per_share")) {
+          findings.push({
+            id: "SEC3-BL005",
+            title: "Reward Calculation Without Time Normalization",
+            severity: "high",
+            description: "Reward calculations should track time since last update to prevent manipulation.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Track rewards_per_share and last_update_timestamp for correct distribution.",
+            cwe: "CWE-682"
+          });
+        }
+      }
+      if (line.includes("liquidat") && !line.includes("//")) {
+        if (!context.includes("health_factor") && !context.includes("collateral_ratio") && !context.includes("ltv") && !context.includes("margin")) {
+          findings.push({
+            id: "SEC3-BL006",
+            title: "Liquidation Without Health Factor",
+            severity: "critical",
+            description: "Liquidation logic without clear health factor calculation is exploitable.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Always compute health_factor = collateral_value * ltv / debt_value",
+            cwe: "CWE-682"
+          });
+        }
+      }
+      if (line.includes("fee") && (line.includes(" = 0") || line.includes("= 0u"))) {
+        findings.push({
+          id: "SEC3-BL007",
+          title: "Fee Set to Zero Detected",
+          severity: "medium",
+          description: "Hardcoded zero fee may indicate missing fee logic or potential bypass.",
+          location: { file: input.path, line: i + 1 },
+          suggestion: "Ensure fees cannot be bypassed. Consider minimum fee requirements.",
+          cwe: "CWE-20"
+        });
+      }
+      if ((line.includes("vote_weight") || line.includes("voting_power")) && !line.includes("//")) {
+        if (!context.includes("snapshot") && !context.includes("checkpoint") && !context.includes("lock_time")) {
+          findings.push({
+            id: "SEC3-BL008",
+            title: "Vote Weight Without Snapshot",
+            severity: "high",
+            description: "Voting power calculations without snapshots enable flash loan governance attacks.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Use snapshot-based voting: vote_weight = get_weight_at_snapshot(proposal.snapshot_slot)",
+            cwe: "CWE-362"
+          });
+        }
+      }
+      if ((line.includes("pub fn stake") || line.includes("pub fn unstake")) && !line.includes("//")) {
+        if (!context.includes("epoch") && !context.includes("warmup") && !context.includes("cooldown")) {
+          findings.push({
+            id: "SEC3-BL009",
+            title: "Staking Without Epoch Boundaries",
+            severity: "medium",
+            description: "Stake/unstake without epoch boundaries allows reward gaming.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Align staking changes with epoch boundaries or add warmup/cooldown periods.",
+            cwe: "CWE-682"
+          });
+        }
+      }
+      if ((line.includes("open_position") || line.includes("increase_position")) && !line.includes("//")) {
+        if (!context.includes("max_position") && !context.includes("position_limit") && !context.includes("max_size")) {
+          findings.push({
+            id: "SEC3-BL010",
+            title: "Position Opening Without Size Limits",
+            severity: "high",
+            description: "Trading positions without size limits can destabilize the protocol.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Enforce position limits: require!(new_size <= max_position_size, PositionTooLarge)",
+            cwe: "CWE-770"
+          });
+        }
+      }
+    }
+  }
+  return findings;
+}
+
+// src/patterns/sec3-2025-input-validation.ts
+function checkSec32025InputValidation(input) {
+  const findings = [];
+  if (input.rust?.content) {
+    const content = input.rust.content;
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const context = lines.slice(Math.max(0, i - 5), Math.min(lines.length, i + 10)).join("\n");
+      if (line.includes("instruction_data") || line.includes("data: &[u8]")) {
+        if (!context.includes(".len()") && !context.includes("size_of")) {
+          findings.push({
+            id: "SEC3-IV001",
+            title: "Instruction Data Size Not Validated",
+            severity: "high",
+            description: "Instruction data should have size validation before deserialization.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Check: require!(data.len() >= MIN_SIZE && data.len() <= MAX_SIZE, InvalidDataLength)",
+            cwe: "CWE-20"
+          });
+        }
+      }
+      if ((line.includes("String") || line.includes("Vec<u8>")) && line.includes("pub ") && !line.includes("//")) {
+        if (!context.includes("max_len") && !context.includes("MAX_") && !context.includes("#[max_len")) {
+          findings.push({
+            id: "SEC3-IV002",
+            title: "Unbounded String/Bytes Field",
+            severity: "medium",
+            description: "String or byte vector without maximum length constraint can cause DoS.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Add Anchor constraint: #[max_len(256)] or validate length manually.",
+            cwe: "CWE-400"
+          });
+        }
+      }
+      if ((line.includes("amount") || line.includes("quantity") || line.includes("price")) && line.includes(": u") && !line.includes("//")) {
+        if (!context.includes("> 0") && !context.includes("!= 0") && !context.includes("require!") && !context.includes("assert!")) {
+          findings.push({
+            id: "SEC3-IV003",
+            title: "Numeric Input Without Range Validation",
+            severity: "medium",
+            description: "Numeric inputs should be validated for acceptable ranges.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Add validation: require!(amount > 0 && amount <= MAX_AMOUNT, InvalidAmount)",
+            cwe: "CWE-20"
+          });
+        }
+      }
+      if ((line.includes("timestamp") || line.includes("expiry") || line.includes("deadline")) && !line.includes("clock.unix_timestamp")) {
+        if (line.includes(": i64") || line.includes(": u64")) {
+          findings.push({
+            id: "SEC3-IV004",
+            title: "Timestamp Input Not Clock-Validated",
+            severity: "high",
+            description: "User-provided timestamps should be validated against on-chain clock.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Compare to clock: require!(timestamp > clock.unix_timestamp, TimestampInPast)",
+            cwe: "CWE-20"
+          });
+        }
+      }
+      if (line.includes("Vec<Pubkey>") && !context.includes("max_len") && !context.includes("MAX_")) {
+        findings.push({
+          id: "SEC3-IV005",
+          title: "Unbounded Pubkey Array",
+          severity: "medium",
+          description: "Arrays of pubkeys without bounds can cause compute exhaustion.",
+          location: { file: input.path, line: i + 1 },
+          suggestion: "Limit array size: require!(accounts.len() <= MAX_ACCOUNTS, TooManyAccounts)",
+          cwe: "CWE-400"
+        });
+      }
+      if (line.includes("decimals") && (line.includes("9") || line.includes("6"))) {
+        if (!context.includes("mint.decimals") && !context.includes(".decimals")) {
+          findings.push({
+            id: "SEC3-IV006",
+            title: "Hardcoded Decimal Assumption",
+            severity: "high",
+            description: "Hardcoded decimal values instead of reading from mint. Different tokens have different decimals.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Always read decimals from mint account: let decimals = ctx.accounts.mint.decimals;",
+            cwe: "CWE-682"
+          });
+        }
+      }
+      if (line.includes("seeds") && line.includes("&[")) {
+        if (context.includes("as &[u8]") && !context.includes("validate") && !context.includes(".len()")) {
+          findings.push({
+            id: "SEC3-IV007",
+            title: "PDA Seed Input Not Sanitized",
+            severity: "high",
+            description: "User-provided PDA seeds should be length-validated to prevent collision attacks.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Validate seed length: require!(seed.len() <= 32, SeedTooLong)",
+            cwe: "CWE-20"
+          });
+        }
+      }
+      if (line.includes("as u8") && context.includes("enum") && !context.includes("TryFrom")) {
+        findings.push({
+          id: "SEC3-IV008",
+          title: "Enum Cast Without Bounds Check",
+          severity: "medium",
+          description: "Casting integers to enums should use TryFrom to validate variants.",
+          location: { file: input.path, line: i + 1 },
+          suggestion: "Use TryFrom: let variant = MyEnum::try_from(value).map_err(|_| InvalidVariant)?;",
+          cwe: "CWE-20"
+        });
+      }
+      if ((line.includes("try_from_slice") || line.includes("deserialize")) && !context.includes(".len()") && !context.includes("size_of")) {
+        findings.push({
+          id: "SEC3-IV009",
+          title: "Deserialization Without Size Validation",
+          severity: "high",
+          description: "Deserializing account data without size check can cause panics or read garbage.",
+          location: { file: input.path, line: i + 1 },
+          suggestion: "Check size before deserializing: require!(data.len() >= std::mem::size_of::<T>())",
+          cwe: "CWE-502"
+        });
+      }
+      if ((line.includes("slippage") || line.includes("min_out") || line.includes("max_in")) && !context.includes("require!") && !context.includes("assert!")) {
+        findings.push({
+          id: "SEC3-IV010",
+          title: "Slippage Parameter Not Enforced",
+          severity: "high",
+          description: "Slippage parameters must be enforced to protect users from sandwich attacks.",
+          location: { file: input.path, line: i + 1 },
+          suggestion: "Enforce: require!(actual_output >= min_output, SlippageExceeded)",
+          cwe: "CWE-20"
+        });
+      }
+    }
+  }
+  return findings;
+}
+
+// src/patterns/sec3-2025-access-control.ts
+function checkSec32025AccessControl(input) {
+  const findings = [];
+  if (input.rust?.content) {
+    const content = input.rust.content;
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const context = lines.slice(Math.max(0, i - 5), Math.min(lines.length, i + 10)).join("\n");
+      if ((line.includes("pub fn admin") || line.includes("pub fn set_") || line.includes("pub fn update_") || line.includes("pub fn pause")) && !line.includes("//")) {
+        if (!context.includes("has_one") && !context.includes("constraint =") && !context.includes("authority") && !context.includes("admin")) {
+          findings.push({
+            id: "SEC3-AC001",
+            title: "Admin Function Without Authority Constraint",
+            severity: "critical",
+            description: "Administrative function lacks authority validation.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Add Anchor constraint: #[account(has_one = authority @ UnauthorizedAdmin)]",
+            cwe: "CWE-862"
+          });
+        }
+      }
+      if ((line.includes("upgrade") || line.includes("withdraw_all") || line.includes("emergency") || line.includes("migrate")) && !line.includes("//")) {
+        if (!context.includes("multisig") && !context.includes("multi_sig") && !context.includes("threshold") && !context.includes("signers")) {
+          findings.push({
+            id: "SEC3-AC002",
+            title: "Critical Operation Without Multi-Sig",
+            severity: "high",
+            description: "Critical operations should require multi-signature authorization.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Implement multi-sig: require!(approved_signers >= threshold, InsufficientSigners)",
+            cwe: "CWE-287"
+          });
+        }
+      }
+      if (line.includes("pub fn") && (line.includes("_admin") || line.includes("_operator") || line.includes("_manager"))) {
+        if (!context.includes("role") && !context.includes("permission") && !context.includes("is_authorized")) {
+          findings.push({
+            id: "SEC3-AC003",
+            title: "Role-Based Function Without Role Check",
+            severity: "high",
+            description: "Function implies role-based access but lacks explicit role verification.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Verify role: require!(user.role == Role::Admin, UnauthorizedRole)",
+            cwe: "CWE-285"
+          });
+        }
+      }
+      if (line.includes("invoke") && !line.includes("invoke_signed")) {
+        if (!context.includes("is_signer") && !context.includes("Signer<")) {
+          findings.push({
+            id: "SEC3-AC004",
+            title: "CPI Without Signer Verification",
+            severity: "high",
+            description: "Cross-program invocation without verifying the signer authority.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Verify signer: require!(authority.is_signer, MissingSigner)",
+            cwe: "CWE-863"
+          });
+        }
+      }
+      if (line.includes("delegate") && !line.includes("//")) {
+        if (!context.includes("max_amount") && !context.includes("expiry") && !context.includes("allowed_operations")) {
+          findings.push({
+            id: "SEC3-AC005",
+            title: "Delegation Without Scope Limits",
+            severity: "medium",
+            description: "Delegated authority should have amount limits and expiry.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Scope delegation: delegate.max_amount, delegate.expiry, delegate.allowed_ops",
+            cwe: "CWE-269"
+          });
+        }
+      }
+      if ((line.includes("transfer_ownership") || line.includes("new_owner") || line.includes("pending_owner")) && !line.includes("//")) {
+        if (!context.includes("accept_ownership") && !context.includes("confirm") && !context.includes("two_step")) {
+          findings.push({
+            id: "SEC3-AC006",
+            title: "Ownership Transfer Without 2-Step Confirmation",
+            severity: "high",
+            description: "Ownership transfers should use 2-step process to prevent accidental loss.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Use pending_owner pattern: set_pending_owner() -> accept_ownership()",
+            cwe: "CWE-269"
+          });
+        }
+      }
+      if ((line.includes("mint_authority") || line.includes("freeze_authority")) && !context.includes("PDA") && !context.includes("find_program_address") && !context.includes("seeds")) {
+        findings.push({
+          id: "SEC3-AC007",
+          title: "Token Authority Not PDA",
+          severity: "medium",
+          description: "Token authorities should be PDAs for programmatic control.",
+          location: { file: input.path, line: i + 1 },
+          suggestion: 'Derive authority from PDA: seeds = [b"mint_authority", mint.key().as_ref()]',
+          cwe: "CWE-269"
+        });
+      }
+      if ((line.includes("pub fn crank") || line.includes("pub fn update_price") || line.includes("pub fn liquidate")) && !line.includes("//")) {
+        if (!context.includes("reward") && !context.includes("fee") && !context.includes("incentive")) {
+          findings.push({
+            id: "SEC3-AC008",
+            title: "Permissionless Crank Without Incentive",
+            severity: "low",
+            description: "Permissionless functions should incentivize crankers to ensure liveness.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Add cranker rewards to incentivize timely execution.",
+            cwe: "CWE-400"
+          });
+        }
+      }
+      if (line.includes("close =") || line.includes("close_account")) {
+        if (!context.includes("authority") && !context.includes("has_one") && !context.includes("owner")) {
+          findings.push({
+            id: "SEC3-AC009",
+            title: "Account Close Without Authority Check",
+            severity: "critical",
+            description: "Account closure must verify the closer has authority.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Add constraint: #[account(close = authority, has_one = authority)]",
+            cwe: "CWE-862"
+          });
+        }
+      }
+      if (line.includes("timelock") && !line.includes("//")) {
+        if (!context.includes("min_delay") && !context.includes("MIN_DELAY") && !context.includes("TIMELOCK_DURATION")) {
+          findings.push({
+            id: "SEC3-AC010",
+            title: "Timelock Without Minimum Delay",
+            severity: "high",
+            description: "Timelocks should have a minimum delay that cannot be bypassed.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Enforce minimum: require!(delay >= MIN_TIMELOCK_DELAY, DelayTooShort)",
+            cwe: "CWE-269"
+          });
+        }
+      }
+    }
+  }
+  return findings;
+}
+
+// src/patterns/sec3-2025-data-integrity.ts
+function checkSec32025DataIntegrity(input) {
+  const findings = [];
+  if (input.rust?.content) {
+    const content = input.rust.content;
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const context = lines.slice(Math.max(0, i - 5), Math.min(lines.length, i + 10)).join("\n");
+      if (line.includes(" / ") && !line.includes("//")) {
+        if ((line.includes("u64") || line.includes("u128")) && !context.includes("checked_div") && !context.includes("saturating")) {
+          if (line.includes(" * ") && line.indexOf(" / ") > line.indexOf(" * ")) {
+            findings.push({
+              id: "SEC3-DI001",
+              title: "Division Before Multiplication",
+              severity: "high",
+              description: "Division before multiplication can cause precision loss. Always multiply first.",
+              location: { file: input.path, line: i + 1 },
+              suggestion: "Reorder: (a * b) / c instead of (a / c) * b",
+              cwe: "CWE-682"
+            });
+          }
+        }
+      }
+      if ((line.includes("as u64") || line.includes("as u128")) && (context.includes(" / ") || context.includes("div"))) {
+        if (!context.includes("floor") && !context.includes("ceil") && !context.includes("round") && !context.includes("direction")) {
+          findings.push({
+            id: "SEC3-DI002",
+            title: "Implicit Rounding Direction",
+            severity: "medium",
+            description: "Integer division implicitly floors. Specify rounding direction explicitly.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Use explicit rounding: floor for protocol benefit, ceil for user protection.",
+            cwe: "CWE-682"
+          });
+        }
+      }
+      if ((line.includes(".save()") || line.includes("serialize")) && !line.includes("//")) {
+        if (!context.includes("atomic") && !context.includes("transaction") && !context.includes("all_or_nothing")) {
+          const stateUpdates = (context.match(/\.\s*\w+\s*=/g) || []).length;
+          if (stateUpdates >= 3) {
+            findings.push({
+              id: "SEC3-DI003",
+              title: "Non-Atomic Multi-State Update",
+              severity: "high",
+              description: "Multiple state updates without atomic transaction can leave inconsistent state on failure.",
+              location: { file: input.path, line: i + 1 },
+              suggestion: "Group related state changes atomically. Consider using a state machine.",
+              cwe: "CWE-362"
+            });
+          }
+        }
+      }
+      if ((line.includes("shares") || line.includes("share_price")) && (line.includes(" / ") || line.includes(" * "))) {
+        if (!context.includes("virtual") && !context.includes("OFFSET") && !context.includes("MIN_DEPOSIT")) {
+          findings.push({
+            id: "SEC3-DI004",
+            title: "Share Calculation Without Inflation Protection",
+            severity: "critical",
+            description: "Share calculations without virtual offset are vulnerable to first-depositor inflation attack.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Add virtual shares offset: shares = (deposit + 1) * TOTAL_SHARES / (totalAssets + 1)",
+            cwe: "CWE-682"
+          });
+        }
+      }
+      if (line.includes("other_account") || line.includes("related_account")) {
+        if (!context.includes("reload") && !context.includes("refresh") && !context.includes("re-fetch")) {
+          findings.push({
+            id: "SEC3-DI005",
+            title: "Cross-Account Data Without Refresh",
+            severity: "medium",
+            description: "Reading from related accounts without refresh may use stale data.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Reload related account data: account.reload()?",
+            cwe: "CWE-662"
+          });
+        }
+      }
+      if (line.includes("merkle") && (line.includes("verify") || line.includes("proof"))) {
+        if (!context.includes("index") && !context.includes("leaf_index") && !context.includes("position")) {
+          findings.push({
+            id: "SEC3-DI006",
+            title: "Merkle Proof Missing Index Validation",
+            severity: "high",
+            description: "Merkle proofs should verify the leaf index to prevent replay at different positions.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Include leaf index in hash: hash(index || leaf_data)",
+            cwe: "CWE-354"
+          });
+        }
+      }
+      if ((line.includes("balance") || line.includes("amount")) && (line.includes("+=") || line.includes("-="))) {
+        if (!context.includes("total") && !context.includes("sum") && !context.includes("invariant")) {
+          findings.push({
+            id: "SEC3-DI007",
+            title: "Balance Update Without Invariant Check",
+            severity: "high",
+            description: "Balance updates should verify total invariants (sum of parts = whole).",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Add invariant: require!(user_balances.sum() == total_balance, InvariantViolation)",
+            cwe: "CWE-682"
+          });
+        }
+      }
+      if (line.includes("nonce") && (line.includes("+= 1") || line.includes("+ 1"))) {
+        if (!context.includes("checked_add") && !context.includes("wrapping")) {
+          findings.push({
+            id: "SEC3-DI008",
+            title: "Nonce Increment Without Overflow Check",
+            severity: "medium",
+            description: "Nonce increment should handle overflow (wrap or reject).",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Use: nonce = nonce.checked_add(1).ok_or(NonceOverflow)?",
+            cwe: "CWE-190"
+          });
+        }
+      }
+      if ((line.includes("epoch") || line.includes("period")) && (line.includes(" / ") || line.includes("div"))) {
+        if (!context.includes("boundary") && !context.includes("start_time") && !context.includes("end_time")) {
+          findings.push({
+            id: "SEC3-DI009",
+            title: "Epoch Calculation Without Boundary Handling",
+            severity: "medium",
+            description: "Epoch calculations should handle boundary conditions explicitly.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Define epoch_start and epoch_end, handle edge cases at boundaries.",
+            cwe: "CWE-682"
+          });
+        }
+      }
+      if (line.includes("10_u128.pow") || line.includes("10u128.pow") || line.includes("PRECISION") || line.includes("SCALE")) {
+        if (!context.includes("DECIMALS") && !context.includes("decimal_places")) {
+          findings.push({
+            id: "SEC3-DI010",
+            title: "Fixed-Point Math Without Decimal Tracking",
+            severity: "medium",
+            description: "Fixed-point operations should track decimal places to prevent precision errors.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Document precision: /// Price is stored with 6 decimal places (PRICE_DECIMALS = 6)",
+            cwe: "CWE-682"
+          });
+        }
+      }
+    }
+  }
+  return findings;
+}
+
+// src/patterns/sec3-2025-dos-liveness.ts
+function checkSec32025DosLiveness(input) {
+  const findings = [];
+  if (input.rust?.content) {
+    const content = input.rust.content;
+    const lines = content.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const context = lines.slice(Math.max(0, i - 5), Math.min(lines.length, i + 10)).join("\n");
+      if ((line.includes("for ") || line.includes(".iter()")) && !line.includes("// bounded") && !line.includes("// SAFETY")) {
+        if (context.includes("Vec<") && !context.includes("MAX_") && !context.includes(".take(") && !context.includes("limit")) {
+          findings.push({
+            id: "SEC3-DOS001",
+            title: "Unbounded Loop Over Dynamic Collection",
+            severity: "high",
+            description: "Iterating over unbounded collections can exhaust compute budget.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Bound iteration: for item in items.iter().take(MAX_ITEMS)",
+            cwe: "CWE-400"
+          });
+        }
+      }
+      if ((line.includes("pub fn") || line.includes("fn process")) && !line.includes("//")) {
+        if (content.includes("for ") && !content.includes("compute_budget") && !content.includes("ComputeBudget")) {
+          findings.push({
+            id: "SEC3-DOS002",
+            title: "No Compute Budget Management",
+            severity: "medium",
+            description: "Complex operations should track compute budget to fail gracefully.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Add early exit if running low on compute units.",
+            cwe: "CWE-400"
+          });
+        }
+      }
+      if ((line.includes("while ") || line.includes("loop {")) && !context.includes("break") && !context.includes("return")) {
+        if (!context.includes("max_iter") && !context.includes("timeout") && !context.includes("deadline")) {
+          findings.push({
+            id: "SEC3-DOS003",
+            title: "Potentially Infinite Loop",
+            severity: "critical",
+            description: "Loop without clear termination condition can hang transaction.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Add iteration limit: while condition && iterations < MAX_ITER",
+            cwe: "CWE-835"
+          });
+        }
+      }
+      if ((line.includes("oracle") || line.includes("price_feed")) && !line.includes("//")) {
+        if (!context.includes("fallback") && !context.includes("backup") && !context.includes("stale_price")) {
+          findings.push({
+            id: "SEC3-DOS004",
+            title: "Oracle Dependency Without Fallback",
+            severity: "high",
+            description: "Oracle failures can DOS the protocol. Have fallback pricing.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Add fallback: let price = oracle.get_price().or_else(|| backup_oracle.get_price())?",
+            cwe: "CWE-754"
+          });
+        }
+      }
+      if (line.includes("realloc") && !line.includes("//")) {
+        if (!context.includes("MAX_SIZE") && !context.includes("max_size") && !context.includes("limit")) {
+          findings.push({
+            id: "SEC3-DOS005",
+            title: "Unbounded Account Reallocation",
+            severity: "high",
+            description: "Account reallocation without size limit can cause DOS.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Set maximum: require!(new_size <= MAX_ACCOUNT_SIZE, AccountTooLarge)",
+            cwe: "CWE-400"
+          });
+        }
+      }
+      if (line.includes("invoke") && context.includes("self") && !context.includes("depth") && !context.includes("MAX_DEPTH")) {
+        findings.push({
+          id: "SEC3-DOS006",
+          title: "Recursive CPI Without Depth Limit",
+          severity: "high",
+          description: "Self-referencing CPI can cause stack overflow or compute exhaustion.",
+          location: { file: input.path, line: i + 1 },
+          suggestion: "Track and limit CPI depth: require!(depth < MAX_CPI_DEPTH)",
+          cwe: "CWE-674"
+        });
+      }
+      if ((line.includes("pub fn mint") || line.includes("pub fn create") || line.includes("pub fn register")) && !line.includes("//")) {
+        if (!context.includes("rate_limit") && !context.includes("cooldown") && !context.includes("last_action")) {
+          findings.push({
+            id: "SEC3-DOS007",
+            title: "No Rate Limiting on Creation",
+            severity: "medium",
+            description: "Account/token creation without rate limits enables spam attacks.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Add rate limiting: require!(clock.unix_timestamp > user.last_create + COOLDOWN)",
+            cwe: "CWE-770"
+          });
+        }
+      }
+      if ((line.includes("borsh::") || line.includes("BorshDeserialize")) && context.includes("Vec<") && !context.includes("max_len")) {
+        findings.push({
+          id: "SEC3-DOS008",
+          title: "Unbounded Deserialization",
+          severity: "high",
+          description: "Deserializing unbounded vectors can exhaust memory.",
+          location: { file: input.path, line: i + 1 },
+          suggestion: "Use bounded types or validate length before deserializing.",
+          cwe: "CWE-502"
+        });
+      }
+      if (line.includes("invoke") && !line.includes("token_program") && !line.includes("system_program") && !line.includes("//")) {
+        if (!context.includes("program_id ==") && !context.includes("whitelist")) {
+          findings.push({
+            id: "SEC3-DOS009",
+            title: "CPI to Unvalidated Program",
+            severity: "high",
+            description: "CPI to unvalidated program could invoke malicious code.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Validate CPI target: require!(target_program.key() == KNOWN_PROGRAM_ID)",
+            cwe: "CWE-829"
+          });
+        }
+      }
+      if ((line.includes("emit!") || line.includes("msg!")) && (context.includes("for ") || context.includes("loop"))) {
+        if (!context.includes("limit") && !context.includes("MAX_")) {
+          findings.push({
+            id: "SEC3-DOS010",
+            title: "Event Emission in Loop",
+            severity: "low",
+            description: "Emitting events in unbounded loops wastes compute and bloats logs.",
+            location: { file: input.path, line: i + 1 },
+            suggestion: "Emit summary event after loop instead of per-iteration events.",
+            cwe: "CWE-400"
+          });
+        }
+      }
+    }
+  }
+  return findings;
+}
+
 // src/patterns/index.ts
 var CORE_PATTERNS = [
   {
@@ -583,6 +1290,14 @@ async function runPatterns(input) {
       }
     } catch (error) {
     }
+  }
+  try {
+    findings.push(...checkSec32025BusinessLogic(input));
+    findings.push(...checkSec32025InputValidation(input));
+    findings.push(...checkSec32025AccessControl(input));
+    findings.push(...checkSec32025DataIntegrity(input));
+    findings.push(...checkSec32025DosLiveness(input));
+  } catch (error) {
   }
   const seen = /* @__PURE__ */ new Set();
   const deduped = findings.filter((f) => {
