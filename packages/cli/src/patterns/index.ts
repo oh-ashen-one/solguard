@@ -392,6 +392,12 @@ import { batchedPatterns29 } from './solana-batched-patterns-29.js';
 import { batchedPatterns30 } from './solana-batched-patterns-30.js';
 import { batchedPatterns31 } from './solana-batched-patterns-31.js';
 
+// NEW PATTERNS SOL853-SOL868 (Feb 5 2026 6:30AM - Helius Complete Exploit History Deep Dive)
+import { batchedPatterns32 } from './solana-batched-patterns-32.js';
+
+// NEW PATTERNS SOL869-SOL884 (Feb 5 2026 6:30AM - Network & Infrastructure Security)
+import { batchedPatterns33 } from './solana-batched-patterns-33.js';
+
 export interface PatternInput {
   idl: ParsedIdl | null;
   rust: ParsedRust | null;
@@ -2813,6 +2819,42 @@ const patterns: Pattern[] = [
   { id: 'SOL850', name: 'Missing Execution Delay', severity: 'medium', run: batchedPatterns31.checkExecutionDelay },
   { id: 'SOL851', name: 'Missing Quorum Validation', severity: 'high', run: batchedPatterns31.checkQuorumValidation },
   { id: 'SOL852', name: 'Missing Vote Weight Snapshot', severity: 'high', run: batchedPatterns31.checkVoteWeightSnapshot },
+  
+  // NEW PATTERNS SOL853-SOL868 (Feb 5 2026 6:30AM - Helius Complete Exploit History)
+  { id: 'SOL853', name: 'Audius-Style Governance Configuration Attack ($6.1M)', severity: 'critical', run: batchedPatterns32.checkAudiusStyleGovernanceAttack },
+  { id: 'SOL854', name: 'OptiFi-Style Program Close Lockup ($661K)', severity: 'critical', run: batchedPatterns32.checkOptiFiStyleProgramClose },
+  { id: 'SOL855', name: 'Mango-Style Oracle Price Manipulation ($116M)', severity: 'critical', run: batchedPatterns32.checkMangoStyleOracleManipulation },
+  { id: 'SOL856', name: 'Slope-Style Private Key Exposure ($8M)', severity: 'critical', run: batchedPatterns32.checkSlopeStyleKeyExposure },
+  { id: 'SOL857', name: 'Supply Chain NPM Dependency Attack', severity: 'high', run: batchedPatterns32.checkSupplyChainDependencyAttack },
+  { id: 'SOL858', name: 'Pump.fun-Style Insider Exploitation ($1.9M)', severity: 'high', run: batchedPatterns32.checkInsiderExploitationRisk },
+  { id: 'SOL859', name: 'Banana Gun-Style Bot Compromise ($1.4M)', severity: 'critical', run: batchedPatterns32.checkBotCompromiseRisk },
+  { id: 'SOL860', name: 'DEXX-Style Centralized Key Management ($30M)', severity: 'critical', run: batchedPatterns32.checkDEXXStyleCentralizedKeys },
+  { id: 'SOL861', name: 'Thunder Terminal-Style Database Injection ($240K)', severity: 'high', run: batchedPatterns32.checkThunderStyleDatabaseInjection },
+  { id: 'SOL862', name: 'Raydium-Style Pool Admin Drain ($4.4M)', severity: 'critical', run: batchedPatterns32.checkRaydiumStylePoolDrain },
+  { id: 'SOL863', name: 'Cypher-Style Insider Fund Theft ($317K)', severity: 'high', run: batchedPatterns32.checkCypherStyleInsiderTheft },
+  { id: 'SOL864', name: 'Solareum-Style Rug Pull Detection', severity: 'critical', run: batchedPatterns32.checkSolareumStyleRugPull },
+  { id: 'SOL865', name: 'Synthetify-Style DAO Treasury Heist ($230K)', severity: 'critical', run: batchedPatterns32.checkSynthetifyStyleDAOHeist },
+  { id: 'SOL866', name: 'NoOnes-Style Withdrawal Verification Missing', severity: 'high', run: batchedPatterns32.checkNoOnesStyleWithdrawalExploit },
+  { id: 'SOL867', name: 'Loopscale-Style Admin Wallet Takeover ($5.8M)', severity: 'critical', run: batchedPatterns32.checkLoopscaleAdminTakeover },
+  { id: 'SOL868', name: 'Saga DAO-Style Insider Attack ($1.5M)', severity: 'high', run: batchedPatterns32.checkSagaDAOInsiderAttack },
+  
+  // NEW PATTERNS SOL869-SOL884 (Feb 5 2026 6:30AM - Network & Infrastructure Security)
+  { id: 'SOL869', name: 'Network Congestion Attack Vulnerability', severity: 'medium', run: batchedPatterns33.checkNetworkCongestionAttack },
+  { id: 'SOL870', name: 'Candy Machine-Style Minting DoS Risk', severity: 'high', run: batchedPatterns33.checkMintingDoSVulnerability },
+  { id: 'SOL871', name: 'Jito-Style Bundle Spam DoS Risk', severity: 'medium', run: batchedPatterns33.checkBundleSpamDoS },
+  { id: 'SOL872', name: 'Phantom-Style Wallet DoS via Malformed Data', severity: 'medium', run: batchedPatterns33.checkWalletDoSVulnerability },
+  { id: 'SOL873', name: 'Turbine-Style Propagation Failure Risk', severity: 'high', run: batchedPatterns33.checkTurbinePropagationRisk },
+  { id: 'SOL874', name: 'Durable Nonce Expiry Vulnerability', severity: 'medium', run: batchedPatterns33.checkDurableNonceExpiry },
+  { id: 'SOL875', name: 'Duplicate Block Handling Vulnerability', severity: 'high', run: batchedPatterns33.checkDuplicateBlockHandling },
+  { id: 'SOL876', name: 'JIT Cache Corruption Risk', severity: 'high', run: batchedPatterns33.checkJITCacheCorruption },
+  { id: 'SOL877', name: 'ELF Address Alignment Vulnerability', severity: 'medium', run: batchedPatterns33.checkELFAlignmentExploit },
+  { id: 'SOL878', name: 'Front-End Phishing Attack Risk (Parcl-style)', severity: 'high', run: batchedPatterns33.checkFrontEndPhishingRisk },
+  { id: 'SOL879', name: 'Tulip-Style Flash Loan Vault Vulnerability', severity: 'critical', run: batchedPatterns33.checkTulipStyleFlashLoan },
+  { id: 'SOL880', name: 'UXD-Style Stablecoin Depeg Risk', severity: 'high', run: batchedPatterns33.checkUXDStyleDepegRisk },
+  { id: 'SOL881', name: 'SVT-Style Unclaimed Token Vulnerability', severity: 'medium', run: batchedPatterns33.checkSVTStyleUnclaimedVuln },
+  { id: 'SOL882', name: 'io.net-Style API Key Exposure Risk', severity: 'high', run: batchedPatterns33.checkAPIKeyExposureRisk },
+  { id: 'SOL883', name: 'Aurory-Style Game Marketplace Exploit', severity: 'high', run: batchedPatterns33.checkAuroryStyleExploit },
+  { id: 'SOL884', name: 'Cross-Chain Message Verification Weakness', severity: 'critical', run: batchedPatterns33.checkCrossChainMessageVerification },
 ];
 
 export async function runPatterns(input: PatternInput): Promise<Finding[]> {
