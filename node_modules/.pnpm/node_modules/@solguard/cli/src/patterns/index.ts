@@ -264,6 +264,15 @@ import { checkRugPullDetection } from './rug-pull-detection.js';
 import { checkAdvancedDefiPatterns } from './advanced-defi-patterns.js';
 import { checkAccountValidationComprehensive } from './account-validation-comprehensive.js';
 
+// New patterns SOL261-SOL275 (Feb 4 2026 - Evening build session batch 8)
+import { checkPrivateKeyLogging, checkCentralizedLogging, checkTwapOracleManipulation, checkLeveragedPositionManipulation, checkFlashLoanOracleAttack, checkBondingCurveFlashLoan, checkGovernanceTimelockBypass, checkThirdPartyPoolDependency, checkNoSqlInjection, checkSessionTokenSecurity, checkInsiderAccessControl, checkGuardianValidationComprehensive, checkTradingBotSecurity, checkPrivateKeyManagement, checkNpmDependencyHijacking } from './solana-batched-patterns-8.js';
+
+// New patterns SOL276-SOL290 (Feb 4 2026 - Evening build session batch 9)
+import { checkOwnershipPhishing, checkProgramAccountConfusion, checkAmmPoolDrainExploit, checkInsiderExploitVectors, checkReserveConfigManipulation, checkRugPullVectors, checkDistributedNetworkExploit, checkGamingExploitVectors, checkCertiKAlertPatterns, checkHiddenMintingPatterns, checkDaoGovernanceAttack, checkP2pPlatformExploit, checkLoopscaleExploitPattern, checkNftMintingDosPattern, checkWalletDdosPattern } from './solana-batched-patterns-9.js';
+
+// New patterns SOL291-SOL310 (Feb 4 2026 - Evening build session batch 10)
+import { checkJitCacheVulnerability, checkDurableNonceMisuse, checkDuplicateBlockPattern, checkTurbinePropagation as checkTurbinePropagationV2, checkElfAlignment as checkElfAlignmentV2, checkCheckedMathEnforcement, checkSeedPredictability, checkCpiReturnInjection, checkAccountLifetime as checkAccountLifetimeV2, checkAnchorConstraintOrdering, checkMissingRentCheck as checkMissingRentCheckV2, checkSystemProgramInvocation, checkTokenProgramVersion, checkLookupTablePoisoning, checkComputeExhaustion, checkPriorityFeeManipulation, checkVersionedTransactionHandling, checkSignerSeedValidationComplete, checkAccountLamportDrain, checkInstructionSysvarSpoofing } from './solana-batched-patterns-10.js';
+
 export interface PatternInput {
   idl: ParsedIdl | null;
   rust: ParsedRust | null;
@@ -1474,6 +1483,307 @@ const patterns: Pattern[] = [
     name: 'Comprehensive Account Validation',
     severity: 'critical',
     run: checkAccountValidationComprehensive,
+  },
+  // NEW PATTERNS SOL261-SOL310 (Feb 4 2026 - Evening build session)
+  {
+    id: 'SOL261',
+    name: 'Private Key Logging (Slope-style)',
+    severity: 'critical',
+    run: checkPrivateKeyLogging,
+  },
+  {
+    id: 'SOL262',
+    name: 'Centralized Logging Security',
+    severity: 'high',
+    run: checkCentralizedLogging,
+  },
+  {
+    id: 'SOL263',
+    name: 'TWAP Oracle Manipulation',
+    severity: 'high',
+    run: checkTwapOracleManipulation,
+  },
+  {
+    id: 'SOL264',
+    name: 'Leveraged Position Manipulation (Mango-style)',
+    severity: 'critical',
+    run: checkLeveragedPositionManipulation,
+  },
+  {
+    id: 'SOL265',
+    name: 'Flash Loan Oracle Attack',
+    severity: 'critical',
+    run: checkFlashLoanOracleAttack,
+  },
+  {
+    id: 'SOL266',
+    name: 'Bonding Curve Flash Loan (Nirvana-style)',
+    severity: 'critical',
+    run: checkBondingCurveFlashLoan,
+  },
+  {
+    id: 'SOL267',
+    name: 'Governance Timelock Bypass (Audius-style)',
+    severity: 'critical',
+    run: checkGovernanceTimelockBypass,
+  },
+  {
+    id: 'SOL268',
+    name: 'Third-Party Pool Dependency (UXD/Tulip)',
+    severity: 'high',
+    run: checkThirdPartyPoolDependency,
+  },
+  {
+    id: 'SOL269',
+    name: 'NoSQL Injection (Thunder-style)',
+    severity: 'critical',
+    run: checkNoSqlInjection,
+  },
+  {
+    id: 'SOL270',
+    name: 'Session Token Security',
+    severity: 'high',
+    run: checkSessionTokenSecurity,
+  },
+  {
+    id: 'SOL271',
+    name: 'Insider Access Control (Pump.fun-style)',
+    severity: 'critical',
+    run: checkInsiderAccessControl,
+  },
+  {
+    id: 'SOL272',
+    name: 'Guardian Validation (Wormhole-style)',
+    severity: 'critical',
+    run: checkGuardianValidationComprehensive,
+  },
+  {
+    id: 'SOL273',
+    name: 'Trading Bot Security (Banana Gun)',
+    severity: 'critical',
+    run: checkTradingBotSecurity,
+  },
+  {
+    id: 'SOL274',
+    name: 'Private Key Management (DEXX-style)',
+    severity: 'critical',
+    run: checkPrivateKeyManagement,
+  },
+  {
+    id: 'SOL275',
+    name: 'NPM Dependency Hijacking (Web3.js)',
+    severity: 'high',
+    run: checkNpmDependencyHijacking,
+  },
+  {
+    id: 'SOL276',
+    name: 'Ownership Phishing (2025 Attacks)',
+    severity: 'critical',
+    run: checkOwnershipPhishing,
+  },
+  {
+    id: 'SOL277',
+    name: 'Program Account Confusion',
+    severity: 'high',
+    run: checkProgramAccountConfusion,
+  },
+  {
+    id: 'SOL278',
+    name: 'AMM Pool Drain (Raydium-style)',
+    severity: 'critical',
+    run: checkAmmPoolDrainExploit,
+  },
+  {
+    id: 'SOL279',
+    name: 'Insider Exploit (Cypher-style)',
+    severity: 'critical',
+    run: checkInsiderExploitVectors,
+  },
+  {
+    id: 'SOL280',
+    name: 'Reserve Config Manipulation (Solend)',
+    severity: 'critical',
+    run: checkReserveConfigManipulation,
+  },
+  {
+    id: 'SOL281',
+    name: 'Rug Pull Detection (Solareum)',
+    severity: 'high',
+    run: checkRugPullVectors,
+  },
+  {
+    id: 'SOL282',
+    name: 'Distributed Network Exploit (io.net)',
+    severity: 'high',
+    run: checkDistributedNetworkExploit,
+  },
+  {
+    id: 'SOL283',
+    name: 'Gaming Exploit (Aurory-style)',
+    severity: 'high',
+    run: checkGamingExploitVectors,
+  },
+  {
+    id: 'SOL284',
+    name: 'CertiK Alert Patterns (SVT Token)',
+    severity: 'high',
+    run: checkCertiKAlertPatterns,
+  },
+  {
+    id: 'SOL285',
+    name: 'Hidden Minting (Synthetify-style)',
+    severity: 'critical',
+    run: checkHiddenMintingPatterns,
+  },
+  {
+    id: 'SOL286',
+    name: 'DAO Governance Attack (Saga)',
+    severity: 'high',
+    run: checkDaoGovernanceAttack,
+  },
+  {
+    id: 'SOL287',
+    name: 'P2P Platform Exploit (NoOnes)',
+    severity: 'high',
+    run: checkP2pPlatformExploit,
+  },
+  {
+    id: 'SOL288',
+    name: 'Flash Loan Undercollateralized (Loopscale)',
+    severity: 'critical',
+    run: checkLoopscaleExploitPattern,
+  },
+  {
+    id: 'SOL289',
+    name: 'NFT Minting DoS (Candy Machine)',
+    severity: 'medium',
+    run: checkNftMintingDosPattern,
+  },
+  {
+    id: 'SOL290',
+    name: 'Wallet DDoS (Phantom)',
+    severity: 'medium',
+    run: checkWalletDdosPattern,
+  },
+  {
+    id: 'SOL291',
+    name: 'JIT Cache Vulnerability (Solana 2023)',
+    severity: 'info',
+    run: checkJitCacheVulnerability,
+  },
+  {
+    id: 'SOL292',
+    name: 'Durable Nonce Misuse',
+    severity: 'high',
+    run: checkDurableNonceMisuse,
+  },
+  {
+    id: 'SOL293',
+    name: 'Duplicate Block Pattern',
+    severity: 'high',
+    run: checkDuplicateBlockPattern,
+  },
+  {
+    id: 'SOL294',
+    name: 'Turbine Propagation Security',
+    severity: 'high',
+    run: checkTurbinePropagationV2,
+  },
+  {
+    id: 'SOL295',
+    name: 'ELF Alignment Vulnerability',
+    severity: 'medium',
+    run: checkElfAlignmentV2,
+  },
+  {
+    id: 'SOL296',
+    name: 'Checked Math Enforcement',
+    severity: 'high',
+    run: checkCheckedMathEnforcement,
+  },
+  {
+    id: 'SOL297',
+    name: 'Seed Derivation Predictability',
+    severity: 'high',
+    run: checkSeedPredictability,
+  },
+  {
+    id: 'SOL298',
+    name: 'CPI Return Data Injection',
+    severity: 'critical',
+    run: checkCpiReturnInjection,
+  },
+  {
+    id: 'SOL299',
+    name: 'Account Lifetime Issues',
+    severity: 'high',
+    run: checkAccountLifetimeV2,
+  },
+  {
+    id: 'SOL300',
+    name: 'Anchor Constraint Ordering',
+    severity: 'medium',
+    run: checkAnchorConstraintOrdering,
+  },
+  {
+    id: 'SOL301',
+    name: 'Missing Rent Check V2',
+    severity: 'medium',
+    run: checkMissingRentCheckV2,
+  },
+  {
+    id: 'SOL302',
+    name: 'System Program Invocation',
+    severity: 'high',
+    run: checkSystemProgramInvocation,
+  },
+  {
+    id: 'SOL303',
+    name: 'Token Program Version Mismatch',
+    severity: 'high',
+    run: checkTokenProgramVersion,
+  },
+  {
+    id: 'SOL304',
+    name: 'Lookup Table Poisoning',
+    severity: 'high',
+    run: checkLookupTablePoisoning,
+  },
+  {
+    id: 'SOL305',
+    name: 'Compute Unit Exhaustion',
+    severity: 'high',
+    run: checkComputeExhaustion,
+  },
+  {
+    id: 'SOL306',
+    name: 'Priority Fee Manipulation',
+    severity: 'medium',
+    run: checkPriorityFeeManipulation,
+  },
+  {
+    id: 'SOL307',
+    name: 'Versioned Transaction Handling',
+    severity: 'low',
+    run: checkVersionedTransactionHandling,
+  },
+  {
+    id: 'SOL308',
+    name: 'Signer Seed Validation Complete',
+    severity: 'high',
+    run: checkSignerSeedValidationComplete,
+  },
+  {
+    id: 'SOL309',
+    name: 'Account Lamport Drain',
+    severity: 'high',
+    run: checkAccountLamportDrain,
+  },
+  {
+    id: 'SOL310',
+    name: 'Instruction Sysvar Spoofing',
+    severity: 'critical',
+    run: checkInstructionSysvarSpoofing,
   },
 ];
 
