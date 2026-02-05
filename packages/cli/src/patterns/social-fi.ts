@@ -1,134 +1,158 @@
 import type { Finding } from '../commands/audit.js';
-import type { PatternInput } from './index.js';
+import type { ParsedIdl } from '../parsers/idl.js';
+import type { ParsedRust } from '../parsers/rust.js';
 
 /**
- * SOL150: SocialFi Security
- * Detects vulnerabilities in social finance protocols (friend.tech style)
+ * SOL461-SOL470: Social-Fi Security Patterns
  * 
- * SocialFi risks:
- * - Key/share price manipulation
- * - Front-running on influencer buys
- * - Exit scam mechanics
+ * Social finance protocols (friend.tech clones, social tokens)
+ * have unique risks around creator keys, bonding curves, and exit scams.
  */
-export function checkSocialFi(input: PatternInput): Finding[] {
+export function checkSocialFi(input: { idl?: ParsedIdl; rust?: ParsedRust }): Finding[] {
   const findings: Finding[] = [];
-  const rust = input.rust;
-  if (!rust) return findings;
-
-  const content = rust.content;
-  const lines = content.split('\n');
-
-  lines.forEach((line, i) => {
-    // Check for social token/key trading
-    if (/buy.*key|sell.*key|trade.*share|social.*token/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 20), Math.min(lines.length, i + 20)).join('\n');
-      
-      // Check for front-running protection
-      if (!/commit.*reveal|private|encrypted|batch/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL150',
-          name: 'SocialFi Front-Running',
-          severity: 'critical',
-          message: 'Key purchases can be front-run when influencer announces',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Use commit-reveal or batch auctions to prevent front-running',
-        });
-      }
-
-      // Check for slippage/price protection
-      if (!/max.*price|slippage|limit.*price/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL150',
-          name: 'SocialFi No Price Limit',
-          severity: 'high',
-          message: 'Buy without price limit can execute at manipulated price',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Add max_price parameter to prevent sandwich attacks',
-        });
-      }
-
-      // Check for trading fees
-      if (!/fee|protocol.*cut|creator.*share/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL150',
-          name: 'SocialFi Fee Structure Missing',
-          severity: 'medium',
-          message: 'Fee structure not visible in code - verify fee caps',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Make fee structure explicit and cap total fees (e.g., <20%)',
-        });
-      }
-    }
-
-    // Check for bonding curve
-    if (/price.*supply|bonding|curve.*price/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 15), Math.min(lines.length, i + 15)).join('\n');
-      
-      // Check for curve manipulation
-      if (!/min.*supply|initial.*price|floor/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL150',
-          name: 'SocialFi Curve No Floor',
-          severity: 'high',
-          message: 'Bonding curve without floor allows dump to zero',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Set minimum supply or price floor to prevent total crashes',
-        });
-      }
-    }
-
-    // Check for creator controls
-    if (/creator.*withdraw|claim.*fee|subject.*fee/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 10), Math.min(lines.length, i + 10)).join('\n');
-      
-      // Check for creator rug protection
-      if (!/lock|vesting|time.*release/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL150',
-          name: 'Creator Instant Withdraw',
-          severity: 'high',
-          message: 'Creator can withdraw fees instantly and abandon project',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Consider vesting creator fees over time to align incentives',
-        });
-      }
-    }
-
-    // Check for holder benefits
-    if (/holder.*access|key.*holder|gated/i.test(line)) {
+  
+  if (input.rust?.sourceCode) {
+    const code = input.rust.sourceCode;
+    
+    // SOL461: Creator key concentration
+    if (/creator|influencer|subject/i.test(code) && 
+        /key|share|token/i.test(code) &&
+        !/max_holding|concentration_limit/.test(code)) {
       findings.push({
-        id: 'SOL150',
-        name: 'SocialFi Access Control',
-        severity: 'info',
-        message: 'Token-gated access present - verify off-chain enforcement',
-        location: `${input.path}:${i + 1}`,
-        snippet: line.trim(),
-        fix: 'Ensure off-chain access checks token ownership in real-time',
+        id: 'SOL461',
+        severity: 'high',
+        title: 'Creator Key Concentration Not Limited',
+        description: 'Creators can hold excessive keys enabling dump attacks.',
+        location: 'Key ownership',
+        recommendation: 'Limit creator self-holding to prevent market manipulation.',
       });
     }
-
-    // Check for exit liquidity
-    if (/sell.*all|exit|dump.*key/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 10), Math.min(lines.length, i + 10)).join('\n');
-      
-      if (!/liquidity|reserve|can.*sell/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL150',
-          name: 'SocialFi Exit Liquidity Risk',
-          severity: 'high',
-          message: 'Users may not be able to exit if no buyers exist',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Document liquidity risks clearly to users',
-        });
-      }
+    
+    // SOL462: Bonding curve exit scam
+    if (/bonding_curve|price_curve/i.test(code) && 
+        /social|creator|key/i.test(code) &&
+        !/lock|vesting|cooldown/.test(code)) {
+      findings.push({
+        id: 'SOL462',
+        severity: 'critical',
+        title: 'Bonding Curve Exit Scam Risk',
+        description: 'Creators can dump keys instantly, extracting liquidity.',
+        location: 'Sell mechanism',
+        recommendation: 'Add selling cooldowns or vesting for creator holdings.',
+      });
     }
-  });
-
+    
+    // SOL463: Fee extraction
+    if (/protocol_fee|creator_fee/i.test(code) && 
+        /social/i.test(code) &&
+        !/fee_cap|max_fee/.test(code)) {
+      findings.push({
+        id: 'SOL463',
+        severity: 'high',
+        title: 'Unbounded Social-Fi Fees',
+        description: 'High fees can make key trading uneconomical.',
+        location: 'Fee structure',
+        recommendation: 'Cap total fees at reasonable percentage.',
+      });
+    }
+    
+    // SOL464: Identity verification
+    if (/creator|profile/i.test(code) && 
+        /register|create/i.test(code) &&
+        !/verify|twitter|proof/.test(code)) {
+      findings.push({
+        id: 'SOL464',
+        severity: 'medium',
+        title: 'No Creator Identity Verification',
+        description: 'Impersonators can create fake creator profiles.',
+        location: 'Registration',
+        recommendation: 'Require social media verification for creator profiles.',
+      });
+    }
+    
+    // SOL465: Follower manipulation
+    if (/follower|subscriber|fan/i.test(code) && 
+        /count|number/i.test(code) &&
+        !/unique|sybil/.test(code)) {
+      findings.push({
+        id: 'SOL465',
+        severity: 'medium',
+        title: 'Follower Count Manipulatable',
+        description: 'Sybil accounts can inflate follower metrics.',
+        location: 'Social metrics',
+        recommendation: 'Implement sybil resistance for follower counting.',
+      });
+    }
+    
+    // SOL466: Whale protection
+    if (/buy|purchase/i.test(code) && 
+        /key|share/i.test(code) &&
+        !/max_buy|purchase_limit/.test(code)) {
+      findings.push({
+        id: 'SOL466',
+        severity: 'high',
+        title: 'No Whale Protection',
+        description: 'Whales can corner the market on creator keys.',
+        location: 'Purchase logic',
+        recommendation: 'Implement per-transaction and per-wallet purchase limits.',
+      });
+    }
+    
+    // SOL467: Price curve manipulation
+    if (/price.*curve|bonding/i.test(code) && 
+        !/smooth|continuous|monotonic/.test(code)) {
+      findings.push({
+        id: 'SOL467',
+        severity: 'high',
+        title: 'Price Curve Can Be Manipulated',
+        description: 'Discontinuous curves enable arbitrage exploits.',
+        location: 'Pricing mechanism',
+        recommendation: 'Use monotonically increasing, continuous bonding curves.',
+      });
+    }
+    
+    // SOL468: Content gating bypass
+    if (/gated|exclusive|access/i.test(code) && 
+        /content|media/i.test(code) &&
+        !/verify_ownership|check_key/.test(code)) {
+      findings.push({
+        id: 'SOL468',
+        severity: 'medium',
+        title: 'Content Gating Can Be Bypassed',
+        description: 'Gated content access must verify key ownership on-chain.',
+        location: 'Access control',
+        recommendation: 'Verify key ownership for every gated content access.',
+      });
+    }
+    
+    // SOL469: Referral system abuse
+    if (/referral|invite/i.test(code) && 
+        /social/i.test(code) &&
+        !/limit|cap|cooldown/.test(code)) {
+      findings.push({
+        id: 'SOL469',
+        severity: 'low',
+        title: 'Referral System Exploitable',
+        description: 'Self-referral and referral farming can drain rewards.',
+        location: 'Referral logic',
+        recommendation: 'Add referral limits and prevent self-referral.',
+      });
+    }
+    
+    // SOL470: Chat/messaging security
+    if (/message|chat|dm/i.test(code) && 
+        /social/i.test(code) &&
+        !/encrypt|sign/.test(code)) {
+      findings.push({
+        id: 'SOL470',
+        severity: 'medium',
+        title: 'Social Messages Not Encrypted',
+        description: 'User messages should be encrypted for privacy.',
+        location: 'Messaging system',
+        recommendation: 'Implement end-to-end encryption for social messaging.',
+      });
+    }
+  }
+  
   return findings;
 }

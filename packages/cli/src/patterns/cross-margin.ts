@@ -1,130 +1,154 @@
 import type { Finding } from '../commands/audit.js';
-import type { PatternInput } from './index.js';
+import type { ParsedIdl } from '../parsers/idl.js';
+import type { ParsedRust } from '../parsers/rust.js';
 
 /**
- * SOL145: Cross-Margin Security
- * Detects vulnerabilities in cross-margin/portfolio margin systems
+ * SOL441-SOL450: Cross-Margin Trading Security
  * 
- * Cross-margin risks:
- * - Correlation assumptions
- * - Cascading liquidations
- * - Risk calculation errors
+ * Cross-margin systems share collateral across positions,
+ * creating unique risks around account health calculation.
  */
-export function checkCrossMargin(input: PatternInput): Finding[] {
+export function checkCrossMargin(input: { idl?: ParsedIdl; rust?: ParsedRust }): Finding[] {
   const findings: Finding[] = [];
-  const rust = input.rust;
-  if (!rust) return findings;
-
-  const content = rust.content;
-  const lines = content.split('\n');
-
-  lines.forEach((line, i) => {
-    // Check for cross-margin calculation
-    if (/cross.*margin|portfolio.*margin|net.*margin/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 20), Math.min(lines.length, i + 20)).join('\n');
-      
-      // Check for correlation assumptions
-      if (!/correlation|hedge.*factor|offset/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL145',
-          name: 'Correlation Not Modeled',
-          severity: 'high',
-          message: 'Cross-margin without correlation modeling can underestimate risk',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Model asset correlations and apply haircuts for offsetting positions',
-        });
-      }
-
-      // Check for stress testing
-      if (!/stress|scenario|extreme|tail.*risk/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL145',
-          name: 'No Stress Testing',
-          severity: 'medium',
-          message: 'Cross-margin should account for correlation breakdown in stress',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Add stress scenarios where correlations approach 1 during market stress',
-        });
-      }
-    }
-
-    // Check for account health calculation
-    if (/account.*health|margin.*ratio|free.*margin/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 15), Math.min(lines.length, i + 15)).join('\n');
-      
-      // Check for unrealized PnL handling
-      if (!/unrealized|pnl|mark.*to.*market/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL145',
-          name: 'Unrealized PnL Not Included',
-          severity: 'high',
-          message: 'Account health should include unrealized PnL for accurate risk',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Include mark-to-market unrealized PnL in margin calculations',
-        });
-      }
-
-      // Check for isolated positions
-      if (!/isolated|segregate|separate.*margin/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL145',
-          name: 'No Position Isolation Option',
-          severity: 'low',
-          message: 'Consider offering isolated margin for high-risk positions',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Allow users to isolate risky positions from cross-margin pool',
-        });
-      }
-    }
-
-    // Check for collateral management
-    if (/collateral.*type|multi.*collateral|accept.*token/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 15), Math.min(lines.length, i + 15)).join('\n');
-      
-      // Check for collateral haircuts
-      if (!/haircut|discount.*factor|collateral.*weight/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL145',
-          name: 'Collateral Haircut Missing',
-          severity: 'high',
-          message: 'Different collateral types need different haircuts for volatility',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Apply haircuts: stables ~0%, majors ~10-20%, alts ~30-50%',
-        });
-      }
-
-      // Check for concentration limits
-      if (!/concentration|max.*collateral.*type|diversif/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL145',
-          name: 'Collateral Concentration Risk',
-          severity: 'medium',
-          message: 'Allow unlimited concentration in volatile collateral',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Limit percentage of margin from any single volatile asset',
-        });
-      }
-    }
-
-    // Check for auto-deleverage
-    if (/cascade|chain.*liquidation|deleverage.*other/i.test(line)) {
+  
+  if (input.rust?.sourceCode) {
+    const code = input.rust.sourceCode;
+    
+    // SOL441: Portfolio margin calculation
+    if (/cross_margin|portfolio_margin/i.test(code) && 
+        !/aggregate|total_risk|net_exposure/.test(code)) {
       findings.push({
-        id: 'SOL145',
-        name: 'Cascading Liquidation Risk',
-        severity: 'high',
-        message: 'Cross-margin liquidation can cascade across positions',
-        location: `${input.path}:${i + 1}`,
-        snippet: line.trim(),
-        fix: 'Implement circuit breakers and partial liquidation to prevent cascades',
+        id: 'SOL441',
+        severity: 'critical',
+        title: 'Cross-Margin Risk Not Aggregated',
+        description: 'Cross-margin requires aggregating risk across all positions.',
+        location: 'Margin calculation',
+        recommendation: 'Calculate net exposure across all positions for margin requirements.',
       });
     }
-  });
-
+    
+    // SOL442: Correlation assumptions
+    if (/cross_margin/i.test(code) && 
+        /hedge|offset/i.test(code) &&
+        !/correlation|stress_test/.test(code)) {
+      findings.push({
+        id: 'SOL442',
+        severity: 'high',
+        title: 'Hedging Assumptions Without Stress Testing',
+        description: 'Hedge offsets assume correlations that may break in volatility.',
+        location: 'Risk offsetting',
+        recommendation: 'Apply haircuts to hedge offsets and stress test correlations.',
+      });
+    }
+    
+    // SOL443: Withdrawal during open positions
+    if (/withdraw/i.test(code) && 
+        /margin|collateral/i.test(code) &&
+        !/health_check|margin_check/.test(code)) {
+      findings.push({
+        id: 'SOL443',
+        severity: 'critical',
+        title: 'Withdrawal Without Margin Check',
+        description: 'Withdrawals must verify account stays above margin requirements.',
+        location: 'Withdrawal logic',
+        recommendation: 'Check post-withdrawal margin ratio before allowing withdrawal.',
+      });
+    }
+    
+    // SOL444: Real-time health factor
+    if (/health|margin_ratio/i.test(code) && 
+        !/real_time|live|current_price/.test(code)) {
+      findings.push({
+        id: 'SOL444',
+        severity: 'high',
+        title: 'Health Factor Not Real-Time',
+        description: 'Health factor must use current prices for accurate risk assessment.',
+        location: 'Health calculation',
+        recommendation: 'Calculate health factor using real-time oracle prices.',
+      });
+    }
+    
+    // SOL445: Cascade liquidation risk
+    if (/liquidat/i.test(code) && 
+        /cross_margin|multiple.*position/i.test(code) &&
+        !/cascade|sequential|order/.test(code)) {
+      findings.push({
+        id: 'SOL445',
+        severity: 'high',
+        title: 'Liquidation Cascade Not Handled',
+        description: 'Cross-margin liquidations can trigger cascading effects.',
+        location: 'Liquidation sequence',
+        recommendation: 'Order liquidations to minimize cascade effects.',
+      });
+    }
+    
+    // SOL446: Unrealized PnL in margin
+    if (/unrealized|paper.*pnl/i.test(code) && 
+        /margin|collateral/i.test(code) &&
+        !/discount|haircut/.test(code)) {
+      findings.push({
+        id: 'SOL446',
+        severity: 'high',
+        title: 'Unrealized PnL Counted at Full Value',
+        description: 'Unrealized profits should be discounted when calculating margin.',
+        location: 'PnL handling',
+        recommendation: 'Apply haircut to unrealized PnL in margin calculations.',
+      });
+    }
+    
+    // SOL447: Sub-account isolation
+    if (/sub_account|sub-account/i.test(code) && 
+        !/isolate|separate|independent/.test(code)) {
+      findings.push({
+        id: 'SOL447',
+        severity: 'medium',
+        title: 'Sub-Account Isolation Missing',
+        description: 'Sub-accounts should be isolated to prevent cross-contamination.',
+        location: 'Account structure',
+        recommendation: 'Ensure sub-accounts have independent margin calculations.',
+      });
+    }
+    
+    // SOL448: Collateral weight changes
+    if (/collateral_weight|asset_weight/i.test(code) && 
+        !/rebalance|adjust|update_weight/.test(code)) {
+      findings.push({
+        id: 'SOL448',
+        severity: 'medium',
+        title: 'Collateral Weight Changes Not Handled',
+        description: 'Weight changes should trigger health recalculation.',
+        location: 'Weight management',
+        recommendation: 'Recalculate all account health when collateral weights change.',
+      });
+    }
+    
+    // SOL449: Maximum utilization
+    if (/utilization|borrowing/i.test(code) && 
+        /margin/i.test(code) &&
+        !/max_util|cap_utilization/.test(code)) {
+      findings.push({
+        id: 'SOL449',
+        severity: 'medium',
+        title: 'No Maximum Utilization Cap',
+        description: 'Unbounded utilization can lead to liquidity crises.',
+        location: 'Utilization tracking',
+        recommendation: 'Cap utilization rates and implement circuit breakers.',
+      });
+    }
+    
+    // SOL450: Emergency deleveraging
+    if (/cross_margin/i.test(code) && 
+        !/emergency|circuit_breaker|halt/.test(code)) {
+      findings.push({
+        id: 'SOL450',
+        severity: 'high',
+        title: 'No Emergency Deleveraging Mechanism',
+        description: 'Cross-margin systems need emergency deleveraging for extreme events.',
+        location: 'Emergency handling',
+        recommendation: 'Implement emergency deleveraging and trading halts.',
+      });
+    }
+  }
+  
   return findings;
 }

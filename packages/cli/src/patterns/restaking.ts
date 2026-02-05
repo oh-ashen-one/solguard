@@ -1,134 +1,156 @@
 import type { Finding } from '../commands/audit.js';
-import type { PatternInput } from './index.js';
+import type { ParsedIdl } from '../parsers/idl.js';
+import type { ParsedRust } from '../parsers/rust.js';
 
 /**
- * SOL142: Restaking Security
- * Detects vulnerabilities in restaking protocols (EigenLayer-style on Solana)
+ * SOL481-SOL490: Restaking Security Patterns
  * 
- * Restaking risks:
- * - Slashing conditions
- * - AVS (Actively Validated Services) trust
- * - Withdrawal delays
+ * Restaking protocols face slashing risks, operator trust,
+ * and complex withdrawal mechanics.
  */
-export function checkRestaking(input: PatternInput): Finding[] {
+export function checkRestaking(input: { idl?: ParsedIdl; rust?: ParsedRust }): Finding[] {
   const findings: Finding[] = [];
-  const rust = input.rust;
-  if (!rust) return findings;
-
-  const content = rust.content;
-  const lines = content.split('\n');
-
-  lines.forEach((line, i) => {
-    // Check for restaking/delegation
-    if (/restake|delegate.*avs|operator.*delegation/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 20), Math.min(lines.length, i + 20)).join('\n');
-      
-      // Check for slashing documentation
-      if (!/slash.*condition|penalty|slashing.*logic/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL142',
-          name: 'Slashing Conditions Unclear',
-          severity: 'high',
-          message: 'Restaking without clear slashing conditions exposes users to unknown risks',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Document all slashing conditions and maximum penalty percentages',
-        });
-      }
-
-      // Check for operator selection
-      if (!/operator.*whitelist|trusted.*operator|verify.*operator/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL142',
-          name: 'Operator Trust Not Validated',
-          severity: 'critical',
-          message: 'Delegation to any operator without validation is risky',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Implement operator whitelist or minimum stake requirements',
-        });
-      }
+  
+  if (input.rust?.sourceCode) {
+    const code = input.rust.sourceCode;
+    
+    // SOL481: Slashing conditions undefined
+    if (/slash|penalty/i.test(code) && 
+        /restake|avs/i.test(code) &&
+        !/slash_condition|proof_of_fault/.test(code)) {
+      findings.push({
+        id: 'SOL481',
+        severity: 'critical',
+        title: 'Slashing Conditions Not Defined',
+        description: 'Restaked assets can be slashed without clear fault proof.',
+        location: 'Slashing logic',
+        recommendation: 'Define explicit slashing conditions with proof requirements.',
+      });
     }
-
-    // Check for AVS registration
-    if (/register.*avs|avs.*registration|add.*service/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 15), Math.min(lines.length, i + 15)).join('\n');
-      
-      // Check for AVS validation
-      if (!/verify.*avs|avs.*whitelist|trusted.*avs/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL142',
-          name: 'AVS Not Validated',
-          severity: 'critical',
-          message: 'Registration to unvalidated AVS can result in slashing for invalid reasons',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Only allow registration to whitelisted/audited AVS programs',
-        });
-      }
-
-      // Check for max AVS limit
-      if (!/max.*avs|avs.*limit|service.*cap/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL142',
-          name: 'Unlimited AVS Registration',
-          severity: 'medium',
-          message: 'No limit on AVS registrations compounds slashing risk',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Limit number of simultaneous AVS registrations per stake',
-        });
-      }
+    
+    // SOL482: Operator trust
+    if (/operator|node_operator/i.test(code) && 
+        /restake/i.test(code) &&
+        !/verify|attestation|collateral/.test(code)) {
+      findings.push({
+        id: 'SOL482',
+        severity: 'high',
+        title: 'Operator Not Verified',
+        description: 'Operators should provide collateral or attestation.',
+        location: 'Operator onboarding',
+        recommendation: 'Require operator collateral and verification.',
+      });
     }
-
-    // Check for withdrawal/undelegation
-    if (/undelegate|withdraw.*stake|exit.*avs/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 15), Math.min(lines.length, i + 15)).join('\n');
-      
-      // Check for withdrawal delay
-      if (!/cooldown|delay|escrow.*period|unbonding/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL142',
-          name: 'No Withdrawal Delay',
-          severity: 'high',
-          message: 'Instant withdrawal prevents fraud proofs and slashing execution',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Implement withdrawal delay (e.g., 7 days) for fraud proof window',
-        });
-      }
-
-      // Check for pending slashing
-      if (!/pending.*slash|check.*slash|slash.*queue/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL142',
-          name: 'Withdrawal Without Slash Check',
-          severity: 'critical',
-          message: 'Withdrawal without checking pending slashing can allow escape',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Block withdrawals while slashing is pending',
-        });
-      }
+    
+    // SOL483: Withdrawal delay bypass
+    if (/withdraw|unstake/i.test(code) && 
+        /restake/i.test(code) &&
+        !/withdrawal_delay|cooldown/.test(code)) {
+      findings.push({
+        id: 'SOL483',
+        severity: 'high',
+        title: 'No Withdrawal Delay',
+        description: 'Instant withdrawals can destabilize restaking security.',
+        location: 'Withdrawal logic',
+        recommendation: 'Implement withdrawal delay period for restaked assets.',
+      });
     }
-
-    // Check for slashing execution
-    if (/execute.*slash|apply.*penalty|slash.*funds/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 10), Math.min(lines.length, i + 10)).join('\n');
-      
-      if (!/proof|evidence|verify.*fault/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL142',
-          name: 'Slashing Without Proof',
-          severity: 'critical',
-          message: 'Slashing executed without cryptographic proof of misbehavior',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Require verifiable proof of misbehavior before slashing',
-        });
-      }
+    
+    // SOL484: Multi-AVS slashing cascade
+    if (/avs|actively_validated/i.test(code) && 
+        /multiple|several/i.test(code) &&
+        !/slash_cap|max_slash/.test(code)) {
+      findings.push({
+        id: 'SOL484',
+        severity: 'critical',
+        title: 'Multiple AVS Slashing Cascade Risk',
+        description: 'Same stake securing multiple AVS can face cascading slashing.',
+        location: 'Multi-AVS security',
+        recommendation: 'Cap total slashing across multiple AVS assignments.',
+      });
     }
-  });
-
+    
+    // SOL485: Reward distribution
+    if (/reward|yield/i.test(code) && 
+        /restake|avs/i.test(code) &&
+        !/fair|pro_rata|proportional/.test(code)) {
+      findings.push({
+        id: 'SOL485',
+        severity: 'medium',
+        title: 'Unfair Reward Distribution',
+        description: 'Restaking rewards should be distributed proportionally.',
+        location: 'Reward mechanism',
+        recommendation: 'Implement pro-rata reward distribution.',
+      });
+    }
+    
+    // SOL486: AVS registration validation
+    if (/register.*avs|avs.*register/i.test(code) && 
+        !/verify_avs|validate_avs/.test(code)) {
+      findings.push({
+        id: 'SOL486',
+        severity: 'high',
+        title: 'AVS Registration Not Validated',
+        description: 'Malicious AVS can steal or slash delegated stake.',
+        location: 'AVS registration',
+        recommendation: 'Validate AVS contracts before allowing delegation.',
+      });
+    }
+    
+    // SOL487: Delegation accounting
+    if (/delegat/i.test(code) && 
+        /restake/i.test(code) &&
+        !/track|account|balance/.test(code)) {
+      findings.push({
+        id: 'SOL487',
+        severity: 'high',
+        title: 'Delegation Accounting Missing',
+        description: 'Delegated amounts must be tracked per delegator.',
+        location: 'Delegation tracking',
+        recommendation: 'Maintain accurate per-delegator accounting.',
+      });
+    }
+    
+    // SOL488: Operator key rotation
+    if (/operator.*key|signing_key/i.test(code) && 
+        /restake/i.test(code) &&
+        !/rotate|update_key/.test(code)) {
+      findings.push({
+        id: 'SOL488',
+        severity: 'medium',
+        title: 'Operator Key Cannot Be Rotated',
+        description: 'Compromised operator keys need rotation capability.',
+        location: 'Key management',
+        recommendation: 'Implement operator key rotation with verification.',
+      });
+    }
+    
+    // SOL489: Slashing dispute window
+    if (/slash/i.test(code) && 
+        !/dispute|challenge|appeal/.test(code)) {
+      findings.push({
+        id: 'SOL489',
+        severity: 'high',
+        title: 'No Slashing Dispute Mechanism',
+        description: 'Slashing should have dispute window for wrongful penalties.',
+        location: 'Slashing execution',
+        recommendation: 'Add dispute period before slashing finalization.',
+      });
+    }
+    
+    // SOL490: Restaking ratio limits
+    if (/restake|rehypothecate/i.test(code) && 
+        !/max_restake|restake_limit|ratio/.test(code)) {
+      findings.push({
+        id: 'SOL490',
+        severity: 'high',
+        title: 'No Restaking Ratio Limits',
+        description: 'Unlimited restaking creates systemic risk.',
+        location: 'Restaking limits',
+        recommendation: 'Limit how much can be restaked against base stake.',
+      });
+    }
+  }
+  
   return findings;
 }

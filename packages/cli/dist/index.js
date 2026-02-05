@@ -3,7 +3,7 @@ import {
   getPatternById,
   listPatterns,
   runPatterns
-} from "./chunk-7SKTCDFZ.js";
+} from "./chunk-QXD7KQW5.js";
 import {
   parseIdl
 } from "./chunk-HWAQQY7Q.js";
@@ -602,7 +602,7 @@ async function certificateCommand(path, options) {
     };
     try {
       const { parseRustFiles: parseRustFiles2 } = await import("./rust-LZBLPUB7.js");
-      const { runPatterns: runPatterns2 } = await import("./patterns-SFU6NKCC.js");
+      const { runPatterns: runPatterns2 } = await import("./patterns-UPTWP5NO.js");
       const { existsSync: existsSync7, statSync: statSync6, readdirSync: readdirSync6 } = await import("fs");
       if (!existsSync7(path)) {
         throw new Error(`Path not found: ${path}`);
@@ -2663,7 +2663,7 @@ program.command("report").description("Generate HTML audit report").argument("<p
   const { join: join9, basename } = await import("path");
   const { parseRustFiles: parseRustFiles2 } = await import("./rust-LZBLPUB7.js");
   const { parseIdl: parseIdl2 } = await import("./idl-YYKIXDKT.js");
-  const { runPatterns: runPatterns2 } = await import("./patterns-SFU6NKCC.js");
+  const { runPatterns: runPatterns2 } = await import("./patterns-UPTWP5NO.js");
   if (!existsSync7(path)) {
     console.error(chalk9.red(`Path not found: ${path}`));
     process.exit(1);

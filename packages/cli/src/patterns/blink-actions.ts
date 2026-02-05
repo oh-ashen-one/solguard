@@ -1,69 +1,87 @@
 import type { Finding } from '../commands/audit.js';
-import type { PatternInput } from './index.js';
+import type { ParsedIdl } from '../parsers/idl.js';
+import type { ParsedRust } from '../parsers/rust.js';
 
 /**
- * SOL132: Solana Blink/Actions Security
- * Detects vulnerabilities in Solana Actions (blinks) implementations
+ * SOL396-SOL400: Solana Actions / Blinks Security
  * 
- * Actions are URLs that return signable transactions. Risks include:
- * - Malicious transaction crafting
- * - Missing origin validation
- * - Excessive permissions requested
+ * Blinks (blockchain links) allow executing transactions from URLs.
+ * Security concerns: URL parameter injection, unsigned transactions,
+ * missing validation on action providers.
  */
-export function checkBlinkActions(input: PatternInput): Finding[] {
+export function checkBlinkActions(input: { idl?: ParsedIdl; rust?: ParsedRust }): Finding[] {
   const findings: Finding[] = [];
-  const rust = input.rust;
-  if (!rust) return findings;
-
-  const content = rust.content;
-  const lines = content.split('\n');
-
-  lines.forEach((line, i) => {
-    // Check for actions.json endpoint patterns
-    if (/actions\.json|solana-action/i.test(line)) {
-      // Check for missing origin validation
-      if (!/origin|cors|allowed_origin/i.test(content)) {
-        findings.push({
-          id: 'SOL132',
-          name: 'Blink Missing Origin Validation',
-          severity: 'high',
-          message: 'Solana Action endpoint without origin validation can be embedded maliciously',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Validate request origin against allowlist before returning transaction',
-        });
-      }
-    }
-
-    // Check for transaction building without fee payer validation
-    if (/build.*transaction|create.*transaction/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 5), Math.min(lines.length, i + 5)).join('\n');
-      if (!/fee_payer|payer.*verify|check.*payer/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL132',
-          name: 'Action Fee Payer Risk',
-          severity: 'medium',
-          message: 'Transaction built without explicit fee payer validation',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Explicitly set and validate fee_payer to prevent unexpected costs',
-        });
-      }
-    }
-
-    // Check for excessive permissions in actions
-    if (/set_compute_unit_limit|request_heap_frame/i.test(line)) {
+  
+  if (input.rust?.sourceCode) {
+    const code = input.rust.sourceCode;
+    
+    // SOL396: Missing URL parameter sanitization
+    if (/actions?\s*=\s*url\.search_params/i.test(code) && 
+        !/sanitize|validate|escape/.test(code)) {
       findings.push({
-        id: 'SOL132',
-        name: 'Action Excessive Resources',
-        severity: 'low',
-        message: 'Action requests elevated compute/memory - ensure this is necessary',
-        location: `${input.path}:${i + 1}`,
-        snippet: line.trim(),
-        fix: 'Only request elevated resources when genuinely needed',
+        id: 'SOL396',
+        severity: 'high',
+        title: 'Missing URL Parameter Sanitization in Blink/Action',
+        description: 'Action parameters from URL should be sanitized to prevent injection attacks.',
+        location: 'Action handler',
+        recommendation: 'Validate and sanitize all URL parameters before using in transaction building.',
       });
     }
-  });
-
+    
+    // SOL397: Unbounded action parameters
+    if (/get_param|query_param/i.test(code) && 
+        !/max_len|limit|bounds/.test(code)) {
+      findings.push({
+        id: 'SOL397',
+        severity: 'medium',
+        title: 'Unbounded Action Parameters',
+        description: 'Action parameters should have length/value bounds to prevent abuse.',
+        location: 'Action parameter handling',
+        recommendation: 'Add maximum length and value bounds for all action parameters.',
+      });
+    }
+    
+    // SOL398: Missing action.json validation
+    if (/actions?\.json/i.test(code) && 
+        !/verify|validate|schema/.test(code)) {
+      findings.push({
+        id: 'SOL398',
+        severity: 'medium',
+        title: 'Missing actions.json Schema Validation',
+        description: 'Action metadata should be validated against schema.',
+        location: 'Action metadata',
+        recommendation: 'Validate actions.json against the Solana Actions spec.',
+      });
+    }
+    
+    // SOL399: Transaction not requiring signature verification
+    if (/create_transaction|build_tx/i.test(code) && 
+        /blink|action/i.test(code) &&
+        !/require_signature|verify_signature/.test(code)) {
+      findings.push({
+        id: 'SOL399',
+        severity: 'high',
+        title: 'Blink Transaction Missing Signature Requirement',
+        description: 'Blink-built transactions should require proper signature verification.',
+        location: 'Transaction building',
+        recommendation: 'Ensure all blink transactions require appropriate signatures.',
+      });
+    }
+    
+    // SOL400: Missing CORS configuration for Actions
+    if (/action|blink/i.test(code) && 
+        /http|server|endpoint/i.test(code) &&
+        !/cors|access-control|origin/.test(code)) {
+      findings.push({
+        id: 'SOL400',
+        severity: 'medium',
+        title: 'Missing CORS Configuration for Actions Endpoint',
+        description: 'Action endpoints need proper CORS headers for browser compatibility.',
+        location: 'HTTP endpoint',
+        recommendation: 'Configure CORS headers as per Solana Actions specification.',
+      });
+    }
+  }
+  
   return findings;
 }

@@ -1,130 +1,157 @@
 import type { Finding } from '../commands/audit.js';
-import type { PatternInput } from './index.js';
+import type { ParsedIdl } from '../parsers/idl.js';
+import type { ParsedRust } from '../parsers/rust.js';
 
 /**
- * SOL149: NFT Lending Security
- * Detects vulnerabilities in NFT-collateralized lending (Sharky, Citrus style)
+ * SOL421-SOL430: NFT Lending Protocol Security
  * 
- * NFT lending risks:
- * - Floor price manipulation
- * - Trait-based valuation attacks
- * - Liquidation timing
+ * NFT lending protocols (Sharky, Citrus, etc.) have unique risks:
+ * collateral valuation, liquidation timing, royalty bypasses.
  */
-export function checkNftLending(input: PatternInput): Finding[] {
+export function checkNftLending(input: { idl?: ParsedIdl; rust?: ParsedRust }): Finding[] {
   const findings: Finding[] = [];
-  const rust = input.rust;
-  if (!rust) return findings;
-
-  const content = rust.content;
-  const lines = content.split('\n');
-
-  lines.forEach((line, i) => {
-    // Check for NFT collateral valuation
-    if (/nft.*value|floor.*price|collateral.*worth/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 20), Math.min(lines.length, i + 20)).join('\n');
-      
-      // Check for TWAP floor
-      if (!/twap|time.*weighted|average.*floor/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL149',
-          name: 'NFT Spot Floor Price',
-          severity: 'critical',
-          message: 'Spot floor price can be manipulated for instant over-borrowing',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Use TWAP floor price (e.g., 7-day average) for LTV calculation',
-        });
-      }
-
-      // Check for collection validation
-      if (!/verified.*collection|check.*collection|collection.*id/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL149',
-          name: 'NFT Collection Not Verified',
-          severity: 'critical',
-          message: 'Fake NFTs from unverified collections accepted as collateral',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Verify NFT belongs to whitelisted verified collection',
-        });
-      }
-
-      // Check for trait premium handling
-      if (!/trait|attribute|rarity/i.test(nearbyContent) && /premium|bonus|extra/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL149',
-          name: 'Trait Premium Manipulation',
-          severity: 'high',
-          message: 'Trait-based premiums can be gamed with wash trading',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Use conservative floor-only pricing or well-established trait oracles',
-        });
-      }
+  
+  if (input.rust?.sourceCode) {
+    const code = input.rust.sourceCode;
+    
+    // SOL421: NFT valuation manipulation
+    if (/nft.*collateral|collateral.*nft/i.test(code) && 
+        !/floor_price|oracle_price|time_weighted/.test(code)) {
+      findings.push({
+        id: 'SOL421',
+        severity: 'critical',
+        title: 'NFT Collateral Valuation Vulnerable',
+        description: 'NFT collateral value can be manipulated without proper price feeds.',
+        location: 'Collateral valuation',
+        recommendation: 'Use time-weighted floor prices or multiple oracle sources.',
+      });
     }
-
-    // Check for loan creation
-    if (/create.*loan|borrow.*against.*nft|collateralize.*nft/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 15), Math.min(lines.length, i + 15)).join('\n');
-      
-      // Check LTV limits
-      if (!/ltv|loan.*to.*value|max.*borrow/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL149',
-          name: 'NFT LTV Not Limited',
-          severity: 'high',
-          message: 'Unlimited LTV allows over-leveraged positions',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Cap LTV at conservative level (e.g., 30-50% of floor)',
-        });
-      }
-
-      // Check for NFT escrow
-      if (!/escrow|custody|transfer.*to.*program/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL149',
-          name: 'NFT Not Escrowed',
-          severity: 'critical',
-          message: 'NFT collateral not transferred to escrow - borrower can sell',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Transfer NFT to program-controlled escrow PDA',
-        });
-      }
+    
+    // SOL422: Instant liquidation exploit
+    if (/liquidat|foreclose/i.test(code) && 
+        /nft/i.test(code) &&
+        !/grace_period|delay|buffer/.test(code)) {
+      findings.push({
+        id: 'SOL422',
+        severity: 'high',
+        title: 'No Liquidation Grace Period',
+        description: 'Instant liquidation can enable oracle manipulation attacks.',
+        location: 'Liquidation logic',
+        recommendation: 'Add grace period before NFT collateral liquidation.',
+      });
     }
-
-    // Check for liquidation
-    if (/liquidat.*nft|seize.*collateral|foreclose/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 15), Math.min(lines.length, i + 15)).join('\n');
-      
-      // Check for grace period
-      if (!/grace|buffer|cure.*period/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL149',
-          name: 'NFT No Grace Period',
-          severity: 'medium',
-          message: 'Instant liquidation without grace period can catch borrowers off guard',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Add grace period (e.g., 24h) for borrowers to add collateral',
-        });
-      }
-
-      // Check for auction mechanism
-      if (!/auction|bid|dutch|english/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL149',
-          name: 'NFT Liquidation No Auction',
-          severity: 'medium',
-          message: 'Direct liquidation may undervalue rare NFTs',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Consider auction mechanism for liquidated NFTs',
-        });
-      }
+    
+    // SOL423: NFT ownership during loan
+    if (/escrow|custody/i.test(code) && 
+        /nft/i.test(code) &&
+        !/freeze|lock|transfer_guard/.test(code)) {
+      findings.push({
+        id: 'SOL423',
+        severity: 'high',
+        title: 'NFT Can Be Transferred During Loan',
+        description: 'Collateral NFT must be locked or frozen during loan period.',
+        location: 'NFT custody',
+        recommendation: 'Use escrow or freeze authority to prevent collateral transfer.',
+      });
     }
-  });
-
+    
+    // SOL424: Collection verification missing
+    if (/nft|collection/i.test(code) && 
+        /lending|loan|borrow/i.test(code) &&
+        !/verify_collection|certified_collection/.test(code)) {
+      findings.push({
+        id: 'SOL424',
+        severity: 'high',
+        title: 'NFT Collection Not Verified',
+        description: 'Fake collection NFTs can be used as fraudulent collateral.',
+        location: 'NFT validation',
+        recommendation: 'Verify NFT collection certification using Metaplex standards.',
+      });
+    }
+    
+    // SOL425: Royalty bypass on liquidation
+    if (/liquidat|sell|transfer/i.test(code) && 
+        /nft/i.test(code) &&
+        !/creator_fee|royalt|seller_fee/.test(code)) {
+      findings.push({
+        id: 'SOL425',
+        severity: 'medium',
+        title: 'Liquidation May Bypass Royalties',
+        description: 'NFT liquidation sales should respect creator royalties.',
+        location: 'Liquidation sale',
+        recommendation: 'Include royalty payments in liquidation sale logic.',
+      });
+    }
+    
+    // SOL426: Interest rate manipulation
+    if (/interest_rate|apr|apy/i.test(code) && 
+        /nft.*lend|lend.*nft/i.test(code) &&
+        !/max_rate|rate_cap|rate_limit/.test(code)) {
+      findings.push({
+        id: 'SOL426',
+        severity: 'high',
+        title: 'Unbounded Interest Rate',
+        description: 'Interest rates should have reasonable caps to prevent abuse.',
+        location: 'Interest calculation',
+        recommendation: 'Cap interest rates and validate rate parameters.',
+      });
+    }
+    
+    // SOL427: Loan extension abuse
+    if (/extend|rollover|refinance/i.test(code) && 
+        /loan|borrow/i.test(code) &&
+        !/extension_limit|max_extend/.test(code)) {
+      findings.push({
+        id: 'SOL427',
+        severity: 'medium',
+        title: 'Unlimited Loan Extensions',
+        description: 'Unlimited extensions can cause perpetual undercollateralization.',
+        location: 'Loan management',
+        recommendation: 'Limit number of extensions and revalidate collateral value.',
+      });
+    }
+    
+    // SOL428: Compressed NFT handling
+    if (/compressed|cnft|merkle_tree/i.test(code) && 
+        /collateral|lending/i.test(code) &&
+        !/verify_leaf|proof/.test(code)) {
+      findings.push({
+        id: 'SOL428',
+        severity: 'high',
+        title: 'Compressed NFT Proof Not Verified',
+        description: 'cNFT collateral requires merkle proof verification.',
+        location: 'cNFT handling',
+        recommendation: 'Verify merkle proof when accepting cNFT as collateral.',
+      });
+    }
+    
+    // SOL429: Multiple loan on same NFT
+    if (/nft.*collateral/i.test(code) && 
+        !/unique_collateral|collateral_check|already_used/.test(code)) {
+      findings.push({
+        id: 'SOL429',
+        severity: 'critical',
+        title: 'Double-Collateralization Possible',
+        description: 'Same NFT can potentially be used as collateral for multiple loans.',
+        location: 'Loan creation',
+        recommendation: 'Track and prevent duplicate use of NFT collateral.',
+      });
+    }
+    
+    // SOL430: Auction manipulation
+    if (/auction|bid/i.test(code) && 
+        /nft.*liquidat|liquidat.*nft/i.test(code) &&
+        !/min_bid|reserve_price|anti_snipe/.test(code)) {
+      findings.push({
+        id: 'SOL430',
+        severity: 'high',
+        title: 'Liquidation Auction Vulnerable',
+        description: 'Liquidation auctions need protections against manipulation.',
+        location: 'Auction logic',
+        recommendation: 'Add minimum bids, anti-sniping, and reserve prices.',
+      });
+    }
+  }
+  
   return findings;
 }

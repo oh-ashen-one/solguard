@@ -285,6 +285,19 @@ import { checkAnchorInitIfNeeded, checkAccountCloseLamportDust, checkPdaSeedColl
 // New patterns SOL371-SOL395 (Feb 5 2026 - Night build session batch 14 - Advanced Protocol Patterns)
 import { checkAldrinOrderBook, checkCrossChainReplay, checkOptionsVaultEpoch, checkLeverageVaultControls, checkSyntheticDebtTracking, checkZkProofVerification, checkCdpStability, checkDcaSecurity, checkLendingPoolIsolation, checkClmmFeeGrowth, checkLiquidationIncentive, checkNftStakingDuration, checkAmmInvariant, checkVestingContractSecurity, checkOrderBookDepth, checkPerpFundingRate, checkMultiCollateralRisk, checkStorageSlotAuth, checkVaaGuardianQuorum, checkDoubleClaimPrevention, checkMultisigThresholdBounds, checkStakePoolMechanics, checkTickArrayBoundary, checkPythConfidenceInterval, checkOracleGuardrails } from './solana-batched-patterns-14.js';
 
+// New patterns SOL396-SOL500 (Feb 5 2026 - 500 patterns milestone)
+import { checkBlinkActions } from './blink-actions.js';
+import { checkToken2022Advanced } from './token-2022-advanced.js';
+import { checkDexAggregator } from './dex-aggregator.js';
+import { checkNftLending } from './nft-lending.js';
+import { checkPerpetualDex } from './perpetual-dex.js';
+import { checkCrossMargin } from './cross-margin.js';
+import { checkPredictionMarket } from './prediction-market.js';
+import { checkSocialFi } from './social-fi.js';
+import { checkDaoTreasury } from './dao-treasury.js';
+import { checkRestaking } from './restaking.js';
+import { checkRealWorldAssets } from './real-world-assets.js';
+
 export interface PatternInput {
   idl: ParsedIdl | null;
   rust: ParsedRust | null;
@@ -2308,6 +2321,73 @@ const patterns: Pattern[] = [
     name: 'Oracle Guardrails (Drift)',
     severity: 'high',
     run: checkOracleGuardrails,
+  },
+  // SOL396-SOL500: New specialized patterns (Feb 5 2026)
+  {
+    id: 'SOL396-400',
+    name: 'Blink/Actions Security (5 patterns)',
+    severity: 'high',
+    run: checkBlinkActions,
+  },
+  {
+    id: 'SOL401-410',
+    name: 'Token-2022 Advanced Security (10 patterns)',
+    severity: 'critical',
+    run: checkToken2022Advanced,
+  },
+  {
+    id: 'SOL411-420',
+    name: 'DEX Aggregator Security (10 patterns)',
+    severity: 'critical',
+    run: checkDexAggregator,
+  },
+  {
+    id: 'SOL421-430',
+    name: 'NFT Lending Security (10 patterns)',
+    severity: 'critical',
+    run: checkNftLending,
+  },
+  {
+    id: 'SOL431-440',
+    name: 'Perpetual DEX Security (10 patterns)',
+    severity: 'critical',
+    run: checkPerpetualDex,
+  },
+  {
+    id: 'SOL441-450',
+    name: 'Cross-Margin Security (10 patterns)',
+    severity: 'critical',
+    run: checkCrossMargin,
+  },
+  {
+    id: 'SOL451-460',
+    name: 'Prediction Market Security (10 patterns)',
+    severity: 'high',
+    run: checkPredictionMarket,
+  },
+  {
+    id: 'SOL461-470',
+    name: 'Social-Fi Security (10 patterns)',
+    severity: 'high',
+    run: checkSocialFi,
+  },
+  {
+    id: 'SOL471-480',
+    name: 'DAO/Treasury Security (10 patterns)',
+    severity: 'critical',
+    run: checkDaoTreasury,
+  },
+  {
+    id: 'SOL481-490',
+    name: 'Restaking Security (10 patterns)',
+    severity: 'critical',
+    run: checkRestaking,
+  },
+  {
+    id: 'SOL491-500',
+    name: 'Real World Asset Security (10 patterns)',
+    severity: 'critical',
+    run: checkRealWorldAssets,
   },
 ];
 

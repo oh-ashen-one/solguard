@@ -1,99 +1,153 @@
 import type { Finding } from '../commands/audit.js';
-import type { PatternInput } from './index.js';
+import type { ParsedIdl } from '../parsers/idl.js';
+import type { ParsedRust } from '../parsers/rust.js';
 
 /**
- * SOL135: DEX Aggregator Security
- * Detects vulnerabilities when integrating with Jupiter and other aggregators
+ * SOL411-SOL420: DEX Aggregator Security Patterns
  * 
- * Risks include:
- * - Route manipulation
- * - Intermediate token attacks
- * - Excessive slippage
+ * DEX aggregators like Jupiter face unique challenges:
+ * route validation, intermediate token safety, slippage manipulation.
  */
-export function checkDexAggregator(input: PatternInput): Finding[] {
+export function checkDexAggregator(input: { idl?: ParsedIdl; rust?: ParsedRust }): Finding[] {
   const findings: Finding[] = [];
-  const rust = input.rust;
-  if (!rust) return findings;
-
-  const content = rust.content;
-  const lines = content.split('\n');
-
-  lines.forEach((line, i) => {
-    // Check for Jupiter/aggregator integration
-    if (/jupiter|jup_ag|route.*swap|aggregator/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 20), Math.min(lines.length, i + 20)).join('\n');
-      
-      // Check for slippage validation
-      if (!/slippage|min_out|minimum_amount_out/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL135',
-          name: 'Aggregator Missing Slippage',
-          severity: 'critical',
-          message: 'DEX aggregator call without slippage protection can result in total loss',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Always set min_out_amount based on expected price with slippage tolerance',
-        });
-      }
-
-      // Check for route validation
-      if (!/validate.*route|check.*route|verify.*path/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL135',
-          name: 'Aggregator Route Not Validated',
-          severity: 'high',
-          message: 'Swap route not validated - malicious routes can drain funds',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Validate that route starts/ends with expected tokens',
-        });
-      }
-    }
-
-    // Check for intermediate token handling
-    if (/intermediate.*token|hop|multi.*hop/i.test(line)) {
+  
+  if (input.rust?.sourceCode) {
+    const code = input.rust.sourceCode;
+    
+    // SOL411: Route validation missing
+    if (/route|swap_path|hop/i.test(code) && 
+        /aggregat|jupiter/i.test(code) &&
+        !/validate_route|verify_path/.test(code)) {
       findings.push({
-        id: 'SOL135',
-        name: 'Intermediate Token Risk',
-        severity: 'medium',
-        message: 'Multi-hop swaps expose to intermediate token risks',
-        location: `${input.path}:${i + 1}`,
-        snippet: line.trim(),
-        fix: 'Consider limiting hops or validating intermediate tokens',
+        id: 'SOL411',
+        severity: 'critical',
+        title: 'DEX Route Validation Missing',
+        description: 'Aggregator routes should be validated to prevent malicious routing.',
+        location: 'Route processing',
+        recommendation: 'Validate each hop in the swap route before execution.',
       });
     }
-
-    // Check for quote freshness
-    if (/get_quote|fetch_quote|quote_response/i.test(line)) {
-      const nearbyContent = lines.slice(Math.max(0, i - 10), Math.min(lines.length, i + 10)).join('\n');
-      if (!/timestamp|expires|valid_until|ttl/i.test(nearbyContent)) {
-        findings.push({
-          id: 'SOL135',
-          name: 'Quote Freshness Not Checked',
-          severity: 'high',
-          message: 'Stale quotes can result in unfavorable execution',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Check quote timestamp and reject if older than acceptable threshold',
-        });
-      }
+    
+    // SOL412: Intermediate token not validated
+    if (/intermediate|hop_token|mid_token/i.test(code) && 
+        !/whitelist|allowed_token|verify_token/.test(code)) {
+      findings.push({
+        id: 'SOL412',
+        severity: 'high',
+        title: 'Intermediate Token Not Whitelisted',
+        description: 'Swap routes using unknown intermediate tokens can enable drain attacks.',
+        location: 'Multi-hop swap',
+        recommendation: 'Whitelist allowed intermediate tokens in multi-hop swaps.',
+      });
     }
-
-    // Check for referral fee manipulation
-    if (/referral.*fee|platform.*fee|protocol.*fee/i.test(line)) {
-      if (!/max.*fee|cap.*fee|<=|< /i.test(line)) {
-        findings.push({
-          id: 'SOL135',
-          name: 'Uncapped Protocol Fee',
-          severity: 'high',
-          message: 'Protocol fees without caps can be set to drain user funds',
-          location: `${input.path}:${i + 1}`,
-          snippet: line.trim(),
-          fix: 'Add maximum fee cap (e.g., <= 1%) to prevent fee manipulation',
-        });
-      }
+    
+    // SOL413: Quote vs execution mismatch
+    if (/quote|expected_amount/i.test(code) && 
+        /execute|swap/i.test(code) &&
+        !/compare|verify_quote|match_quote/.test(code)) {
+      findings.push({
+        id: 'SOL413',
+        severity: 'high',
+        title: 'Quote vs Execution Amount Mismatch Risk',
+        description: 'Quoted amounts should be verified against actual execution.',
+        location: 'Swap execution',
+        recommendation: 'Verify executed amount against quoted amount within tolerance.',
+      });
     }
-  });
-
+    
+    // SOL414: Platform fee manipulation
+    if (/platform_fee|referral_fee|protocol_fee/i.test(code) && 
+        !/max_fee|fee_cap|validate_fee/.test(code)) {
+      findings.push({
+        id: 'SOL414',
+        severity: 'high',
+        title: 'Unbounded Platform Fee',
+        description: 'Platform fees should have maximum caps to prevent excessive extraction.',
+        location: 'Fee handling',
+        recommendation: 'Cap platform fees and validate fee parameters.',
+      });
+    }
+    
+    // SOL415: Flash loan in route
+    if (/route|swap_path/i.test(code) && 
+        !/flash_loan_check|no_flash_loan/.test(code)) {
+      findings.push({
+        id: 'SOL415',
+        severity: 'high',
+        title: 'Flash Loan Route Not Blocked',
+        description: 'Routes containing flash loans can enable atomic arbitrage attacks.',
+        location: 'Route validation',
+        recommendation: 'Detect and optionally block flash loan usage in routes.',
+      });
+    }
+    
+    // SOL416: Minimum output not enforced
+    if (/swap|exchange/i.test(code) && 
+        /aggregat/i.test(code) &&
+        !/minimum_out|min_amount_out|slippage/.test(code)) {
+      findings.push({
+        id: 'SOL416',
+        severity: 'critical',
+        title: 'Minimum Output Amount Not Enforced',
+        description: 'Swaps without minimum output can result in total loss to MEV.',
+        location: 'Swap execution',
+        recommendation: 'Always enforce minimum output amount on aggregator swaps.',
+      });
+    }
+    
+    // SOL417: Price impact not checked
+    if (/swap|route/i.test(code) && 
+        !/price_impact|impact_check|max_impact/.test(code)) {
+      findings.push({
+        id: 'SOL417',
+        severity: 'high',
+        title: 'Price Impact Not Validated',
+        description: 'Large swaps should check price impact before execution.',
+        location: 'Swap logic',
+        recommendation: 'Calculate and limit price impact for user protection.',
+      });
+    }
+    
+    // SOL418: AMM pool validation
+    if (/pool|amm|liquidity/i.test(code) && 
+        /aggregat/i.test(code) &&
+        !/verify_pool|validate_pool|pool_check/.test(code)) {
+      findings.push({
+        id: 'SOL418',
+        severity: 'high',
+        title: 'AMM Pool Not Validated',
+        description: 'Routes through unvalidated pools can lead to fake liquidity attacks.',
+        location: 'Pool selection',
+        recommendation: 'Validate pool authenticity before including in routes.',
+      });
+    }
+    
+    // SOL419: Shared account exposure
+    if (/shared_account|common_intermediary/i.test(code) && 
+        !/isolate|separate|atomic/.test(code)) {
+      findings.push({
+        id: 'SOL419',
+        severity: 'medium',
+        title: 'Shared Account State Between Routes',
+        description: 'Shared intermediary accounts can cause cross-contamination.',
+        location: 'Route isolation',
+        recommendation: 'Isolate state between concurrent swap routes.',
+      });
+    }
+    
+    // SOL420: Referrer manipulation
+    if (/referrer|referral/i.test(code) && 
+        !/verify_referrer|referrer_check/.test(code)) {
+      findings.push({
+        id: 'SOL420',
+        severity: 'low',
+        title: 'Referrer Address Not Validated',
+        description: 'Referrer addresses should be validated to prevent fee theft.',
+        location: 'Referral system',
+        recommendation: 'Validate referrer addresses against known registry.',
+      });
+    }
+  }
+  
   return findings;
 }
