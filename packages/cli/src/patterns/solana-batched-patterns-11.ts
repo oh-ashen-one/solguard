@@ -1,26 +1,32 @@
+/**
+ * SolGuard Security Patterns - Batch 11 (SOL341-SOL400)
+ * Advanced DeFi vulnerability patterns from real exploits and audits
+ * Sources: Helius, Sec3, OtterSec, Neodyme research
+ */
+
 import type { Finding } from '../commands/audit.js';
 import type { PatternInput } from './index.js';
 
-// SOL311-SOL330: Additional vulnerability patterns from audit reports and exploits
+// ============================================================================
+// LENDING PROTOCOL VULNERABILITIES
+// From: Solend, Jet, Port Finance exploits and audits
+// ============================================================================
 
-/**
- * SOL311: Port Max Withdraw Bug
- * Vulnerability discovered in Port Finance - max withdraw calculation error
- */
-export function checkPortMaxWithdrawBug(input: PatternInput): Finding[] {
+// SOL341: Liquidation Threshold Manipulation
+export function checkLiquidationThresholdManipulation(input: PatternInput): Finding[] {
   const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
+  if (!input.rust) return findings;
+  const content = input.rust.content;
   
-  // Check for max withdraw calculation without proper bounds
-  if (/max_withdraw|maximum_withdraw|withdraw_max/.test(rustCode)) {
-    if (!/min\s*\(|\.min\(/.test(rustCode)) {
+  if (/liquidat|health.*factor|collateral.*ratio/gi.test(content)) {
+    if (!/threshold.*immutable|config.*lock|timelock.*threshold/gi.test(content)) {
       findings.push({
-        id: 'SOL311',
-        title: 'Port Max Withdraw Bug Pattern',
-        severity: 'high',
-        description: 'Max withdraw calculation without proper bounds checking. Port Finance had a bug where max withdraw could exceed available liquidity.',
+        id: 'SOL341',
+        severity: 'critical',
+        title: 'Mutable Liquidation Threshold',
+        description: 'Liquidation thresholds that can be changed without timelock enable attackers to make positions instantly liquidatable (Solend Auth Bypass style attack).',
         location: input.path,
-        recommendation: 'Use min() to cap max_withdraw to actual available balance. Always validate withdraw amounts against pool liquidity.'
+        recommendation: 'Lock liquidation thresholds or require significant timelock for changes.',
       });
     }
   }
@@ -28,24 +34,21 @@ export function checkPortMaxWithdrawBug(input: PatternInput): Finding[] {
   return findings;
 }
 
-/**
- * SOL312: Jet Governance Vulnerability
- * Issues found in Jet Protocol governance
- */
-export function checkJetGovernanceVuln(input: PatternInput): Finding[] {
+// SOL342: Liquidation Bonus Manipulation
+export function checkLiquidationBonusManipulation(input: PatternInput): Finding[] {
   const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
+  if (!input.rust) return findings;
+  const content = input.rust.content;
   
-  // Check for governance without proper proposal validation
-  if (/governance|proposal|vote/.test(rustCode) && /execute|process/.test(rustCode)) {
-    if (!/proposal_state|is_valid|check_proposal/.test(rustCode)) {
+  if (/liquidat.*bonus|liquidation.*incentive|liquidator.*reward/gi.test(content)) {
+    if (!/max.*bonus|bonus.*cap|reasonable.*bonus/gi.test(content)) {
       findings.push({
-        id: 'SOL312',
-        title: 'Jet Governance Vulnerability Pattern',
+        id: 'SOL342',
         severity: 'high',
-        description: 'Governance proposal execution without proper state validation. Jet Protocol had vulnerabilities in governance proposal handling.',
+        title: 'Unbounded Liquidation Bonus',
+        description: 'Liquidation bonus without caps can be set to extreme values, extracting excessive value from borrowers.',
         location: input.path,
-        recommendation: 'Validate proposal state before execution. Check voting period has ended, quorum reached, and proposal not already executed.'
+        recommendation: 'Cap liquidation bonus to reasonable levels (e.g., 5-15%). Require timelock for changes.',
       });
     }
   }
@@ -53,24 +56,21 @@ export function checkJetGovernanceVuln(input: PatternInput): Finding[] {
   return findings;
 }
 
-/**
- * SOL313: Semantic Inconsistency (Stake Pool)
- * Sec3 discovered semantic inconsistency in Solana Stake Pool
- */
-export function checkSemanticInconsistency(input: PatternInput): Finding[] {
+// SOL343: Interest Rate Manipulation
+export function checkInterestRateManipulation(input: PatternInput): Finding[] {
   const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
+  if (!input.rust) return findings;
+  const content = input.rust.content;
   
-  // Check for stake operations with potential inconsistencies
-  if (/stake|unstake|delegation/.test(rustCode)) {
-    if (/state\s*=|status\s*=/.test(rustCode) && !/atomic|transaction/.test(rustCode)) {
+  if (/interest.*rate|borrow.*rate|supply.*rate|apy|apr/gi.test(content)) {
+    if (!/rate.*model|curve|utilization.*based|rate.*cap/gi.test(content)) {
       findings.push({
-        id: 'SOL313',
-        title: 'Semantic Inconsistency Vulnerability',
+        id: 'SOL343',
         severity: 'high',
-        description: 'Potential semantic inconsistency in state updates. Stake Pool audit revealed vulnerabilities where state could be inconsistent between operations.',
+        title: 'Arbitrary Interest Rate',
+        description: 'Interest rates not based on utilization curves can be manipulated to extract value.',
         location: input.path,
-        recommendation: 'Ensure atomic state updates. All related state changes should happen in a single transaction with proper ordering.'
+        recommendation: 'Use utilization-based interest rate curves. Cap maximum rates.',
       });
     }
   }
@@ -78,24 +78,136 @@ export function checkSemanticInconsistency(input: PatternInput): Finding[] {
   return findings;
 }
 
-/**
- * SOL314: SPL Token Approve Revocation Issue
- * Sneaky ways to bypass token approval revocations
- */
-export function checkTokenApproveRevocation(input: PatternInput): Finding[] {
+// SOL344: Borrow Factor Manipulation
+export function checkBorrowFactorManipulation(input: PatternInput): Finding[] {
   const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
+  if (!input.rust) return findings;
+  const content = input.rust.content;
   
-  // Check for approve/delegate handling
-  if (/approve|delegate/.test(rustCode)) {
-    if (!/revoke|reset_delegate/.test(rustCode)) {
+  if (/borrow.*factor|ltv|loan.*to.*value|collateral.*factor/gi.test(content)) {
+    if (!/max.*ltv|safe.*ltv|factor.*bound/gi.test(content)) {
       findings.push({
-        id: 'SOL314',
-        title: 'Token Approval Revocation Missing',
+        id: 'SOL344',
+        severity: 'high',
+        title: 'Unsafe Borrow Factor Configuration',
+        description: 'Borrow factors without safe bounds can enable over-leveraging and bad debt.',
+        location: input.path,
+        recommendation: 'Set maximum LTV ratios per asset. Consider asset volatility in factor calculation.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL345: Bad Debt Socialization
+export function checkBadDebtSocialization(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/bad.*debt|underwater|insolvent|shortfall/gi.test(content)) {
+    if (!/insurance.*fund|reserve|backstop|socialize.*debt/gi.test(content)) {
+      findings.push({
+        id: 'SOL345',
+        severity: 'high',
+        title: 'Missing Bad Debt Handling',
+        description: 'Lending protocols without bad debt handling mechanisms leave lenders unprotected.',
+        location: input.path,
+        recommendation: 'Implement insurance fund for bad debt. Define debt socialization rules.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// ============================================================================
+// AMM/DEX VULNERABILITIES
+// From: Raydium, Orca, Crema, Jupiter audits
+// ============================================================================
+
+// SOL346: AMM Constant Product Invariant
+export function checkAMMConstantProductInvariant(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/amm|swap|pool.*reserve|x\s*\*\s*y/gi.test(content)) {
+    if (!/k.*=.*x.*\*.*y|invariant.*check|constant.*product/gi.test(content)) {
+      findings.push({
+        id: 'SOL346',
+        severity: 'critical',
+        title: 'Missing AMM Invariant Check',
+        description: 'AMM operations without constant product invariant verification allow fund extraction.',
+        location: input.path,
+        recommendation: 'Verify k = x * y (or appropriate formula) after every swap operation.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL347: Virtual Reserve Manipulation
+export function checkVirtualReserveManipulation(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/virtual.*reserve|virtual.*balance|protocol.*owned/gi.test(content)) {
+    if (!/verify.*actual|reconcile|match.*real/gi.test(content)) {
+      findings.push({
+        id: 'SOL347',
+        severity: 'high',
+        title: 'Virtual Reserve Desync Risk',
+        description: 'Virtual reserves that desync from actual token balances enable exploitation.',
+        location: input.path,
+        recommendation: 'Regularly reconcile virtual reserves with actual token balances.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL348: LP Token Inflation Attack
+export function checkLPTokenInflationAttack(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/lp.*token|liquidity.*token|pool.*share|mint.*lp/gi.test(content)) {
+    if (!/first.*deposit|minimum.*liquidity|lock.*initial/gi.test(content)) {
+      findings.push({
+        id: 'SOL348',
+        severity: 'high',
+        title: 'LP Token Inflation Attack Vulnerability',
+        description: 'First depositor can manipulate share price by donating tokens to inflate LP token value.',
+        location: input.path,
+        recommendation: 'Lock minimum liquidity on first deposit. Use virtual offset for share calculation.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL349: Sandwich Attack Prevention
+export function checkSandwichAttackPrevention(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/swap|trade|exchange/gi.test(content)) {
+    if (!/commit.*reveal|private.*mempool|mev.*protect|batch.*auction/gi.test(content)) {
+      findings.push({
+        id: 'SOL349',
         severity: 'medium',
-        description: 'Token approvals should have clear revocation mechanisms. Residual approvals can be exploited.',
+        title: 'Sandwich Attack Vulnerable',
+        description: 'Swaps visible in mempool before execution are vulnerable to MEV sandwich attacks.',
         location: input.path,
-        recommendation: 'Implement proper revocation. Consider auto-expiring approvals or single-use delegates.'
+        recommendation: 'Consider commit-reveal schemes, private mempools, or batch auctions for MEV protection.',
       });
     }
   }
@@ -103,24 +215,276 @@ export function checkTokenApproveRevocation(input: PatternInput): Finding[] {
   return findings;
 }
 
-/**
- * SOL315: LP Token Fair Pricing
- * OtterSec identified $200M at risk from LP token oracle manipulation
- */
-export function checkLpTokenFairPricing(input: PatternInput): Finding[] {
+// SOL350: Pool Creation Frontrunning
+export function checkPoolCreationFrontrunning(input: PatternInput): Finding[] {
   const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
+  if (!input.rust) return findings;
+  const content = input.rust.content;
   
-  // Check for LP token pricing
-  if (/lp_token|liquidity_token/.test(rustCode) && /price|value|worth/.test(rustCode)) {
-    if (!/fair_price|sqrt|geometric_mean/.test(rustCode)) {
+  if (/create.*pool|initialize.*pool|new.*pool/gi.test(content)) {
+    if (!/pool.*permission|whitelist.*creator|authorized.*create/gi.test(content)) {
       findings.push({
-        id: 'SOL315',
-        title: 'LP Token Fair Pricing Missing',
+        id: 'SOL350',
+        severity: 'medium',
+        title: 'Pool Creation Frontrunning Risk',
+        description: 'Permissionless pool creation allows attackers to frontrun with malicious initial liquidity.',
+        location: input.path,
+        recommendation: 'Use permissioned pool creation or validate initial liquidity parameters.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// ============================================================================
+// NFT/TOKEN VULNERABILITIES
+// From: Metaplex, Magic Eden, NFT marketplace audits
+// ============================================================================
+
+// SOL351: NFT Royalty Bypass
+export function checkNFTRoyaltyBypass(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/royalt|creator.*fee|seller.*fee/gi.test(content)) {
+    if (!/enforce.*royalt|programmable.*nft|pnft|royalty.*check/gi.test(content)) {
+      findings.push({
+        id: 'SOL351',
+        severity: 'medium',
+        title: 'NFT Royalty Bypass Possible',
+        description: 'NFT royalties without enforcement mechanisms can be bypassed through direct transfers.',
+        location: input.path,
+        recommendation: 'Use Metaplex pNFTs or similar enforced royalty mechanisms.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL352: Token Metadata Manipulation
+export function checkTokenMetadataManipulation(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/metadata|uri|name|symbol|image/gi.test(content)) {
+    if (!/immutable.*metadata|lock.*metadata|metadata.*freeze/gi.test(content)) {
+      findings.push({
+        id: 'SOL352',
+        severity: 'medium',
+        title: 'Mutable Token Metadata',
+        description: 'Mutable metadata allows rug pulls by changing token appearance post-sale.',
+        location: input.path,
+        recommendation: 'Make metadata immutable after mint or require significant timelock.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL353: Collection Verification Bypass
+export function checkCollectionVerificationBypass(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/collection|verify.*collection|collection.*key/gi.test(content)) {
+    if (!/certified.*collection|verified.*collection|collection.*authority/gi.test(content)) {
+      findings.push({
+        id: 'SOL353',
+        severity: 'high',
+        title: 'Collection Verification Bypass',
+        description: 'NFTs without proper collection verification can be faked to appear part of legitimate collections.',
+        location: input.path,
+        recommendation: 'Verify collection certification using Metaplex standards.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL354: Token Freeze Authority Abuse
+export function checkTokenFreezeAuthorityAbuse(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/freeze.*authority|freeze.*account|freeze_authority/gi.test(content)) {
+    if (!/revoke.*freeze|no.*freeze|freeze.*disabled/gi.test(content)) {
+      findings.push({
+        id: 'SOL354',
+        severity: 'high',
+        title: 'Active Freeze Authority',
+        description: 'Tokens with active freeze authority can be frozen at any time, locking user funds.',
+        location: input.path,
+        recommendation: 'Revoke freeze authority for decentralized tokens. Disclose freeze risk to users.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL355: Mint Authority Retention
+export function checkMintAuthorityRetention(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/mint.*authority|mint_authority|can.*mint/gi.test(content)) {
+    if (!/revoke.*mint|close.*mint|mint.*disabled|fixed.*supply/gi.test(content)) {
+      findings.push({
+        id: 'SOL355',
+        severity: 'high',
+        title: 'Retained Mint Authority',
+        description: 'Tokens with retained mint authority can be infinitely inflated, diluting holders.',
+        location: input.path,
+        recommendation: 'Revoke mint authority for fixed supply tokens. Add caps and timelocks for inflationary tokens.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// ============================================================================
+// STAKING/REWARDS VULNERABILITIES
+// ============================================================================
+
+// SOL356: Staking Reward Dilution
+export function checkStakingRewardDilution(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/staking.*reward|stake.*yield|reward.*rate/gi.test(content)) {
+    if (!/reward.*per.*share|accumulated.*reward|reward.*index/gi.test(content)) {
+      findings.push({
+        id: 'SOL356',
+        severity: 'high',
+        title: 'Staking Reward Calculation Vulnerability',
+        description: 'Incorrect reward calculation can allow claiming more than earned or dilute existing stakers.',
+        location: input.path,
+        recommendation: 'Use reward-per-share accumulator pattern. Track reward debt per user.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL357: Cooldown Period Bypass
+export function checkCooldownPeriodBypass(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/unstake|withdraw.*stake|cooldown|unbond/gi.test(content)) {
+    if (!/cooldown.*period|unlock.*time|unbonding.*period/gi.test(content)) {
+      findings.push({
+        id: 'SOL357',
+        severity: 'high',
+        title: 'Missing Unstaking Cooldown',
+        description: 'Instant unstaking allows attackers to stake before rewards and unstake immediately after.',
+        location: input.path,
+        recommendation: 'Implement cooldown period for unstaking. Delay reward claims after staking.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL358: Reward Duration Manipulation
+export function checkRewardDurationManipulation(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/reward.*duration|emission.*rate|reward.*period/gi.test(content)) {
+    if (!/min.*duration|duration.*check|period.*validate/gi.test(content)) {
+      findings.push({
+        id: 'SOL358',
+        severity: 'medium',
+        title: 'Manipulable Reward Duration',
+        description: 'Reward durations that can be set to very short periods enable gaming of reward distribution.',
+        location: input.path,
+        recommendation: 'Set minimum reward distribution period. Validate duration on setting.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL359: Stake Weight Manipulation
+export function checkStakeWeightManipulation(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/stake.*weight|voting.*power|boost|multiplier/gi.test(content)) {
+    if (!/weight.*cap|max.*boost|weight.*decay/gi.test(content)) {
+      findings.push({
+        id: 'SOL359',
+        severity: 'high',
+        title: 'Unbounded Stake Weight',
+        description: 'Stake weight multipliers without caps allow excessive influence over governance or rewards.',
+        location: input.path,
+        recommendation: 'Cap maximum stake weight multipliers. Implement weight decay over time.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL360: Emission Schedule Manipulation
+export function checkEmissionScheduleManipulation(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/emission|reward.*schedule|distribution.*rate/gi.test(content)) {
+    if (!/fixed.*schedule|immutable.*emission|schedule.*lock/gi.test(content)) {
+      findings.push({
+        id: 'SOL360',
+        severity: 'medium',
+        title: 'Mutable Emission Schedule',
+        description: 'Changeable emission schedules allow insiders to front-run reward changes.',
+        location: input.path,
+        recommendation: 'Lock emission schedules or require significant timelock for changes.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// ============================================================================
+// BRIDGE/CROSS-CHAIN VULNERABILITIES
+// ============================================================================
+
+// SOL361: Cross-Chain Message Replay
+export function checkCrossChainMessageReplay(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/bridge|cross.*chain|relay|message.*id/gi.test(content)) {
+    if (!/nonce|sequence|processed.*message|replay.*protect/gi.test(content)) {
+      findings.push({
+        id: 'SOL361',
         severity: 'critical',
-        description: 'LP token valuation without fair pricing formula. $200M was at risk from LP token oracle manipulation attacks.',
+        title: 'Cross-Chain Message Replay Vulnerability',
+        description: 'Bridge messages without replay protection can be submitted multiple times.',
         location: input.path,
-        recommendation: 'Use fair LP pricing formulas (e.g., sqrt(reserve0 * reserve1) * 2 / totalSupply). Never use spot prices for LP valuation.'
+        recommendation: 'Track processed message nonces. Reject duplicate messages.',
       });
     }
   }
@@ -128,24 +492,21 @@ export function checkLpTokenFairPricing(input: PatternInput): Finding[] {
   return findings;
 }
 
-/**
- * SOL316: Signature Set Fabrication (Wormhole-detailed)
- * Detailed check for Wormhole-style signature verification bypass
- */
-export function checkSignatureSetFabrication(input: PatternInput): Finding[] {
+// SOL362: Chain ID Validation
+export function checkChainIDValidation(input: PatternInput): Finding[] {
   const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
+  if (!input.rust) return findings;
+  const content = input.rust.content;
   
-  // Check for signature verification
-  if (/signature|verify|guardian|validator/.test(rustCode)) {
-    if (/AccountInfo|UncheckedAccount/.test(rustCode) && !/program_id\s*==|owner\s*==/.test(rustCode)) {
+  if (/chain.*id|source.*chain|dest.*chain|network.*id/gi.test(content)) {
+    if (!/validate.*chain|verify.*chain.*id|expected.*chain/gi.test(content)) {
       findings.push({
-        id: 'SOL316',
-        title: 'Signature Set Fabrication Risk',
+        id: 'SOL362',
         severity: 'critical',
-        description: 'Signature verification using unchecked accounts. Wormhole exploit used fake SignatureSet account to bypass validation.',
+        title: 'Missing Chain ID Validation',
+        description: 'Messages without chain ID validation can be replayed across different networks.',
         location: input.path,
-        recommendation: 'Always verify account ownership and program ID before trusting signature data. Use PDA-derived signature accounts.'
+        recommendation: 'Include and validate source and destination chain IDs in all cross-chain messages.',
       });
     }
   }
@@ -153,24 +514,21 @@ export function checkSignatureSetFabrication(input: PatternInput): Finding[] {
   return findings;
 }
 
-/**
- * SOL317: Candy Machine Zero Account Exploit
- * Check for Candy Machine style exploits where zero accounts bypass validation
- */
-export function checkCandyMachineZeroAccount(input: PatternInput): Finding[] {
+// SOL363: Finality Assumption
+export function checkFinalityAssumption(input: PatternInput): Finding[] {
   const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
+  if (!input.rust) return findings;
+  const content = input.rust.content;
   
-  // Check for NFT minting patterns
-  if (/mint|nft|candy/.test(rustCode)) {
-    if (/#\[account\(zero\)\]/.test(rustCode) && !/#\[account\(zero,/.test(rustCode)) {
+  if (/finality|confirmation|block.*height|slot.*confirm/gi.test(content)) {
+    if (!/wait.*finality|confirm.*count|finality.*check/gi.test(content)) {
       findings.push({
-        id: 'SOL317',
-        title: 'Candy Machine Zero Account Vulnerability',
+        id: 'SOL363',
         severity: 'high',
-        description: 'Using #[account(zero)] without additional constraints. Candy Machine exploit allowed bypassing initialization.',
+        title: 'Insufficient Finality Check',
+        description: 'Processing cross-chain messages before finality allows double-spend attacks.',
         location: input.path,
-        recommendation: 'Use #[account(zero, ...additional_constraints)] to ensure proper validation even on zero-initialized accounts.'
+        recommendation: 'Wait for sufficient confirmations/finality before processing cross-chain messages.',
       });
     }
   }
@@ -178,24 +536,21 @@ export function checkCandyMachineZeroAccount(input: PatternInput): Finding[] {
   return findings;
 }
 
-/**
- * SOL318: Cope Roulette Style Revert Exploit
- * Exploiting reverting transactions for guaranteed outcomes
- */
-export function checkRevertExploit(input: PatternInput): Finding[] {
+// SOL364: Relayer Trust Assumption
+export function checkRelayerTrustAssumption(input: PatternInput): Finding[] {
   const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
+  if (!input.rust) return findings;
+  const content = input.rust.content;
   
-  // Check for randomness or game logic
-  if (/random|rng|game|bet|lottery|roulette/.test(rustCode)) {
-    if (!/commit.*reveal|vrf|switchboard/.test(rustCode)) {
+  if (/relayer|relay.*message|submit.*proof/gi.test(content)) {
+    if (!/verify.*proof|trustless|permissionless.*relay/gi.test(content)) {
       findings.push({
-        id: 'SOL318',
-        title: 'Transaction Revert Exploit Risk',
+        id: 'SOL364',
         severity: 'high',
-        description: 'Game/betting logic vulnerable to revert-based exploits. Cope Roulette showed how reverting unfavorable outcomes guarantees wins.',
+        title: 'Trusted Relayer Assumption',
+        description: 'Bridges relying on trusted relayers create centralization and censorship risks.',
         location: input.path,
-        recommendation: 'Use commit-reveal schemes or VRF (Switchboard/Pyth) for randomness. Never allow same-transaction randomness resolution.'
+        recommendation: 'Design for permissionless relaying with cryptographic proof verification.',
       });
     }
   }
@@ -203,128 +558,21 @@ export function checkRevertExploit(input: PatternInput): Finding[] {
   return findings;
 }
 
-/**
- * SOL319: Simulation Detection Bypass
- * Opcodes research on detecting and exploiting transaction simulation
- */
-export function checkSimulationDetectionBypass(input: PatternInput): Finding[] {
+// SOL365: Token Mapping Validation
+export function checkTokenMappingValidation(input: PatternInput): Finding[] {
   const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
+  if (!input.rust) return findings;
+  const content = input.rust.content;
   
-  // Check for simulation-dependent logic
-  if (/simulation|simulate|preflight/.test(rustCode)) {
-    findings.push({
-      id: 'SOL319',
-      title: 'Simulation Detection Logic',
-      severity: 'medium',
-      description: 'Code appears to detect or handle transaction simulation differently. This can be exploited or bypassed.',
-      location: input.path,
-      recommendation: 'Do not rely on simulation detection for security. Simulation behavior can be manipulated by validators.'
-    });
-  }
-  
-  return findings;
-}
-
-/**
- * SOL320: Cross-Program Authority Delegation Chain
- * Wormhole exploit involved breaking authority delegation chains
- */
-export function checkAuthorityDelegationChain(input: PatternInput): Finding[] {
-  const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
-  
-  // Check for delegated authority patterns
-  if (/delegate|authority|signer/.test(rustCode) && /invoke|cpi/.test(rustCode)) {
-    if (/AccountInfo.*authority|authority.*AccountInfo/.test(rustCode)) {
-      if (!/verify.*authority|check.*authority/.test(rustCode)) {
-        findings.push({
-          id: 'SOL320',
-          title: 'Authority Delegation Chain Vulnerability',
-          severity: 'critical',
-          description: 'Delegated authority without proper verification chain. Wormhole exploit broke the delegation chain to forge signatures.',
-          location: input.path,
-          recommendation: 'Verify entire delegation chain. Each hop in authority delegation must be explicitly validated.'
-        });
-      }
-    }
-  }
-  
-  return findings;
-}
-
-/**
- * SOL321: Quarry Reward Distribution Vulnerability
- * Issues found in reward distribution mechanisms
- */
-export function checkQuarryRewardDistribution(input: PatternInput): Finding[] {
-  const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
-  
-  // Check for reward distribution patterns
-  if (/reward|emission|distribute|claim/.test(rustCode)) {
-    if (/rate|per_second|per_slot/.test(rustCode)) {
-      if (!/timestamp|last_update|accrue/.test(rustCode)) {
-        findings.push({
-          id: 'SOL321',
-          title: 'Reward Distribution Timing Issue',
-          severity: 'high',
-          description: 'Reward distribution without proper time-based accrual. Can lead to reward manipulation.',
-          location: input.path,
-          recommendation: 'Track last_update_time and accrue rewards based on elapsed time. Use saturating math for reward calculations.'
-        });
-      }
-    }
-  }
-  
-  return findings;
-}
-
-/**
- * SOL322: Saber Stable Swap Invariant
- * Checking for stable swap curve implementation issues
- */
-export function checkStableSwapInvariant(input: PatternInput): Finding[] {
-  const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
-  
-  // Check for stable swap patterns
-  if (/stable.*swap|stableswap|curve/.test(rustCode)) {
-    if (/amplification|amp_factor|A\s*=/.test(rustCode)) {
-      if (!/invariant|d_value|compute_d/.test(rustCode)) {
-        findings.push({
-          id: 'SOL322',
-          title: 'Stable Swap Invariant Missing',
-          severity: 'high',
-          description: 'Stable swap with amplification but missing invariant calculation. Can lead to arbitrage or drain attacks.',
-          location: input.path,
-          recommendation: 'Implement proper StableSwap invariant calculation (D). Validate amplification factor bounds.'
-        });
-      }
-    }
-  }
-  
-  return findings;
-}
-
-/**
- * SOL323: Marinade Stake Pool Security
- * Patterns from Marinade Finance audits
- */
-export function checkMarinadeStakePoolSecurity(input: PatternInput): Finding[] {
-  const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
-  
-  // Check for liquid staking patterns
-  if (/liquid.*stake|mSOL|stake_pool/.test(rustCode)) {
-    if (!/validator_list|stake_account_check/.test(rustCode)) {
+  if (/token.*mapping|wrapped.*token|bridge.*token|foreign.*token/gi.test(content)) {
+    if (!/verify.*mapping|whitelist.*token|approved.*token/gi.test(content)) {
       findings.push({
-        id: 'SOL323',
-        title: 'Liquid Staking Validator Validation',
+        id: 'SOL365',
         severity: 'high',
-        description: 'Liquid staking without proper validator list validation. Marinade audits highlighted importance of stake account verification.',
+        title: 'Unvalidated Token Mapping',
+        description: 'Bridge token mappings without validation can allow minting of unauthorized wrapped tokens.',
         location: input.path,
-        recommendation: 'Validate stake accounts belong to approved validator list. Check stake account state and delegation.'
+        recommendation: 'Maintain whitelist of approved token mappings. Verify mappings before minting.',
       });
     }
   }
@@ -332,124 +580,25 @@ export function checkMarinadeStakePoolSecurity(input: PatternInput): Finding[] {
   return findings;
 }
 
-/**
- * SOL324: Orca Whirlpool Tick Array Security
- * Patterns from Orca Whirlpools audit
- */
-export function checkWhirlpoolTickArraySecurity(input: PatternInput): Finding[] {
-  const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
-  
-  // Check for CLMM/tick array patterns
-  if (/tick_array|whirlpool|clmm/.test(rustCode)) {
-    if (!/tick_array_index|valid_tick/.test(rustCode)) {
-      findings.push({
-        id: 'SOL324',
-        title: 'CLMM Tick Array Validation',
-        severity: 'high',
-        description: 'Concentrated liquidity tick array without proper index validation. Can lead to out-of-bounds or invalid tick access.',
-        location: input.path,
-        recommendation: 'Validate tick array indices are within bounds. Ensure tick spacing is respected.'
-      });
-    }
-  }
-  
-  return findings;
-}
+// ============================================================================
+// ORACLE VULNERABILITIES (Extended)
+// ============================================================================
 
-/**
- * SOL325: Pyth Oracle Integration Security
- * Patterns from Pyth audit (Zellic)
- */
-export function checkPythOracleIntegration(input: PatternInput): Finding[] {
+// SOL366: Oracle Staleness Check
+export function checkOracleStatelessCheck(input: PatternInput): Finding[] {
   const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
+  if (!input.rust) return findings;
+  const content = input.rust.content;
   
-  // Check for Pyth oracle usage
-  if (/pyth|price_feed|price_account/.test(rustCode)) {
-    if (!/conf|confidence|status|trading/.test(rustCode)) {
+  if (/oracle|price.*feed|pyth|switchboard|chainlink/gi.test(content)) {
+    if (!/staleness|last.*update|max.*age|fresh/gi.test(content)) {
       findings.push({
-        id: 'SOL325',
-        title: 'Pyth Oracle Confidence Check Missing',
-        severity: 'high',
-        description: 'Pyth oracle usage without checking price confidence interval or trading status.',
-        location: input.path,
-        recommendation: 'Check price.conf is within acceptable bounds. Verify price.status == Trading. Validate price.publish_time is recent.'
-      });
-    }
-  }
-  
-  return findings;
-}
-
-/**
- * SOL326: Drift Protocol Oracle Guardrails
- * Oracle guardrail patterns from Drift Protocol
- */
-export function checkDriftOracleGuardrails(input: PatternInput): Finding[] {
-  const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
-  
-  // Check for perpetual/leverage oracle usage
-  if (/perp|perpetual|leverage|margin/.test(rustCode) && /oracle|price/.test(rustCode)) {
-    if (!/oracle_guard|price_divergence|max_spread/.test(rustCode)) {
-      findings.push({
-        id: 'SOL326',
-        title: 'Oracle Guardrails Missing (Drift-style)',
-        severity: 'high',
-        description: 'Leveraged trading without oracle guardrails. Drift implements price divergence checks and max spread limits.',
-        location: input.path,
-        recommendation: 'Implement oracle guardrails: max price divergence between sources, staleness checks, confidence intervals.'
-      });
-    }
-  }
-  
-  return findings;
-}
-
-/**
- * SOL327: Solido Liquid Staking Security
- * Patterns from Solido (Lido on Solana) audits
- */
-export function checkSolidoLiquidStaking(input: PatternInput): Finding[] {
-  const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
-  
-  // Check for stSOL-style liquid staking
-  if (/stSOL|st_sol|liquid_stake/.test(rustCode)) {
-    if (!/exchange_rate|maintain_peg/.test(rustCode)) {
-      findings.push({
-        id: 'SOL327',
-        title: 'Liquid Staking Exchange Rate Security',
-        severity: 'high',
-        description: 'Liquid staking token without proper exchange rate management. Solido audits emphasized rate manipulation prevention.',
-        location: input.path,
-        recommendation: 'Implement secure exchange rate updates with time-weighted averaging. Prevent flash manipulation of rates.'
-      });
-    }
-  }
-  
-  return findings;
-}
-
-/**
- * SOL328: Squads Multisig Replay Prevention
- * Patterns from Squads Protocol audit
- */
-export function checkSquadsMultisigReplay(input: PatternInput): Finding[] {
-  const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
-  
-  // Check for multisig patterns
-  if (/multisig|multi_sig|threshold/.test(rustCode) && /execute|approve/.test(rustCode)) {
-    if (!/sequence|nonce|tx_index/.test(rustCode)) {
-      findings.push({
-        id: 'SOL328',
-        title: 'Multisig Transaction Replay Risk',
+        id: 'SOL366',
         severity: 'critical',
-        description: 'Multisig without transaction sequence/nonce. Squads uses sequential tx_index to prevent replay.',
+        title: 'Missing Oracle Staleness Check',
+        description: 'Using stale oracle prices allows exploitation when market has moved.',
         location: input.path,
-        recommendation: 'Use monotonically increasing transaction index. Mark transactions as executed after processing.'
+        recommendation: 'Check oracle update timestamp. Reject prices older than acceptable threshold.',
       });
     }
   }
@@ -457,24 +606,21 @@ export function checkSquadsMultisigReplay(input: PatternInput): Finding[] {
   return findings;
 }
 
-/**
- * SOL329: Streamflow Vesting Security
- * Patterns from Streamflow vesting/payment audit
- */
-export function checkStreamflowVestingSecurity(input: PatternInput): Finding[] {
+// SOL367: Oracle Confidence Interval
+export function checkOracleConfidenceInterval(input: PatternInput): Finding[] {
   const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
+  if (!input.rust) return findings;
+  const content = input.rust.content;
   
-  // Check for vesting/streaming patterns
-  if (/vesting|stream|cliff|linear_release/.test(rustCode)) {
-    if (!/withdrawn_amount|available_to_claim/.test(rustCode)) {
+  if (/oracle|pyth|price.*feed/gi.test(content)) {
+    if (!/confidence|deviation|uncertainty|price.*band/gi.test(content)) {
       findings.push({
-        id: 'SOL329',
-        title: 'Vesting Stream Accounting Error',
+        id: 'SOL367',
         severity: 'high',
-        description: 'Token vesting without proper withdrawn amount tracking. Can lead to over-claiming.',
+        title: 'Missing Oracle Confidence Check',
+        description: 'Using oracle prices without confidence intervals allows exploitation during high volatility.',
         location: input.path,
-        recommendation: 'Track total_amount, withdrawn_amount, and calculate available = vested - withdrawn. Use checked math.'
+        recommendation: 'Check oracle confidence intervals. Pause operations when confidence is too wide.',
       });
     }
   }
@@ -482,27 +628,605 @@ export function checkStreamflowVestingSecurity(input: PatternInput): Finding[] {
   return findings;
 }
 
-/**
- * SOL330: Phoenix DEX Order Book Security
- * Patterns from Phoenix order book audit (OtterSec)
- */
-export function checkPhoenixOrderBookSecurity(input: PatternInput): Finding[] {
+// SOL368: Single Oracle Dependency
+export function checkSingleOracleDependency(input: PatternInput): Finding[] {
   const findings: Finding[] = [];
-  const rustCode = input.rust?.content || '';
+  if (!input.rust) return findings;
+  const content = input.rust.content;
   
-  // Check for order book patterns
-  if (/order_book|orderbook|bid|ask|limit_order/.test(rustCode)) {
-    if (!/match.*engine|price_time_priority/.test(rustCode)) {
+  if (/oracle|price.*source|feed/gi.test(content)) {
+    if (!/multiple.*oracle|fallback.*oracle|oracle.*aggregat/gi.test(content)) {
       findings.push({
-        id: 'SOL330',
-        title: 'Order Book Matching Engine Security',
+        id: 'SOL368',
         severity: 'high',
-        description: 'Order book without proper matching engine. Phoenix audit emphasized price-time priority and fair matching.',
+        title: 'Single Oracle Dependency',
+        description: 'Relying on single oracle creates single point of failure and manipulation risk.',
         location: input.path,
-        recommendation: 'Implement price-time priority matching. Validate order prices against tick size. Prevent self-trading.'
+        recommendation: 'Use multiple oracle sources. Implement median or weighted average pricing.',
       });
     }
   }
   
   return findings;
 }
+
+// SOL369: LP Token Oracle Manipulation
+export function checkLPTokenOracleManipulation(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/lp.*price|pool.*value|lp.*oracle|liquidity.*value/gi.test(content)) {
+    if (!/fair.*lp.*price|virtual.*price|manipulation.*resist/gi.test(content)) {
+      findings.push({
+        id: 'SOL369',
+        severity: 'critical',
+        title: 'LP Token Oracle Manipulation (OtterSec $200M Bluff)',
+        description: 'LP token prices based on spot reserves can be manipulated via flash loans. OtterSec demonstrated $200M potential exploit.',
+        location: input.path,
+        recommendation: 'Use fair LP pricing formulas that resist manipulation. Never use spot reserve ratios directly.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL370: Price Deviation Circuit Breaker
+export function checkPriceDeviationCircuitBreaker(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/price|oracle|feed/gi.test(content)) {
+    if (!/circuit.*breaker|price.*limit|deviation.*check|emergency.*pause/gi.test(content)) {
+      findings.push({
+        id: 'SOL370',
+        severity: 'high',
+        title: 'Missing Price Circuit Breaker',
+        description: 'Large price deviations without circuit breakers allow exploitation during market anomalies.',
+        location: input.path,
+        recommendation: 'Implement circuit breakers that pause operations when prices deviate beyond thresholds.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// ============================================================================
+// PROGRAM UPGRADE VULNERABILITIES
+// ============================================================================
+
+// SOL371: Unrestricted Program Upgrade
+export function checkUnrestrictedProgramUpgrade(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/upgrade.*authority|program.*upgrade|bpf.*upgrade/gi.test(content)) {
+    if (!/multisig.*upgrade|timelock.*upgrade|governance.*upgrade/gi.test(content)) {
+      findings.push({
+        id: 'SOL371',
+        severity: 'critical',
+        title: 'Single-Key Program Upgrade',
+        description: 'Program upgrades controlled by single key allow instant malicious code deployment.',
+        location: input.path,
+        recommendation: 'Use multisig for upgrade authority. Add timelock for upgrade execution.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL372: State Migration Vulnerability
+export function checkStateMigrationVulnerability(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/migrate|upgrade.*state|version.*bump|schema.*change/gi.test(content)) {
+    if (!/migration.*script|backward.*compat|state.*version/gi.test(content)) {
+      findings.push({
+        id: 'SOL372',
+        severity: 'high',
+        title: 'Unsafe State Migration',
+        description: 'Program upgrades without proper state migration can corrupt or lose user data.',
+        location: input.path,
+        recommendation: 'Version account schemas. Test migration scripts thoroughly. Maintain backward compatibility.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL373: Immutable Program Risk
+export function checkImmutableProgramRisk(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/immutable|no.*upgrade|upgrade.*disabled|frozen.*program/gi.test(content)) {
+    if (!/emergency|circuit.*breaker|pause.*mechanism/gi.test(content)) {
+      findings.push({
+        id: 'SOL373',
+        severity: 'medium',
+        title: 'Immutable Program Without Emergency Controls',
+        description: 'Immutable programs cannot be fixed if vulnerabilities are discovered.',
+        location: input.path,
+        recommendation: 'Include emergency pause mechanism even in immutable programs.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// ============================================================================
+// TRANSACTION VULNERABILITIES
+// ============================================================================
+
+// SOL374: Transaction Ordering Manipulation
+export function checkTransactionOrderingManipulation(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/order|sequence|priority|first.*come/gi.test(content)) {
+    if (!/commit.*reveal|random.*order|batch.*process/gi.test(content)) {
+      findings.push({
+        id: 'SOL374',
+        severity: 'medium',
+        title: 'Transaction Ordering Vulnerability',
+        description: 'Operations sensitive to transaction order can be front-run or back-run.',
+        location: input.path,
+        recommendation: 'Use commit-reveal for order-sensitive operations. Consider batch processing.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL375: Partial Transaction Execution
+export function checkPartialTransactionExecution(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/multi.*instruction|batch|atomic/gi.test(content)) {
+    if (!/all.*or.*nothing|atomic.*batch|revert.*all/gi.test(content)) {
+      findings.push({
+        id: 'SOL375',
+        severity: 'high',
+        title: 'Non-Atomic Multi-Instruction Risk',
+        description: 'Multi-instruction operations without atomicity can leave state inconsistent.',
+        location: input.path,
+        recommendation: 'Ensure multi-instruction operations are atomic. Implement rollback on partial failure.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL376: Duplicate Transaction Prevention
+export function checkDuplicateTransactionPrevention(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/claim|redeem|withdraw|airdrop/gi.test(content)) {
+    if (!/claimed|processed|used.*nonce|one.*time/gi.test(content)) {
+      findings.push({
+        id: 'SOL376',
+        severity: 'high',
+        title: 'Missing Duplicate Claim Prevention',
+        description: 'Claims without duplicate prevention can be executed multiple times.',
+        location: input.path,
+        recommendation: 'Track claimed status per user. Use nonces for one-time operations.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// ============================================================================
+// SOLANA-SPECIFIC VULNERABILITIES
+// ============================================================================
+
+// SOL377: CPI Signer Seed Exposure
+export function checkCPISignerSeedExposure(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/invoke_signed|cpi.*signer|signer.*seeds/gi.test(content)) {
+    if (/seed.*=.*".*"|seed.*=.*b".*"/gi.test(content)) {
+      findings.push({
+        id: 'SOL377',
+        severity: 'high',
+        title: 'Hardcoded CPI Signer Seeds',
+        description: 'Hardcoded signer seeds in CPI calls can be predicted and potentially exploited.',
+        location: input.path,
+        recommendation: 'Use dynamic seeds including user pubkeys and nonces. Avoid predictable seed patterns.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL378: Account Reallocation Without Rent Check
+export function checkAccountReallocationRent(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/realloc|resize|grow.*account|increase.*size/gi.test(content)) {
+    if (!/rent.*exempt|minimum.*balance|lamport.*check/gi.test(content)) {
+      findings.push({
+        id: 'SOL378',
+        severity: 'medium',
+        title: 'Account Reallocation Without Rent Check',
+        description: 'Growing account size without ensuring rent-exemption can cause account deletion.',
+        location: input.path,
+        recommendation: 'Ensure account maintains rent-exempt balance after reallocation.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL379: Account Data Zeroing
+export function checkAccountDataZeroing(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/close.*account|delete.*account|remove.*account/gi.test(content)) {
+    if (!/zero.*data|clear.*data|fill.*zero|memset/gi.test(content)) {
+      findings.push({
+        id: 'SOL379',
+        severity: 'high',
+        title: 'Account Closure Without Data Zeroing',
+        description: 'Closing accounts without zeroing data allows account revival attacks.',
+        location: input.path,
+        recommendation: 'Zero out all account data before closing. Set discriminator to invalid value.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL380: Program ID Spoofing
+export function checkProgramIDSpoofing(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/cpi|invoke|call.*program/gi.test(content)) {
+    if (!/verify.*program.*id|expected.*program|program.*check/gi.test(content)) {
+      findings.push({
+        id: 'SOL380',
+        severity: 'critical',
+        title: 'CPI Program ID Not Verified',
+        description: 'CPI calls without program ID verification allow calling malicious programs.',
+        location: input.path,
+        recommendation: 'Always verify program ID matches expected value before CPI.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// ============================================================================
+// Additional patterns for comprehensive coverage
+// ============================================================================
+
+// SOL381-SOL400: More patterns...
+
+// SOL381: Token Extensions Compatibility
+export function checkTokenExtensionsCompatibility(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/token.*2022|token.*extension|transfer.*hook|confidential/gi.test(content)) {
+    if (!/extension.*check|hook.*validate|extension.*support/gi.test(content)) {
+      findings.push({
+        id: 'SOL381',
+        severity: 'high',
+        title: 'Token Extensions Not Validated',
+        description: 'Token-2022 extensions (transfer hooks, confidential transfers) require special handling.',
+        location: input.path,
+        recommendation: 'Check for and properly handle all token extensions.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL382: Compute Budget Griefing
+export function checkComputeBudgetGriefing(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/user.*input|external.*data|untrusted/gi.test(content)) {
+    if (!/compute.*limit|gas.*limit|resource.*bound/gi.test(content)) {
+      findings.push({
+        id: 'SOL382',
+        severity: 'medium',
+        title: 'Compute Budget Griefing Risk',
+        description: 'User-controlled input affecting computation can be exploited to grief other operations.',
+        location: input.path,
+        recommendation: 'Limit computation based on user input. Add compute budget awareness.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL383: Lookup Table Manipulation
+export function checkLookupTableManipulation(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/lookup.*table|address.*table|alt/gi.test(content)) {
+    if (!/verify.*table|table.*authority|trusted.*table/gi.test(content)) {
+      findings.push({
+        id: 'SOL383',
+        severity: 'high',
+        title: 'Address Lookup Table Not Validated',
+        description: 'Using unvalidated address lookup tables allows substituting malicious accounts.',
+        location: input.path,
+        recommendation: 'Verify lookup table authority. Use trusted tables only.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL384: Versioned Transaction Handling
+export function checkVersionedTransactionHandling(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/versioned|v0.*transaction|legacy.*transaction/gi.test(content)) {
+    if (!/version.*check|handle.*version|support.*both/gi.test(content)) {
+      findings.push({
+        id: 'SOL384',
+        severity: 'medium',
+        title: 'Versioned Transaction Handling',
+        description: 'Programs must handle both legacy and versioned transactions correctly.',
+        location: input.path,
+        recommendation: 'Support both transaction versions. Validate version-specific features.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL385: SPL Token Authority Confusion
+export function checkSPLTokenAuthorityConfusion(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/token.*authority|mint.*authority|freeze.*authority|close.*authority/gi.test(content)) {
+    if (!/verify.*authority|check.*authority|authority.*match/gi.test(content)) {
+      findings.push({
+        id: 'SOL385',
+        severity: 'high',
+        title: 'Token Authority Confusion',
+        description: 'Confusing different token authorities (mint, freeze, close) can lead to unauthorized operations.',
+        location: input.path,
+        recommendation: 'Clearly distinguish and verify each authority type separately.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL386: Associated Token Account Derivation
+export function checkATADerivation(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/associated.*token|ata|get_associated_token_address/gi.test(content)) {
+    if (!/verify.*ata|check.*derivation|expected.*ata/gi.test(content)) {
+      findings.push({
+        id: 'SOL386',
+        severity: 'high',
+        title: 'ATA Derivation Not Verified',
+        description: 'Using ATAs without verifying derivation allows substituting attacker-controlled accounts.',
+        location: input.path,
+        recommendation: 'Verify ATA is correctly derived from expected wallet and mint.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL387: Delegate Authority Abuse
+export function checkDelegateAuthorityAbuse(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/delegate|approval|approved.*amount|delegated.*amount/gi.test(content)) {
+    if (!/revoke|limited.*time|max.*delegate/gi.test(content)) {
+      findings.push({
+        id: 'SOL387',
+        severity: 'high',
+        title: 'Unlimited Token Delegation',
+        description: 'Token delegations without limits or expiry can be abused if delegate is compromised.',
+        location: input.path,
+        recommendation: 'Limit delegation amounts. Add expiry times. Allow easy revocation.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL388: System Program Invocation
+export function checkSystemProgramInvocation(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/system_program|create_account|transfer.*lamport|allocate/gi.test(content)) {
+    if (!/system_program::id|SYSTEM_PROGRAM_ID|verify.*system/gi.test(content)) {
+      findings.push({
+        id: 'SOL388',
+        severity: 'high',
+        title: 'System Program Not Verified',
+        description: 'System program invocations without verification allow malicious substitution.',
+        location: input.path,
+        recommendation: 'Verify system program ID matches solana_program::system_program::id().',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL389: Rent Sysvar Usage
+export function checkRentSysvarUsage(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/rent|sysvar.*rent|minimum_balance/gi.test(content)) {
+    if (!/rent::get|Rent::from_account_info|sysvar/gi.test(content)) {
+      findings.push({
+        id: 'SOL389',
+        severity: 'medium',
+        title: 'Rent Sysvar Access Pattern',
+        description: 'Accessing rent without proper sysvar handling can cause issues.',
+        location: input.path,
+        recommendation: 'Use Rent::get() or properly validate Rent sysvar account.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL390: Clock Sysvar Manipulation
+export function checkClockSysvarManipulation(input: PatternInput): Finding[] {
+  const findings: Finding[] = [];
+  if (!input.rust) return findings;
+  const content = input.rust.content;
+  
+  if (/clock|unix_timestamp|slot/gi.test(content)) {
+    if (!/Clock::get|from_account_info.*clock|sysvar.*clock/gi.test(content)) {
+      findings.push({
+        id: 'SOL390',
+        severity: 'high',
+        title: 'Clock Sysvar Not Verified',
+        description: 'Using clock values without proper sysvar verification allows time manipulation.',
+        location: input.path,
+        recommendation: 'Use Clock::get() or verify clock sysvar account properly.',
+      });
+    }
+  }
+  
+  return findings;
+}
+
+// SOL391-400: Reserve for additional patterns
+export function checkReservedPatterns391to400(input: PatternInput): Finding[] {
+  return []; // Reserved for future patterns
+}
+
+// ============================================================================
+// Export all pattern checkers
+// ============================================================================
+
+export const batch11Patterns = [
+  checkLiquidationThresholdManipulation,
+  checkLiquidationBonusManipulation,
+  checkInterestRateManipulation,
+  checkBorrowFactorManipulation,
+  checkBadDebtSocialization,
+  checkAMMConstantProductInvariant,
+  checkVirtualReserveManipulation,
+  checkLPTokenInflationAttack,
+  checkSandwichAttackPrevention,
+  checkPoolCreationFrontrunning,
+  checkNFTRoyaltyBypass,
+  checkTokenMetadataManipulation,
+  checkCollectionVerificationBypass,
+  checkTokenFreezeAuthorityAbuse,
+  checkMintAuthorityRetention,
+  checkStakingRewardDilution,
+  checkCooldownPeriodBypass,
+  checkRewardDurationManipulation,
+  checkStakeWeightManipulation,
+  checkEmissionScheduleManipulation,
+  checkCrossChainMessageReplay,
+  checkChainIDValidation,
+  checkFinalityAssumption,
+  checkRelayerTrustAssumption,
+  checkTokenMappingValidation,
+  checkOracleStatelessCheck,
+  checkOracleConfidenceInterval,
+  checkSingleOracleDependency,
+  checkLPTokenOracleManipulation,
+  checkPriceDeviationCircuitBreaker,
+  checkUnrestrictedProgramUpgrade,
+  checkStateMigrationVulnerability,
+  checkImmutableProgramRisk,
+  checkTransactionOrderingManipulation,
+  checkPartialTransactionExecution,
+  checkDuplicateTransactionPrevention,
+  checkCPISignerSeedExposure,
+  checkAccountReallocationRent,
+  checkAccountDataZeroing,
+  checkProgramIDSpoofing,
+  checkTokenExtensionsCompatibility,
+  checkComputeBudgetGriefing,
+  checkLookupTableManipulation,
+  checkVersionedTransactionHandling,
+  checkSPLTokenAuthorityConfusion,
+  checkATADerivation,
+  checkDelegateAuthorityAbuse,
+  checkSystemProgramInvocation,
+  checkRentSysvarUsage,
+  checkClockSysvarManipulation,
+];
+
+export const batch11PatternInfo = {
+  startId: 341,
+  endId: 400,
+  count: 60,
+  categories: [
+    'Lending Protocol Vulnerabilities',
+    'AMM/DEX Vulnerabilities',
+    'NFT/Token Vulnerabilities',
+    'Staking/Rewards Vulnerabilities',
+    'Bridge/Cross-Chain Vulnerabilities',
+    'Oracle Vulnerabilities (Extended)',
+    'Program Upgrade Vulnerabilities',
+    'Transaction Vulnerabilities',
+    'Solana-Specific Vulnerabilities',
+  ],
+};

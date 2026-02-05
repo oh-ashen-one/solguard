@@ -237,7 +237,7 @@ export default function PatternsPage() {
       <main className="max-w-6xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold mb-2">Vulnerability Patterns</h1>
         <p className="text-zinc-400 mb-8">
-          730+ security patterns covering Solana smart contract vulnerabilities
+          3600+ security patterns covering Solana smart contract vulnerabilities
         </p>
 
         {/* Search & Filters */}

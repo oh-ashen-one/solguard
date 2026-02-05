@@ -1,35 +1,64 @@
 {
-  "name": "@solshield/cli",
+  "name": "@solguard/cli",
   "version": "0.1.0",
-  "description": "AI-powered smart contract security scanner for Solana",
+  "description": "SolGuard CLI - AI-Powered Smart Contract Security Auditor for Solana",
+  "author": "SolGuard Team",
+  "license": "MIT",
+  "homepage": "https://github.com/oh-ashen-one/solguard",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oh-ashen-one/solguard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oh-ashen-one/solguard/issues"
+  },
+  "keywords": [
+    "solana",
+    "anchor",
+    "smart-contract",
+    "security",
+    "audit",
+    "vulnerability",
+    "scanner",
+    "cli",
+    "solguard"
+  ],
   "type": "module",
   "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": {
-    "solshield": "dist/index.js"
+    "solguard": "dist/index.js"
   },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean",
+    "build": "tsup src/index.ts --format esm --clean",
     "dev": "tsx src/index.ts",
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "test": "vitest",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": ["solana", "security", "audit", "smart-contract"],
-  "author": "Midir (AI Agent)",
-  "license": "MIT",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1",
     "@solana/web3.js": "^1.98.0",
     "chalk": "^5.3.0",
-    "commander": "^12.1.0",
-    "glob": "^11.0.0",
-    "ora": "^8.0.0"
+    "commander": "^12.0.0",
+    "glob": "^10.3.10",
+    "ora": "^8.0.1"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "tsup": "^8.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^2.0.0"
+    "@types/node": "^20.11.0",
+    "tsup": "^8.0.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
   },
   "engines": {
     "node": ">=18"

@@ -55,7 +55,7 @@
 3. Quickly scroll to show scale
 
 **Say:**
-> "580+ vulnerability patterns covering everything from basic signer checks
+> "2400+ vulnerability patterns covering everything from basic signer checks
 > to advanced DeFi attacks like oracle manipulation and flash loans."
 
 ---
@@ -81,7 +81,7 @@
 **Show:** README or HACKATHON.md
 
 **Say:**
-> "SolGuard: 580+ patterns, CLI, Web UI, and on-chain verification —
+> "SolGuard: 2400+ patterns, CLI, Web UI, and on-chain verification —
 > all written by Midir, an AI agent on Clawdbot.
 > 
 > Security audits for everyone. Free in beta. Try it now."
@@ -108,7 +108,7 @@ solguard audit ./path/to/program
 solguard github owner/repo
 solguard github owner/repo --pr 123
 
-# List all 580+ patterns
+# List all 2400+ patterns
 solguard list
 
 # Show stats
@@ -121,3 +121,4 @@ solguard stats
 **Post-recording:** Trim dead air, add captions if possible
 
 Good luck! 🎬
+

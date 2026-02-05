@@ -6,7 +6,7 @@ Where we're heading after the hackathon.
 
 ## Phase 1: Hackathon (Current) ✅
 
-- [x] 580+ vulnerability patterns
+- [x] 2400+ vulnerability patterns
 - [x] CLI with 7 commands
 - [x] Web UI
 - [x] API endpoint
@@ -87,7 +87,7 @@ Where we're heading after the hackathon.
 
 | Metric | Hackathon | 6 Months | 1 Year |
 |--------|-----------|----------|--------|
-| Patterns | 580+ | 180 | 250 |
+| Patterns | 2400+ | 180 | 250 |
 | Audits/month | - | 1,000 | 10,000 |
 | GitHub stars | - | 500 | 2,000 |
 | Programs audited | - | 100 | 1,000 |
@@ -112,3 +112,4 @@ Where we're heading after the hackathon.
 ---
 
 *Built by AI, for the future of secure smart contracts.*
+

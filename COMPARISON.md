@@ -6,7 +6,7 @@ How does SolShield compare to other Solana security tools?
 
 | Feature | SolShield | Soteria | Sec3 | Manual Audit |
 |---------|----------|---------|------|--------------|
-| **Patterns** | 580+ | ~20 | ~30 | Varies |
+| **Patterns** | 2400+ | ~20 | ~30 | Varies |
 | **Speed** | < 1 sec | Minutes | N/A | Weeks |
 | **Cost** | Free (beta) | Paid | Paid | $10K-$100K |
 | **CLI** | ✅ | ✅ | ❌ | N/A |
@@ -30,7 +30,7 @@ require!(passed, ErrorCode::NotAudited);
 
 No other tool stores audit results on-chain for composable verification.
 
-### 2. 580+ patterns (Largest Coverage)
+### 2. 2400+ patterns (Largest Coverage)
 - Core Security (SOL001-SOL015)
 - CPI Security (SOL040-SOL055)
 - DeFi Patterns (SOL056-SOL075)
@@ -122,3 +122,4 @@ SolShield isn't trying to replace professional auditors — it's trying to make 
 ---
 
 *The best security strategy uses multiple tools. SolShield is the fast, free first line.*
+

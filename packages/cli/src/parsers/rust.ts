@@ -1,292 +1,199 @@
 /**
- * Rust Source Code Parser
- * 
- * Parses Rust source files to extract security-relevant information
- * for pattern matching and vulnerability detection.
+ * Rust Parser - Parses Solana/Anchor Rust files for security analysis
  */
 
-import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
-import { join, extname } from 'path';
+import { readFileSync } from 'fs';
 
-export interface ParsedRust {
-  functions: FunctionInfo[];
-  structs: StructInfo[];
-  accounts: AccountInfo[];
-  instructions: InstructionInfo[];
-  raw: string;
-  imports: string[];
-  macros: MacroUsage[];
+export interface ParsedFile {
+  path: string;
+  content: string;
+  lines: string[];
 }
 
 export interface FunctionInfo {
   name: string;
-  visibility: 'pub' | 'private';
-  params: string[];
-  returnType: string;
-  body: string;
+  file: string;
   line: number;
-  attributes: string[];
+  visibility: string;
+  params: string[];
+  body: string;
 }
 
 export interface StructInfo {
   name: string;
-  fields: FieldInfo[];
-  attributes: string[];
+  file: string;
   line: number;
-}
-
-export interface FieldInfo {
-  name: string;
-  type: string;
+  fields: { name: string; type: string }[];
   attributes: string[];
 }
 
-export interface AccountInfo {
+export interface ImplBlock {
   name: string;
-  constraints: string[];
-  isMut: boolean;
-  isSigner: boolean;
+  file: string;
   line: number;
+  methods: string[];
 }
 
-export interface InstructionInfo {
-  name: string;
-  accounts: string[];
-  args: string[];
-  line: number;
-}
-
-export interface MacroUsage {
-  name: string;
-  args: string;
-  line: number;
+export interface ParsedRust {
+  files: ParsedFile[];
+  functions: FunctionInfo[];
+  structs: StructInfo[];
+  implBlocks: ImplBlock[];
+  content: string;
+  filePath: string;
 }
 
 /**
- * Parse a single Rust file
+ * Parse Rust files into structured format for pattern analysis
  */
-export function parseRustFile(filePath: string): ParsedRust {
-  if (!existsSync(filePath)) {
-    throw new Error(`File not found: ${filePath}`);
+export async function parseRustFiles(filePaths: string[]): Promise<ParsedRust> {
+  const files: ParsedFile[] = [];
+  const functions: FunctionInfo[] = [];
+  const structs: StructInfo[] = [];
+  const implBlocks: ImplBlock[] = [];
+  let allContent = '';
+
+  for (const filePath of filePaths) {
+    try {
+      const content = readFileSync(filePath, 'utf-8');
+      const lines = content.split('\n');
+      allContent += content + '\n';
+      
+      files.push({ path: filePath, content, lines });
+      
+      // Parse functions
+      const funcRegex = /(?:pub\s+)?fn\s+(\w+)\s*\(([^)]*)\)/g;
+      let match;
+      while ((match = funcRegex.exec(content)) !== null) {
+        const lineNum = content.substring(0, match.index).split('\n').length;
+        functions.push({
+          name: match[1],
+          file: filePath,
+          line: lineNum,
+          visibility: match[0].includes('pub') ? 'public' : 'private',
+          params: match[2].split(',').map(p => p.trim()).filter(Boolean),
+          body: extractFunctionBody(content, match.index),
+        });
+      }
+      
+      // Parse structs
+      const structRegex = /((?:#\[[^\]]+\]\s*)*)?(?:pub\s+)?struct\s+(\w+)/g;
+      while ((match = structRegex.exec(content)) !== null) {
+        const lineNum = content.substring(0, match.index).split('\n').length;
+        structs.push({
+          name: match[2],
+          file: filePath,
+          line: lineNum,
+          fields: extractStructFields(content, match.index),
+          attributes: match[1] ? match[1].split('#').filter(Boolean).map(a => '#' + a.trim()) : [],
+        });
+      }
+      
+      // Parse impl blocks
+      const implRegex = /impl(?:\s*<[^>]*>)?\s+(\w+)/g;
+      while ((match = implRegex.exec(content)) !== null) {
+        const lineNum = content.substring(0, match.index).split('\n').length;
+        implBlocks.push({
+          name: match[1],
+          file: filePath,
+          line: lineNum,
+          methods: extractImplMethods(content, match.index),
+        });
+      }
+    } catch (error) {
+      console.warn(`Failed to parse ${filePath}: ${error}`);
+    }
   }
-  
-  const content = readFileSync(filePath, 'utf-8');
-  return parseRustContent(content);
-}
 
-/**
- * Parse Rust source code content
- */
-export function parseRustContent(content: string): ParsedRust {
-  const lines = content.split('\n');
-  
   return {
-    functions: extractFunctions(content, lines),
-    structs: extractStructs(content, lines),
-    accounts: extractAccounts(content, lines),
-    instructions: extractInstructions(content, lines),
-    raw: content,
-    imports: extractImports(content),
-    macros: extractMacros(content, lines),
+    files,
+    functions,
+    structs,
+    implBlocks,
+    content: allContent,
+    filePath: filePaths[0] || '',
   };
 }
 
-/**
- * Parse all Rust files in a directory
- */
-export function parseRustFiles(dirPath: string): ParsedRust[] {
-  const results: ParsedRust[] = [];
+function extractFunctionBody(content: string, startIndex: number): string {
+  let braceCount = 0;
+  let started = false;
+  let bodyStart = startIndex;
   
-  function walkDir(dir: string) {
-    if (!existsSync(dir)) return;
-    
-    const entries = readdirSync(dir);
-    for (const entry of entries) {
-      const fullPath = join(dir, entry);
-      const stat = statSync(fullPath);
-      
-      if (stat.isDirectory()) {
-        // Skip common non-source directories
-        if (!['target', 'node_modules', '.git', 'dist'].includes(entry)) {
-          walkDir(fullPath);
-        }
-      } else if (extname(entry) === '.rs') {
-        try {
-          results.push(parseRustFile(fullPath));
-        } catch (e) {
-          // Skip files that can't be parsed
-        }
+  for (let i = startIndex; i < content.length; i++) {
+    if (content[i] === '{') {
+      if (!started) {
+        started = true;
+        bodyStart = i;
+      }
+      braceCount++;
+    } else if (content[i] === '}') {
+      braceCount--;
+      if (started && braceCount === 0) {
+        return content.substring(bodyStart, i + 1);
       }
     }
   }
-  
-  walkDir(dirPath);
-  return results;
+  return '';
 }
 
-function extractFunctions(content: string, lines: string[]): FunctionInfo[] {
-  const functions: FunctionInfo[] = [];
-  const fnRegex = /(?:(pub(?:\s*\([^)]*\))?)\s+)?fn\s+(\w+)\s*(?:<[^>]*>)?\s*\(([^)]*)\)(?:\s*->\s*([^{]+))?\s*\{/g;
+function extractStructFields(content: string, startIndex: number): { name: string; type: string }[] {
+  const fields: { name: string; type: string }[] = [];
+  let braceCount = 0;
+  let started = false;
+  let fieldSection = '';
   
-  let match;
-  while ((match = fnRegex.exec(content)) !== null) {
-    const lineNum = content.substring(0, match.index).split('\n').length;
-    const attrs = extractAttributesAbove(lines, lineNum - 1);
-    
-    // Find function body
-    const bodyStart = match.index + match[0].length;
-    const bodyEnd = findMatchingBrace(content, bodyStart - 1);
-    const body = bodyEnd > bodyStart ? content.substring(bodyStart, bodyEnd) : '';
-    
-    functions.push({
-      name: match[2],
-      visibility: match[1]?.startsWith('pub') ? 'pub' : 'private',
-      params: match[3].split(',').map(p => p.trim()).filter(Boolean),
-      returnType: match[4]?.trim() || 'void',
-      body,
-      line: lineNum,
-      attributes: attrs,
-    });
+  for (let i = startIndex; i < content.length; i++) {
+    if (content[i] === '{') {
+      started = true;
+      braceCount++;
+    } else if (content[i] === '}') {
+      braceCount--;
+      if (started && braceCount === 0) {
+        break;
+      }
+    } else if (started && braceCount === 1) {
+      fieldSection += content[i];
+    }
   }
   
-  return functions;
-}
-
-function extractStructs(content: string, lines: string[]): StructInfo[] {
-  const structs: StructInfo[] = [];
-  const structRegex = /(?:pub\s+)?struct\s+(\w+)(?:<[^>]*>)?\s*\{([^}]*)\}/g;
-  
+  const fieldRegex = /(?:pub\s+)?(\w+)\s*:\s*([^,}]+)/g;
   let match;
-  while ((match = structRegex.exec(content)) !== null) {
-    const lineNum = content.substring(0, match.index).split('\n').length;
-    const attrs = extractAttributesAbove(lines, lineNum - 1);
-    const fields = extractFields(match[2]);
-    
-    structs.push({
-      name: match[1],
-      fields,
-      attributes: attrs,
-      line: lineNum,
-    });
-  }
-  
-  return structs;
-}
-
-function extractFields(fieldsStr: string): FieldInfo[] {
-  const fields: FieldInfo[] = [];
-  const fieldRegex = /(?:#\[([^\]]+)\]\s*)*(?:pub\s+)?(\w+)\s*:\s*([^,\n]+)/g;
-  
-  let match;
-  while ((match = fieldRegex.exec(fieldsStr)) !== null) {
-    fields.push({
-      name: match[2],
-      type: match[3].trim(),
-      attributes: match[1] ? [match[1]] : [],
-    });
+  while ((match = fieldRegex.exec(fieldSection)) !== null) {
+    fields.push({ name: match[1], type: match[2].trim() });
   }
   
   return fields;
 }
 
-function extractAccounts(content: string, lines: string[]): AccountInfo[] {
-  const accounts: AccountInfo[] = [];
+function extractImplMethods(content: string, startIndex: number): string[] {
+  const methods: string[] = [];
+  let braceCount = 0;
+  let started = false;
+  let implBlock = '';
   
-  // Match Anchor account constraints
-  const accountRegex = /#\[account\(([^)]*)\)\]\s*(?:pub\s+)?(\w+)\s*:/g;
-  
-  let match;
-  while ((match = accountRegex.exec(content)) !== null) {
-    const lineNum = content.substring(0, match.index).split('\n').length;
-    const constraints = match[1].split(',').map(c => c.trim()).filter(Boolean);
-    
-    accounts.push({
-      name: match[2],
-      constraints,
-      isMut: constraints.some(c => c.includes('mut')),
-      isSigner: constraints.some(c => c.includes('signer')),
-      line: lineNum,
-    });
-  }
-  
-  return accounts;
-}
-
-function extractInstructions(content: string, lines: string[]): InstructionInfo[] {
-  const instructions: InstructionInfo[] = [];
-  
-  // Match Anchor instruction handlers
-  const instrRegex = /#\[instruction\(([^)]*)\)\]/g;
-  
-  let match;
-  while ((match = instrRegex.exec(content)) !== null) {
-    const lineNum = content.substring(0, match.index).split('\n').length;
-    
-    instructions.push({
-      name: `instruction_${instructions.length}`,
-      accounts: [],
-      args: match[1].split(',').map(a => a.trim()).filter(Boolean),
-      line: lineNum,
-    });
-  }
-  
-  return instructions;
-}
-
-function extractImports(content: string): string[] {
-  const imports: string[] = [];
-  const useRegex = /use\s+([^;]+);/g;
-  
-  let match;
-  while ((match = useRegex.exec(content)) !== null) {
-    imports.push(match[1].trim());
-  }
-  
-  return imports;
-}
-
-function extractMacros(content: string, lines: string[]): MacroUsage[] {
-  const macros: MacroUsage[] = [];
-  const macroRegex = /(\w+)!\s*(?:\(([^)]*)\)|\{([^}]*)\}|\[([^\]]*)\])/g;
-  
-  let match;
-  while ((match = macroRegex.exec(content)) !== null) {
-    const lineNum = content.substring(0, match.index).split('\n').length;
-    
-    macros.push({
-      name: match[1],
-      args: match[2] || match[3] || match[4] || '',
-      line: lineNum,
-    });
-  }
-  
-  return macros;
-}
-
-function extractAttributesAbove(lines: string[], lineIndex: number): string[] {
-  const attrs: string[] = [];
-  let i = lineIndex - 1;
-  
-  while (i >= 0 && lines[i].trim().startsWith('#[')) {
-    const match = lines[i].match(/#\[([^\]]+)\]/);
-    if (match) {
-      attrs.unshift(match[1]);
+  for (let i = startIndex; i < content.length; i++) {
+    if (content[i] === '{') {
+      started = true;
+      braceCount++;
+    } else if (content[i] === '}') {
+      braceCount--;
+      if (started && braceCount === 0) {
+        break;
+      }
     }
-    i--;
+    if (started) {
+      implBlock += content[i];
+    }
   }
   
-  return attrs;
+  const methodRegex = /(?:pub\s+)?fn\s+(\w+)/g;
+  let match;
+  while ((match = methodRegex.exec(implBlock)) !== null) {
+    methods.push(match[1]);
+  }
+  
+  return methods;
 }
 
-function findMatchingBrace(content: string, startIndex: number): number {
-  let depth = 1;
-  let i = startIndex + 1;
-  
-  while (i < content.length && depth > 0) {
-    if (content[i] === '{') depth++;
-    else if (content[i] === '}') depth--;
-    i++;
-  }
-  
-  return depth === 0 ? i - 1 : -1;
-}
+export type { ParsedRust as default };

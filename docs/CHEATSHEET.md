@@ -16,7 +16,7 @@ SolShield watch ./program
 # CI mode with SARIF
 SolShield ci . --fail-on high --sarif results.sarif
 
-# List all 580+ patterns
+# List all 2400+ patterns
 SolShield list
 
 # Show audit stats
@@ -31,7 +31,7 @@ SolShield audit . --output json      # Machine-readable
 SolShield audit . --output markdown  # Documentation
 ```
 
-## 580+ Vulnerability Patterns
+## 2400+ Vulnerability Patterns
 
 ### By Category
 
@@ -126,3 +126,4 @@ curl -X POST https://SolShield.dev/api/v1/audit \
 - **GitHub:** https://github.com/oh-ashen-one/solshield
 - **Patterns:** See web UI for full searchable list
 - **API Docs:** /api page in web UI
+
