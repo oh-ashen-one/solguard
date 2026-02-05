@@ -32,7 +32,7 @@
 SolShield is an autonomous smart contract auditing system that:
 
 1. **Parses** Anchor IDL + Rust source code
-2. **Detects** vulnerabilities using **880+ specialized patterns**
+2. **Detects** vulnerabilities using **900+ specialized patterns**
 3. **Generates** AI-powered explanations + fix suggestions  
 4. **Stores** audit results on-chain for verification
 5. **Mints** NFT certificates for passed audits
@@ -41,9 +41,9 @@ SolShield is an autonomous smart contract auditing system that:
 
 > 💰 **[Real-world impact](REAL-WORLD.md):** SolShield's patterns would have caught exploits totaling **$600M+** in losses (Wormhole, Mango, Cashio, and more).
 
-## 🔍 Vulnerability Patterns (880+)
+## 🔍 Vulnerability Patterns (900+)
 
-> **880+ patterns** covering Core Security, CPI, DeFi, NFT, Token, PDA, Anchor, historical exploit signatures, and more.
+> **900+ patterns** covering Core Security, CPI, DeFi, NFT, Token, PDA, Anchor, historical exploit signatures, and more.
 > See [patterns page](packages/web/src/app/patterns/page.tsx) for the complete list.
 
 ### Sample Critical Patterns
