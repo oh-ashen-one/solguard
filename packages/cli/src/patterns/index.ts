@@ -398,6 +398,9 @@ import { batchedPatterns32 } from './solana-batched-patterns-32.js';
 // NEW PATTERNS SOL869-SOL884 (Feb 5 2026 6:30AM - Network & Infrastructure Security)
 import { batchedPatterns33 } from './solana-batched-patterns-33.js';
 
+// NEW PATTERNS SOL885-SOL904 (Feb 5 2026 7AM - Feb 2026 Latest Exploits)
+import { batchedPatterns34 } from './solana-batched-patterns-34.js';
+
 export interface PatternInput {
   idl: ParsedIdl | null;
   rust: ParsedRust | null;
@@ -2855,6 +2858,28 @@ const patterns: Pattern[] = [
   { id: 'SOL882', name: 'io.net-Style API Key Exposure Risk', severity: 'high', run: batchedPatterns33.checkAPIKeyExposureRisk },
   { id: 'SOL883', name: 'Aurory-Style Game Marketplace Exploit', severity: 'high', run: batchedPatterns33.checkAuroryStyleExploit },
   { id: 'SOL884', name: 'Cross-Chain Message Verification Weakness', severity: 'critical', run: batchedPatterns33.checkCrossChainMessageVerification },
+  
+  // NEW PATTERNS SOL885-SOL904 (Feb 5 2026 7AM - Feb 2026 Latest Exploits & Security Research)
+  { id: 'SOL885', name: 'Owner Permission Phishing Attack (Jan 2026)', severity: 'critical', run: batchedPatterns34.checkOwnerPermissionPhishing },
+  { id: 'SOL886', name: 'Centralized Wallet Key Exposure (Step Finance $40M)', severity: 'critical', run: batchedPatterns34.checkCentralizedWalletStorage },
+  { id: 'SOL887', name: 'Transaction Simulation Bypass Risk', severity: 'high', run: batchedPatterns34.checkSimulationBypassRisk },
+  { id: 'SOL888', name: 'Hidden Authority Transfer Attack', severity: 'critical', run: batchedPatterns34.checkHiddenAuthorityTransfer },
+  { id: 'SOL889', name: 'Withdrawal Verification Missing (NoOnes $8.5M)', severity: 'critical', run: batchedPatterns34.checkWithdrawalVerificationMissing },
+  { id: 'SOL890', name: 'Social Engineering Attack Surface', severity: 'high', run: batchedPatterns34.checkSocialEngineeringAttackSurface },
+  { id: 'SOL891', name: 'Key Equality Without Signer Verification', severity: 'critical', run: batchedPatterns34.checkMissingSignerPattern },
+  { id: 'SOL892', name: 'Missing Account Data Relationship Validation', severity: 'high', run: batchedPatterns34.checkMissingAccountDataMatching },
+  { id: 'SOL893', name: 'Non-Canonical PDA Bump Risk', severity: 'high', run: batchedPatterns34.checkNonCanonicalBump },
+  { id: 'SOL894', name: 'Type Cosplay via Missing Discriminator', severity: 'critical', run: batchedPatterns34.checkMissingDiscriminatorCheck },
+  { id: 'SOL895', name: 'Arithmetic Overflow Risk (Unchecked Math)', severity: 'high', run: batchedPatterns34.checkArithmeticOverflowRisk },
+  { id: 'SOL896', name: 'Rent Exemption Not Verified', severity: 'medium', run: batchedPatterns34.checkRentExemptionNotVerified },
+  { id: 'SOL897', name: 'Account Close to Unverified Destination', severity: 'high', run: batchedPatterns34.checkClosingAccountDestination },
+  { id: 'SOL898', name: 'Arbitrary CPI Without Program Verification', severity: 'critical', run: batchedPatterns34.checkCpiProgramIdVerification },
+  { id: 'SOL899', name: 'Account Revival Attack Vector', severity: 'high', run: batchedPatterns34.checkAccountRevivalVector },
+  { id: 'SOL900', name: 'Flash Loan Oracle Manipulation (Mango $116M)', severity: 'critical', run: batchedPatterns34.checkFlashLoanOracleManipulation },
+  { id: 'SOL901', name: 'Fund Obfuscation Risk (No Rate Limiting)', severity: 'high', run: batchedPatterns34.checkFundObfuscationPattern },
+  { id: 'SOL902', name: 'Missing Emergency Pause Mechanism', severity: 'medium', run: batchedPatterns34.checkMissingEmergencyPause },
+  { id: 'SOL903', name: 'Insufficient Event Logging for Forensics', severity: 'low', run: batchedPatterns34.checkInsufficientEventLogging },
+  { id: 'SOL904', name: 'Cross-Program Reentrancy via CPI', severity: 'critical', run: batchedPatterns34.checkReentrancyViaCpi },
 ];
 
 export async function runPatterns(input: PatternInput): Promise<Finding[]> {
