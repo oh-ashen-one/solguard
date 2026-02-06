@@ -1,5 +1,81 @@
 # SolGuard Hackathon Sprint Notes
 
+## Session: Feb 5, 2026 - 8:00 PM CST (100 NEW PATTERNS!)
+
+### 🎯 Pattern Count Update: 4,955+ Patterns
+**Added 100 new patterns (SOL2901-SOL3000)**
+
+**Pattern Files Created:**
+- `solana-batched-patterns-65.ts` - SOL2901-SOL2950 (50 patterns): Latest 2025-2026 Exploits
+- `solana-batched-patterns-66.ts` - SOL2951-SOL3000 (50 patterns): CLMM Deep Dive + Protocol Security
+
+**Batch 65 - Latest 2025-2026 Exploits (SOL2901-SOL2950):**
+Sources: The Block, CryptoRank, CyberPress, Sec3 2025 Report
+
+New exploits covered:
+- **Step Finance ($40M, Jan 2026)** - Treasury wallet compromise, executive key exposure
+- **CrediX ($4.5M, Aug 2025)** - Admin wallet control, underwriting authority bypass
+- **Upbit ($36M, Nov 2025)** - Exchange hot wallet breach, deposit address validation
+- **SwissBorg ($41M, 2025)** - API breach, withdrawal API abuse, authentication bypass
+- **Token-2022 Unlimited Minting Flaw** - Critical vulnerability in ecosystem
+- **NPM Supply Chain Attack (Sept 2025)** - 18 packages compromised (chalk, debug, etc.), crypto-clipper malware
+- **Cross-Chain Bridge ($1.5B, mid-2025)** - Message replay, guardian quorum, finality assumptions
+
+Additional patterns:
+- Validator concentration (Jito 88%), hosting provider concentration (43%)
+- JIT liquidity MEV, time-bandit reorganization
+- SetAuthority phishing ($3M+ per SlowMist), memo phishing, fake airdrops
+- Lending health factor bypass, liquidation frontrunning
+- Vault share inflation (first depositor), interest rate manipulation
+- Stake pool commission abuse, flash loan governance voting
+- NFT metadata injection, compressed NFT proof manipulation
+- Blind signing, seed phrase extraction, approval delegation drain
+- RPC provider manipulation, websocket poisoning, DNS hijacking
+- Program upgrade hijack, reinitialization, close account resurrection
+
+**Batch 66 - CLMM Deep Dive + Protocol Security (SOL2951-SOL3000):**
+Sources: Ackee Blockchain Crema Analysis, CertiK, arXiv:2504.07419, Sec3 2025
+
+Crema Finance CLMM patterns ($8.8M):
+- Fake tick account creation (circumventing owner checks)
+- Tick owner check bypass (writing initialized tick address)
+- Fee accumulator manipulation (replacing authentic fee data)
+- Flash loan amplified fee claim
+
+Core security patterns:
+- AccountInfo owner verification, discriminator collision, data race conditions
+- User-controlled PDA seeds, bump seed injection, seed length manipulation
+- Unchecked CPI program, return data spoofing, account reordering
+- Division truncation theft, share calculation rounding, interest accrual manipulation
+- Single oracle dependency, staleness threshold, confidence interval, TWAP window
+- State machine violations, invariant checks, reentrancy state corruption
+- Mint authority, freeze authority, token account owner mismatch, ATA race
+- Admin backdoor, authority transfer, role escalation
+- Borrow exceeds collateral, liquidation bonus, bad debt socialization
+- Constant product violation, sandwich attack, LP token inflation
+- Flash governance, proposal execution bypass, vote bribery
+- Callback injection, composability exploit, version mismatch
+- Rent exemption, slot randomness, debug code, timestamp manipulation, compute griefing
+
+**Research Sources:**
+- The Block: Step Finance Hack Analysis
+- CryptoRank: Step Finance $40M Breach
+- Ackee Blockchain: 2022 Solana Hacks Explained - Crema Finance
+- CertiK: Crema Finance Exploit Report
+- SlowMist: Solana Phishing Attacks Analysis
+- Cyber Daily: DeFi Security Breaches Exceed $3.1B in 2025
+- arXiv:2504.07419: Exploring Vulnerabilities in Solana Smart Contracts
+- Sec3 2025 Solana Security Ecosystem Review
+
+**Key Stats:**
+- Now covering 50+ major exploits with deep-dive patterns
+- Total documented losses covered: ~$800M+
+- Pattern categories: 50+ distinct security categories
+
+**Git:** Committed and pushed to main (4c0bdc8)
+
+---
+
 ## Session: Feb 5, 2026 - 6:30 PM CST (140 NEW PATTERNS!)
 
 ### 🎯 Pattern Count Update: 4,515+ Patterns
@@ -886,9 +962,13 @@ Based on Helius Blog research "Solana Hacks, Bugs, and Exploits: A Complete Hist
 | Feb 5 1:00 PM | +140 | 3,780+ |
 | Feb 5 1:30 PM | +140 | 3,920+ |
 | Feb 5 2:00 PM | +175 | 4,095+ |
-| Feb 5 5:30 PM | +140 | **4,235+** |
+| Feb 5 5:30 PM | +140 | 4,235+ |
+| Feb 5 6:30 PM | +140 | 4,515+ |
+| Feb 5 7:00 PM | +140 | 4,655+ |
+| Feb 5 7:30 PM | +200 | 4,855+ |
+| Feb 5 8:00 PM | +100 | **4,955+** |
 
-**Note:** Pattern count reflects ALL batched pattern files (57 files × ~70 patterns avg + core patterns)
+**Note:** Pattern count reflects ALL batched pattern files (67 files × ~70 patterns avg + core patterns)
 
 ## Key Exploits Covered
 
@@ -899,21 +979,28 @@ Based on Helius Blog research "Solana Hacks, Bugs, and Exploits: A Complete Hist
 | LP Token Oracle | $200M risk | SOL683 |
 | Mango Markets | $116M | SOL264, SOL326, SOL590, SOL690 |
 | Cashio | $52.8M | SOL251, SOL580, SOL681 |
-| DEXX | $30M | SOL274, SOL658, **SOL848** |
-| Crema Finance | $8.8M | SOL140, SOL324 |
+| **Step Finance** | **$40M** | **SOL2901-SOL2903** |
+| **SwissBorg** | **$41M** | **SOL2910-SOL2912** |
+| **Upbit** | **$36M** | **SOL2907-SOL2909** |
+| DEXX | $30M | SOL274, SOL658, SOL848 |
+| Crema Finance | $8.8M | SOL140, SOL324, **SOL2951-SOL2954** |
 | Slope Wallet | $8M | SOL261, SOL252 |
-| Loopscale | $5.8M | SOL288, SOL655, **SOL845** |
-| NoOnes | $4M | SOL287, SOL657, **SOL852** |
-| Pump.fun | $1.9M | SOL660, **SOL846** |
-| Banana Gun | $1.4M | SOL659, **SOL849** |
-| Cypher | $1.35M | SOL663, **SOL851** |
+| Loopscale | $5.8M | SOL288, SOL655, SOL845 |
+| **CrediX** | **$4.5M** | **SOL2904-SOL2906** |
+| NoOnes | $4M | SOL287, SOL657, SOL852 |
+| Pump.fun | $1.9M | SOL660, SOL846 |
+| **Cross-Chain Bridges** | **$1.5B** | **SOL2920-SOL2923** |
+| Banana Gun | $1.4M | SOL659, SOL849 |
+| Cypher | $1.35M | SOL663, SOL851 |
 | OptiFi | $661K | SOL670 |
-| Solareum | $500K+ | SOL662, **SOL850** |
-| Thunder Terminal | $240K | SOL661, **SOL847** |
+| Solareum | $500K+ | SOL662, SOL850 |
+| Thunder Terminal | $240K | SOL661, SOL847 |
 | Saga DAO | $230K | SOL666 |
 | Web3.js | $164K | SOL671 |
-| io.net Sybil | - | **SOL853** |
-| SVT Honeypot | - | **SOL854** |
+| **NPM Supply Chain** | **2B+ downloads** | **SOL2916-SOL2919** |
+| **Token-2022 Flaw** | **Critical** | **SOL2913-SOL2915** |
+| io.net Sybil | - | SOL853 |
+| SVT Honeypot | - | SOL854 |
 | Jet Protocol | - | SOL678 |
 | Cope Roulette | - | SOL679 |
 | Solend | - | SOL691 |
@@ -931,9 +1018,9 @@ Based on Helius Blog research "Solana Hacks, Bugs, and Exploits: A Complete Hist
 ✅ TypeScript compilation clean
 ✅ CLI working correctly
 ✅ Web demo working
-✅ **4,235+ patterns registered** 🚀
+✅ **4,955+ patterns registered** 🚀
 
-### Pattern Categories (57+ batch files)
+### Pattern Categories (67+ batch files)
 - CPI Security & Cross-Program Invocation
 - Account Validation & Ownership
 - Arithmetic & Integer Safety
@@ -949,7 +1036,10 @@ Based on Helius Blog research "Solana Hacks, Bugs, and Exploits: A Complete Hist
 - NFT & Compressed NFT
 - MEV & Sandwich Attacks
 - Reentrancy & State Corruption
-- Real-World Exploits (40+ major incidents)
+- Real-World Exploits (50+ major incidents)
 - Academic Research (arXiv)
 - Audit Firm Patterns (OtterSec, Neodyme, Kudelski, Zellic, Sec3, Halborn)
 - Protocol-Specific (30+ protocols)
+- Exchange & Custody Security (NEW)
+- Supply Chain & NPM Security (NEW)
+- CLMM/Tick Account Security (NEW)
