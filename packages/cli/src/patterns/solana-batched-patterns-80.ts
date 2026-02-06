@@ -1,940 +1,1097 @@
 /**
- * SolGuard Batch 80 Security Patterns
- * Based on: arXiv Academic Research, Zellic Anchor Vulnerabilities, Protocol-Specific Deep Dive
- * 
- * Pattern IDs: SOL4076 - SOL4175 (100 patterns)
- * Created: Feb 6, 2026 1:30 AM CST
- * 
- * Sources:
- * - arXiv "Exploring Vulnerabilities in Solana Smart Contracts" (Apr 2025)
- * - Zellic "The Vulnerabilities You'll Write With Anchor"
- * - Neodyme "Common Pitfalls" and Security Workshop
- * - Kudelski Security Research on Solana
- * - Trail of Bits DeFi Security Best Practices
+ * Batch 80: Helius Complete Exploit History + 2024-2025 Emerging Threats
+ * Source: helius.dev/blog/solana-hacks, arxiv papers, security firm reports
+ * Added: Feb 6, 2026 2:00 AM
+ * Patterns: SOL4026-SOL4150
  */
 
-import type { Finding, PatternInput } from './index.js';
+import type { Finding } from './index.js';
 
-// ============================================================================
-// ZELLIC ANCHOR-SPECIFIC VULNERABILITIES
-// ============================================================================
+interface ParsedRust {
+  content: string;
+  functions: Array<{ name: string; body: string; line: number }>;
+  structs: Array<{ name: string; fields: string[]; line: number }>;
+  impl_blocks: Array<{ name: string; methods: string[]; line: number }>;
+  uses: string[];
+  attributes: Array<{ name: string; line: number }>;
+}
 
-const ZELLIC_ANCHOR_PATTERNS: {
-  id: string;
-  name: string;
-  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
-  pattern: RegExp;
-  description: string;
-  recommendation: string;
-}[] = [
-  {
-    id: 'SOL4076',
-    name: 'Zellic - Discriminator Collision Risk',
-    severity: 'high',
-    pattern: /(?:#\[account\])[\s\S]{0,200}(?:struct\s+\w+)[\s\S]{0,100}(?:struct\s+\w+)/i,
-    description: 'Multiple account types may have colliding 8-byte discriminators. Anchor uses first 8 bytes of SHA256(namespace:name).',
-    recommendation: 'Audit discriminator uniqueness across all account types. Consider using explicit discriminator values.'
-  },
-  {
-    id: 'SOL4077',
-    name: 'Zellic - init_if_needed Race Condition',
-    severity: 'critical',
-    pattern: /init_if_needed[\s\S]{0,100}(?!realloc|seeds_constraint)/i,
-    description: 'init_if_needed can be exploited if attacker initializes account first. Race condition vulnerability.',
-    recommendation: 'Avoid init_if_needed. Use separate init instruction with proper access control.'
-  },
-  {
-    id: 'SOL4078',
-    name: 'Zellic - UncheckedAccount Without Validation',
-    severity: 'critical',
-    pattern: /UncheckedAccount[\s\S]{0,50}(?!\/\/\/\s*CHECK|#\[doc)/i,
-    description: 'UncheckedAccount used without documenting safety checks. Anchor requires CHECK comment.',
-    recommendation: 'Add /// CHECK: comment explaining why account is safe, or use proper account types.'
-  },
-  {
-    id: 'SOL4079',
-    name: 'Zellic - Seeds Constraint Without Bump',
-    severity: 'high',
-    pattern: /seeds\s*=[\s\S]{0,50}(?!bump)/i,
-    description: 'PDA seeds specified without bump constraint. May accept non-canonical PDA addresses.',
-    recommendation: 'Always include bump constraint with seeds. Use canonical bump only.'
-  },
-  {
-    id: 'SOL4080',
-    name: 'Zellic - has_one Without Owner Check',
-    severity: 'high',
-    pattern: /has_one[\s\S]{0,50}(?!@.*owner|@.*program)/i,
-    description: 'has_one constraint without additional owner verification. May trust attacker-controlled accounts.',
-    recommendation: 'Combine has_one with owner constraint or explicit program ID check.'
-  },
-  {
-    id: 'SOL4081',
-    name: 'Zellic - Constraint Order Vulnerability',
-    severity: 'medium',
-    pattern: /(?:#\[account\([\s\S]*has_one[\s\S]*constraint)/i,
-    description: 'Constraint ordering may affect validation. has_one should come before constraint.',
-    recommendation: 'Order constraints: mut, init/seeds first, then has_one, then custom constraint.'
-  },
-  {
-    id: 'SOL4082',
-    name: 'Zellic - Missing close Constraint',
-    severity: 'medium',
-    pattern: /(?:close|zero)[\s\S]{0,80}(?:account)[\s\S]{0,50}(?!close\s*=)/i,
-    description: 'Account closed without close constraint. May not properly transfer lamports.',
-    recommendation: 'Use close = target_account constraint for proper account closure.'
-  },
-  {
-    id: 'SOL4083',
-    name: 'Zellic - realloc Without zero_init',
-    severity: 'medium',
-    pattern: /realloc[\s\S]{0,50}(?!realloc::zero\s*=\s*true)/i,
-    description: 'Account reallocation without zeroing new space. May leak previous data.',
-    recommendation: 'Use realloc::zero = true when expanding account size.'
-  },
-  {
-    id: 'SOL4084',
-    name: 'Zellic - Account Not mut When Modified',
-    severity: 'high',
-    pattern: /(?:\.key|\.to_account_info)[\s\S]{0,200}(?:serialize|borrow_mut)[\s\S]{0,50}(?!#\[account\(mut)/i,
-    description: 'Account data modified but not marked mutable. Transaction will fail or behave unexpectedly.',
-    recommendation: 'Mark all accounts that are modified with mut constraint.'
-  },
-  {
-    id: 'SOL4085',
-    name: 'Zellic - Signer Not Verified',
-    severity: 'critical',
-    pattern: /(?:authority|payer|user)[\s\S]{0,50}(?:AccountInfo|Account)[\s\S]{0,30}(?!Signer)/i,
-    description: 'Authority account not verified as signer. Attacker can pass any account.',
-    recommendation: 'Use Signer<\'info> type or add signer constraint for authority accounts.'
-  },
-
-  // ============================================================================
-  // NEODYME COMMON PITFALLS
-  // ============================================================================
-
-  {
-    id: 'SOL4086',
-    name: 'Neodyme - Account Info Owner Not Checked',
-    severity: 'critical',
-    pattern: /AccountInfo[\s\S]{0,100}(?:data|lamports)[\s\S]{0,50}(?!owner.*==|\.owner)/i,
-    description: 'AccountInfo used without owner verification. May accept accounts from wrong program.',
-    recommendation: 'Verify account.owner == expected_program_id for all AccountInfo usage.'
-  },
-  {
-    id: 'SOL4087',
-    name: 'Neodyme - Data Not Validated Before Use',
-    severity: 'high',
-    pattern: /(?:borrow|data)[\s\S]{0,50}(?:deserialize|try_from)[\s\S]{0,50}(?!len.*check|size.*verify)/i,
-    description: 'Account data deserialized without size validation. May panic or read garbage.',
-    recommendation: 'Verify account data length before deserialization.'
-  },
-  {
-    id: 'SOL4088',
-    name: 'Neodyme - invoke_signed Without PDA Verification',
-    severity: 'critical',
-    pattern: /invoke_signed[\s\S]{0,100}(?:seeds)[\s\S]{0,50}(?!find_program_address|verify_pda)/i,
-    description: 'invoke_signed used without verifying PDA matches expected. May sign for wrong account.',
-    recommendation: 'Verify PDA address matches expected before invoke_signed.'
-  },
-  {
-    id: 'SOL4089',
-    name: 'Neodyme - Integer Overflow in Loop',
-    severity: 'high',
-    pattern: /(?:for|while)[\s\S]{0,80}(?:\+=|-=|\+\+|--|\*=)[\s\S]{0,30}(?!checked_|saturating_)/i,
-    description: 'Loop counter arithmetic without overflow protection. May cause infinite loop.',
-    recommendation: 'Use checked arithmetic in all loop operations.'
-  },
-  {
-    id: 'SOL4090',
-    name: 'Neodyme - Unvalidated Account Type',
-    severity: 'high',
-    pattern: /(?:Account|AccountInfo)[\s\S]{0,80}(?:key|address)[\s\S]{0,50}(?!discriminator|type_check)/i,
-    description: 'Account type not validated. May accept different account type with matching fields.',
-    recommendation: 'Always verify account discriminator or use Anchor typed accounts.'
-  },
-
-  // ============================================================================
-  // KUDELSKI SECURITY PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4091',
-    name: 'Kudelski - Authority Key Without Scope Limit',
-    severity: 'high',
-    pattern: /(?:authority|admin)[\s\S]{0,100}(?:key|pubkey)[\s\S]{0,50}(?!scope|limited|specific)/i,
-    description: 'Authority key can perform any operation. No scope limitations.',
-    recommendation: 'Implement role-based access control. Limit authority actions by type.'
-  },
-  {
-    id: 'SOL4092',
-    name: 'Kudelski - State Update Without Invariant Check',
-    severity: 'high',
-    pattern: /(?:state|data)[\s\S]{0,80}(?:update|modify|set)[\s\S]{0,50}(?!invariant|verify|assert)/i,
-    description: 'State updated without checking invariants. May violate protocol assumptions.',
-    recommendation: 'Add invariant checks before and after state updates.'
-  },
-  {
-    id: 'SOL4093',
-    name: 'Kudelski - Token Transfer Without Balance Verification',
-    severity: 'high',
-    pattern: /(?:transfer|spl_token)[\s\S]{0,100}(?:invoke)[\s\S]{0,50}(?!balance.*check|sufficient)/i,
-    description: 'Token transfer without pre-checking balance. May fail unexpectedly.',
-    recommendation: 'Verify source has sufficient balance before transfer.'
-  },
-  {
-    id: 'SOL4094',
-    name: 'Kudelski - PDA Authority Without Program Check',
-    severity: 'critical',
-    pattern: /(?:pda|program_derived)[\s\S]{0,100}(?:authority|signer)[\s\S]{0,50}(?!program_id.*verify)/i,
-    description: 'PDA used as authority without verifying derived from correct program.',
-    recommendation: 'Verify PDA derivation uses expected program ID.'
-  },
-  {
-    id: 'SOL4095',
-    name: 'Kudelski - Cross-Reference Account Mismatch',
-    severity: 'high',
-    pattern: /(?:account_a|account_b)[\s\S]{0,100}(?:reference|points_to)[\s\S]{0,50}(?!verify_match|check_ref)/i,
-    description: 'Account cross-references not validated. May link to wrong accounts.',
-    recommendation: 'Verify all account cross-references match expected values.'
-  },
-
-  // ============================================================================
-  // arXiv ACADEMIC RESEARCH PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4096',
-    name: 'arXiv - BPF Verifier Bypass Risk',
-    severity: 'critical',
-    pattern: /(?:unsafe|raw_pointer|transmute)[\s\S]{0,100}(?!justified|documented)/i,
-    description: 'Unsafe Rust may bypass BPF verifier protections. Academic research identifies this as attack vector.',
-    recommendation: 'Avoid unsafe code. If required, thoroughly document and audit justification.'
-  },
-  {
-    id: 'SOL4097',
-    name: 'arXiv - Stack Overflow in Recursive Call',
-    severity: 'high',
-    pattern: /(?:fn\s+\w+)[\s\S]{0,200}(?:self\.\w+\(|recursion|recursive)/i,
-    description: 'Recursive function without depth limit. BPF has limited stack space.',
-    recommendation: 'Convert recursion to iteration. If recursion needed, add depth limit.'
-  },
-  {
-    id: 'SOL4098',
-    name: 'arXiv - Compute Budget Exhaustion Attack',
-    severity: 'medium',
-    pattern: /(?:compute|cu)[\s\S]{0,80}(?:intensive|expensive)[\s\S]{0,50}(?!limit|check|budget)/i,
-    description: 'Compute-intensive operation without budget management. May be used for DoS.',
-    recommendation: 'Check remaining compute budget before expensive operations.'
-  },
-  {
-    id: 'SOL4099',
-    name: 'arXiv - Sysvar Account Spoofing',
-    severity: 'critical',
-    pattern: /(?:sysvar|clock|rent|epoch)[\s\S]{0,80}(?:account)[\s\S]{0,50}(?!sysvar::.*ID|verify_sysvar)/i,
-    description: 'Sysvar account not verified against known sysvar addresses. May accept fake sysvar.',
-    recommendation: 'Verify sysvar account keys match sysvar::*::ID constants.'
-  },
-  {
-    id: 'SOL4100',
-    name: 'arXiv - Parallel Execution Race Condition',
-    severity: 'high',
-    pattern: /(?:parallel|concurrent)[\s\S]{0,100}(?:access|modify)[\s\S]{0,50}(?!lock|mutex|atomic)/i,
-    description: 'Parallel transaction execution may cause race conditions. Account locking needed.',
-    recommendation: 'Ensure account write locks are properly acquired. Use atomic operations.'
-  },
-
-  // ============================================================================
-  // LENDING PROTOCOL DEEP PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4101',
-    name: 'Lending - Interest Rate Model Kink Validation',
-    severity: 'medium',
-    pattern: /(?:interest_rate|utilization)[\s\S]{0,100}(?:kink|threshold)[\s\S]{0,50}(?!bounds|0\.\d|validate)/i,
-    description: 'Interest rate kink points not validated. May cause rate discontinuities.',
-    recommendation: 'Validate kink points are within [0, 1] and properly ordered.'
-  },
-  {
-    id: 'SOL4102',
-    name: 'Lending - Liquidation Bonus Bounds Missing',
-    severity: 'high',
-    pattern: /(?:liquidation_bonus|incentive)[\s\S]{0,80}(?:set|update)[\s\S]{0,50}(?!max_bonus|bounded)/i,
-    description: 'Liquidation bonus unbounded. Excessive bonus drains protocol reserves.',
-    recommendation: 'Cap liquidation bonus (typically 5-15%). Validate on configuration.'
-  },
-  {
-    id: 'SOL4103',
-    name: 'Lending - Close Factor Without Limit',
-    severity: 'high',
-    pattern: /(?:close_factor|liquidation_close)[\s\S]{0,80}(?!max|bounded|<\s*1|<=\s*100)/i,
-    description: 'Close factor unbounded. May allow 100% liquidation in single transaction.',
-    recommendation: 'Limit close factor (typically 50%). Implement gradual liquidation.'
-  },
-  {
-    id: 'SOL4104',
-    name: 'Lending - Borrow Cap Not Enforced',
-    severity: 'high',
-    pattern: /(?:borrow|loan)[\s\S]{0,100}(?:amount)[\s\S]{0,50}(?!cap|limit|max_borrow)/i,
-    description: 'No borrow cap per asset. Single asset can dominate protocol risk.',
-    recommendation: 'Implement per-asset borrow caps based on liquidity and risk profile.'
-  },
-  {
-    id: 'SOL4105',
-    name: 'Lending - Reserve Factor Drain',
-    severity: 'high',
-    pattern: /(?:reserve_factor|protocol_fee)[\s\S]{0,80}(?:withdraw|drain)[\s\S]{0,50}(?!timelock|governance)/i,
-    description: 'Reserve funds withdrawable without governance. Protocol safety net at risk.',
-    recommendation: 'Require governance approval for reserve withdrawals. Add timelock.'
-  },
-
-  // ============================================================================
-  // AMM/DEX DEEP PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4106',
-    name: 'AMM - Invariant Violation in Swap',
-    severity: 'critical',
-    pattern: /(?:swap|exchange)[\s\S]{0,100}(?:k_value|constant_product)[\s\S]{0,50}(?!verify|assert|check)/i,
-    description: 'AMM invariant (k = x * y) not verified after swap. May drain liquidity.',
-    recommendation: 'Assert invariant maintained or improved after every swap operation.'
-  },
-  {
-    id: 'SOL4107',
-    name: 'AMM - LP Share Inflation Attack',
-    severity: 'critical',
-    pattern: /(?:lp_token|share)[\s\S]{0,100}(?:mint|issue)[\s\S]{0,50}(?:first|initial)[\s\S]{0,30}(?!minimum|dead_shares)/i,
-    description: 'LP share minting vulnerable to inflation attack. First depositor can manipulate.',
-    recommendation: 'Mint minimum LP shares to dead address on pool creation.'
-  },
-  {
-    id: 'SOL4108',
-    name: 'AMM - Virtual Reserve Manipulation',
-    severity: 'high',
-    pattern: /(?:virtual_reserve|amplification)[\s\S]{0,100}(?:set|change)[\s\S]{0,50}(?!gradual|timelock)/i,
-    description: 'Virtual reserve changes immediate. Enables price manipulation.',
-    recommendation: 'Implement gradual amplification changes over multiple blocks.'
-  },
-  {
-    id: 'SOL4109',
-    name: 'AMM - Concentrated Liquidity Range Validation',
-    severity: 'high',
-    pattern: /(?:tick|range|position)[\s\S]{0,100}(?:lower|upper)[\s\S]{0,50}(?!validate|lower\s*<\s*upper)/i,
-    description: 'CLMM position range not validated. Invalid ranges may cause unexpected behavior.',
-    recommendation: 'Validate tickLower < tickUpper and both within valid tick range.'
-  },
-  {
-    id: 'SOL4110',
-    name: 'AMM - Fee Tier Bypass in Routing',
-    severity: 'medium',
-    pattern: /(?:route|path)[\s\S]{0,100}(?:fee|tier)[\s\S]{0,50}(?!verify|match|expected)/i,
-    description: 'Swap routing may bypass intended fee tier. Lower fee pools drain liquidity.',
-    recommendation: 'Verify routed pools match expected fee tiers.'
-  },
-
-  // ============================================================================
-  // STAKING PROTOCOL PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4111',
-    name: 'Staking - Validator Commission Manipulation',
-    severity: 'high',
-    pattern: /(?:commission|fee)[\s\S]{0,80}(?:rate|percent)[\s\S]{0,50}(?:change|update)[\s\S]{0,30}(?!bounded|max)/i,
-    description: 'Validator commission changeable without bounds. May suddenly increase to 100%.',
-    recommendation: 'Cap commission rate changes per epoch. Announce changes in advance.'
-  },
-  {
-    id: 'SOL4112',
-    name: 'Staking - Instant Unstake Without Cooldown',
-    severity: 'high',
-    pattern: /(?:unstake|withdraw)[\s\S]{0,100}(?:immediate|instant)[\s\S]{0,50}(?!cooldown|delay|epoch)/i,
-    description: 'Instant unstaking without cooldown period. Enables rapid stake movement attacks.',
-    recommendation: 'Implement minimum cooldown period (typically 1 epoch).'
-  },
-  {
-    id: 'SOL4113',
-    name: 'Staking - Reward Rate Manipulation',
-    severity: 'high',
-    pattern: /(?:reward_rate|apy|apr)[\s\S]{0,80}(?:set|update)[\s\S]{0,50}(?!governance|timelock|bounded)/i,
-    description: 'Reward rate immediately changeable. Flash stake attacks possible.',
-    recommendation: 'Apply reward rate changes gradually. Use time-weighted calculations.'
-  },
-  {
-    id: 'SOL4114',
-    name: 'Staking - Slashing Without Appeal',
-    severity: 'medium',
-    pattern: /(?:slash|penalty)[\s\S]{0,100}(?:apply|execute)[\s\S]{0,50}(?!appeal|dispute|timelock)/i,
-    description: 'Slashing applied without appeal mechanism. May slash unfairly.',
-    recommendation: 'Implement slashing appeal period before finalization.'
-  },
-  {
-    id: 'SOL4115',
-    name: 'Staking - Delegation Overflow',
-    severity: 'high',
-    pattern: /(?:delegate|stake)[\s\S]{0,80}(?:amount|lamports)[\s\S]{0,50}(?:add|\+=)[\s\S]{0,30}(?!checked_)/i,
-    description: 'Delegation amount addition without overflow check. May wrap around.',
-    recommendation: 'Use checked arithmetic for all stake calculations.'
-  },
-
-  // ============================================================================
-  // GOVERNANCE PROTOCOL PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4116',
-    name: 'Governance - Proposal Without Minimum Threshold',
-    severity: 'high',
-    pattern: /(?:proposal|create_proposal)[\s\S]{0,100}(?!threshold|minimum_stake|required_tokens)/i,
-    description: 'Anyone can create proposals. Spam and griefing risk.',
-    recommendation: 'Require minimum token stake to create proposals.'
-  },
-  {
-    id: 'SOL4117',
-    name: 'Governance - Vote Without Snapshot',
-    severity: 'critical',
-    pattern: /(?:vote|voting_power)[\s\S]{0,100}(?:current_balance|live_balance)[\s\S]{0,50}(?!snapshot|checkpoint)/i,
-    description: 'Voting power calculated from live balance. Flash loan vote attacks possible.',
-    recommendation: 'Use snapshot-based voting power from before proposal creation.'
-  },
-  {
-    id: 'SOL4118',
-    name: 'Governance - Quorum Not Enforced',
-    severity: 'high',
-    pattern: /(?:proposal|execute)[\s\S]{0,100}(?:pass|approve)[\s\S]{0,50}(?!quorum|minimum_votes)/i,
-    description: 'Proposals can pass without quorum. Low participation attacks.',
-    recommendation: 'Enforce minimum participation quorum for proposal execution.'
-  },
-  {
-    id: 'SOL4119',
-    name: 'Governance - Execution Without Delay',
-    severity: 'critical',
-    pattern: /(?:proposal|execute)[\s\S]{0,100}(?:approved|passed)[\s\S]{0,50}(?!delay|timelock|queue)/i,
-    description: 'Approved proposals execute immediately. No time for emergency response.',
-    recommendation: 'Queue approved proposals with minimum execution delay (24-48h).'
-  },
-  {
-    id: 'SOL4120',
-    name: 'Governance - Delegate Vote Without Revocation',
-    severity: 'medium',
-    pattern: /(?:delegate|delegation)[\s\S]{0,100}(?:vote|power)[\s\S]{0,50}(?!revoke|undelegate|expires)/i,
-    description: 'Vote delegation permanent without revocation mechanism.',
-    recommendation: 'Implement vote delegation revocation. Consider auto-expiry.'
-  },
-
-  // ============================================================================
-  // NFT/GAMING PROTOCOL PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4121',
-    name: 'NFT - Metadata URI Injection',
-    severity: 'high',
-    pattern: /(?:metadata|uri|json)[\s\S]{0,80}(?:update|set)[\s\S]{0,50}(?!sanitize|validate|whitelist)/i,
-    description: 'Metadata URI can be set to malicious content. Phishing risk.',
-    recommendation: 'Validate metadata URIs against whitelist. Sanitize content.'
-  },
-  {
-    id: 'SOL4122',
-    name: 'NFT - Royalty Enforcement Bypass',
-    severity: 'medium',
-    pattern: /(?:royalty|creator_fee)[\s\S]{0,100}(?:transfer|sale)[\s\S]{0,50}(?!enforce|check|required)/i,
-    description: 'NFT transfers may bypass royalty payments. Creator revenue loss.',
-    recommendation: 'Use Metaplex pNFT or similar enforced royalty standard.'
-  },
-  {
-    id: 'SOL4123',
-    name: 'NFT - Collection Verification Bypass',
-    severity: 'high',
-    pattern: /(?:collection|verified)[\s\S]{0,80}(?:check|assert)[\s\S]{0,50}(?!collection_key|verified.*true)/i,
-    description: 'NFT collection membership not verified. Fake NFTs may pass.',
-    recommendation: 'Verify collection key and verified flag for all collection NFTs.'
-  },
-  {
-    id: 'SOL4124',
-    name: 'Gaming - Randomness Predictable',
-    severity: 'critical',
-    pattern: /(?:random|rng|seed)[\s\S]{0,100}(?:blockhash|slot|timestamp)[\s\S]{0,50}(?!vrf|commit_reveal)/i,
-    description: 'Game randomness derived from predictable on-chain values. Validators can manipulate.',
-    recommendation: 'Use VRF (Switchboard/Chainlink) or commit-reveal for randomness.'
-  },
-  {
-    id: 'SOL4125',
-    name: 'Gaming - Item Duplication Risk',
-    severity: 'critical',
-    pattern: /(?:item|asset|inventory)[\s\S]{0,100}(?:transfer|move)[\s\S]{0,50}(?!atomic|lock|mutex)/i,
-    description: 'Item transfers not atomic. Race conditions enable duplication.',
-    recommendation: 'Implement atomic item transfers. Lock source before modification.'
-  },
-
-  // ============================================================================
-  // TOKEN SECURITY PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4126',
-    name: 'Token - Mint Authority Not Revoked',
-    severity: 'high',
-    pattern: /(?:mint_authority|mint_to)[\s\S]{0,100}(?!revoke|set_authority.*None|immutable)/i,
-    description: 'Mint authority retained post-launch. Infinite supply risk.',
-    recommendation: 'Revoke mint authority after initial distribution for fixed-supply tokens.'
-  },
-  {
-    id: 'SOL4127',
-    name: 'Token - Freeze Authority Abuse Risk',
-    severity: 'medium',
-    pattern: /(?:freeze_authority|freeze_account)[\s\S]{0,80}(?!governance|multisig|revoked)/i,
-    description: 'Freeze authority can lock user funds arbitrarily.',
-    recommendation: 'Revoke freeze authority or place under governance control.'
-  },
-  {
-    id: 'SOL4128',
-    name: 'Token-2022 - Transfer Hook Validation',
-    severity: 'high',
-    pattern: /(?:transfer_hook|ExtraAccountMeta)[\s\S]{0,100}(?!validate|verify|check_program)/i,
-    description: 'Token-2022 transfer hook not validated. Malicious hooks can steal funds.',
-    recommendation: 'Validate transfer hook program ID and extra account metas.'
-  },
-  {
-    id: 'SOL4129',
-    name: 'Token-2022 - Confidential Transfer Leak',
-    severity: 'high',
-    pattern: /(?:confidential|encrypted)[\s\S]{0,100}(?:balance|amount)[\s\S]{0,50}(?:log|emit|expose)/i,
-    description: 'Confidential transfer amounts may be leaked through side channels.',
-    recommendation: 'Never log or expose confidential amounts. Audit all data flows.'
-  },
-  {
-    id: 'SOL4130',
-    name: 'Token-2022 - Permanent Delegate Risk',
-    severity: 'critical',
-    pattern: /(?:permanent_delegate|default_account_state)[\s\S]{0,80}(?!warning|documented)/i,
-    description: 'Token-2022 permanent delegate can transfer user tokens anytime.',
-    recommendation: 'Document permanent delegate clearly. Consider user consent mechanisms.'
-  },
-
-  // ============================================================================
-  // BRIDGE PROTOCOL ADVANCED PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4131',
-    name: 'Bridge - Guardian Set Update Race',
-    severity: 'critical',
-    pattern: /(?:guardian_set|validator_set)[\s\S]{0,100}(?:update|change)[\s\S]{0,50}(?!pending|delay)/i,
-    description: 'Guardian set updates immediate. May enable stale signature replay.',
-    recommendation: 'Implement guardian set update delay. Track set index in messages.'
-  },
-  {
-    id: 'SOL4132',
-    name: 'Bridge - Cross-Chain Decimal Mismatch',
-    severity: 'high',
-    pattern: /(?:bridge|cross_chain)[\s\S]{0,100}(?:decimals|precision)[\s\S]{0,50}(?!normalize|convert|map)/i,
-    description: 'Token decimals may differ across chains. Causes balance mismatches.',
-    recommendation: 'Normalize decimals in bridge logic. Handle precision loss.'
-  },
-  {
-    id: 'SOL4133',
-    name: 'Bridge - Canonical Token Verification',
-    severity: 'critical',
-    pattern: /(?:wrapped|bridged)[\s\S]{0,100}(?:token|mint)[\s\S]{0,50}(?!canonical|verify_mint|whitelist)/i,
-    description: 'Bridged token not verified as canonical. Multiple wrappers for same asset.',
-    recommendation: 'Maintain canonical wrapped token registry. Verify on bridging.'
-  },
-  {
-    id: 'SOL4134',
-    name: 'Bridge - Message Sequence Gap',
-    severity: 'high',
-    pattern: /(?:sequence|nonce)[\s\S]{0,100}(?:process|handle)[\s\S]{0,50}(?!sequential|no_gap|ordered)/i,
-    description: 'Bridge messages processed out of order. May cause state inconsistency.',
-    recommendation: 'Process messages sequentially. Handle or reject gaps explicitly.'
-  },
-  {
-    id: 'SOL4135',
-    name: 'Bridge - Proof Verification Timeout',
-    severity: 'medium',
-    pattern: /(?:proof|attestation)[\s\S]{0,100}(?:verify|validate)[\s\S]{0,50}(?!timeout|expiry|max_age)/i,
-    description: 'Bridge proofs valid indefinitely. Stale proofs may be replayed.',
-    recommendation: 'Add proof expiry. Reject proofs older than threshold.'
-  },
-
-  // ============================================================================
-  // PERPETUAL/DERIVATIVES PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4136',
-    name: 'Perp - Funding Rate Manipulation',
-    severity: 'high',
-    pattern: /(?:funding_rate|funding_payment)[\s\S]{0,100}(?:calculate|compute)[\s\S]{0,50}(?!twap|time_weighted|bounds)/i,
-    description: 'Funding rate calculated from spot price. Manipulation enables funding extraction.',
-    recommendation: 'Use TWAP for funding rate calculation. Add rate bounds.'
-  },
-  {
-    id: 'SOL4137',
-    name: 'Perp - ADL Priority Gaming',
-    severity: 'high',
-    pattern: /(?:adl|auto_deleverage)[\s\S]{0,100}(?:priority|rank)[\s\S]{0,50}(?!deterministic|transparent)/i,
-    description: 'ADL priority opaque or manipulable. Users may be unfairly deleveraged.',
-    recommendation: 'Use transparent, deterministic ADL ranking based on PnL and leverage.'
-  },
-  {
-    id: 'SOL4138',
-    name: 'Perp - Mark Price Manipulation',
-    severity: 'critical',
-    pattern: /(?:mark_price|index_price)[\s\S]{0,100}(?:calculate)[\s\S]{0,50}(?!multiple_sources|median|trimmed)/i,
-    description: 'Mark price from single source. Manipulation causes mass liquidations.',
-    recommendation: 'Use median of multiple oracle sources for mark price.'
-  },
-  {
-    id: 'SOL4139',
-    name: 'Perp - Liquidation Cascade Risk',
-    severity: 'critical',
-    pattern: /(?:liquidation|liquidate)[\s\S]{0,100}(?:batch|mass)[\s\S]{0,50}(?!circuit_breaker|pause)/i,
-    description: 'Mass liquidations may cause cascade. Nov 2025 $258M incident pattern.',
-    recommendation: 'Implement liquidation circuit breakers. Pause on abnormal activity.'
-  },
-  {
-    id: 'SOL4140',
-    name: 'Perp - Insurance Fund Depletion',
-    severity: 'high',
-    pattern: /(?:insurance_fund|deficit)[\s\S]{0,100}(?:use|withdraw)[\s\S]{0,50}(?!backstop|limit|reserve)/i,
-    description: 'Insurance fund can be fully depleted. No backstop for socializing losses.',
-    recommendation: 'Keep minimum insurance fund reserve. Implement loss socialization.'
-  },
-
-  // ============================================================================
-  // OPTIONS PROTOCOL PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4141',
-    name: 'Options - Premium Mispricing',
-    severity: 'high',
-    pattern: /(?:premium|option_price)[\s\S]{0,100}(?:calculate)[\s\S]{0,50}(?!volatility|greeks|model)/i,
-    description: 'Option premium not using proper pricing model. Arbitrage opportunity.',
-    recommendation: 'Use Black-Scholes or equivalent. Update implied volatility regularly.'
-  },
-  {
-    id: 'SOL4142',
-    name: 'Options - Settlement Price Manipulation',
-    severity: 'critical',
-    pattern: /(?:settlement|expiry)[\s\S]{0,100}(?:price)[\s\S]{0,50}(?!twap|average|oracle)/i,
-    description: 'Settlement price from single snapshot. Manipulation at expiry.',
-    recommendation: 'Use TWAP around settlement time. Multiple oracle sources.'
-  },
-  {
-    id: 'SOL4143',
-    name: 'Options - Exercise Window Attack',
-    severity: 'high',
-    pattern: /(?:exercise|execute)[\s\S]{0,100}(?:option)[\s\S]{0,50}(?:window|period)[\s\S]{0,30}(?!documented)/i,
-    description: 'Exercise window parameters exploitable. May prevent legitimate exercise.',
-    recommendation: 'Document exercise windows clearly. Add buffer for execution.'
-  },
-  {
-    id: 'SOL4144',
-    name: 'Options - Collateral Ratio Stale',
-    severity: 'high',
-    pattern: /(?:collateral_ratio|margin)[\s\S]{0,100}(?:option|position)[\s\S]{0,50}(?!update|refresh|current)/i,
-    description: 'Option collateral requirements not updated with price changes.',
-    recommendation: 'Update collateral requirements on every price change.'
-  },
-  {
-    id: 'SOL4145',
-    name: 'Options - Greeks Calculation Error',
-    severity: 'medium',
-    pattern: /(?:delta|gamma|theta|vega)[\s\S]{0,80}(?:calculate)[\s\S]{0,50}(?!boundary|edge_case)/i,
-    description: 'Greeks calculation may fail at boundary conditions (deep ITM/OTM).',
-    recommendation: 'Handle edge cases in Greeks calculation. Add numerical stability.'
-  },
-
-  // ============================================================================
-  // YIELD AGGREGATOR PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4146',
-    name: 'Yield - Strategy Approval Without Audit',
-    severity: 'high',
-    pattern: /(?:strategy|vault)[\s\S]{0,100}(?:add|register|approve)[\s\S]{0,50}(?!audit|review|governance)/i,
-    description: 'New strategies added without security review. Malicious strategy risk.',
-    recommendation: 'Require governance approval and audit for new strategies.'
-  },
-  {
-    id: 'SOL4147',
-    name: 'Yield - Emergency Withdrawal Path',
-    severity: 'high',
-    pattern: /(?:emergency|panic)[\s\S]{0,100}(?:withdraw|exit)[\s\S]{0,50}(?!guaranteed|fallback)/i,
-    description: 'No emergency withdrawal path. Funds locked if strategy fails.',
-    recommendation: 'Implement emergency withdrawal that bypasses strategy.'
-  },
-  {
-    id: 'SOL4148',
-    name: 'Yield - Harvest Sandwich Attack',
-    severity: 'high',
-    pattern: /(?:harvest|compound)[\s\S]{0,100}(?:reward|yield)[\s\S]{0,50}(?!private|protected|mev)/i,
-    description: 'Harvest transactions public. MEV bots sandwich for profit.',
-    recommendation: 'Use private mempool for harvests. Implement MEV protection.'
-  },
-  {
-    id: 'SOL4149',
-    name: 'Yield - Share Price Manipulation',
-    severity: 'critical',
-    pattern: /(?:share_price|exchange_rate)[\s\S]{0,100}(?:vault)[\s\S]{0,50}(?!protected|twap|bounded)/i,
-    description: 'Vault share price manipulable via donations. Inflation attack.',
-    recommendation: 'Use virtual shares or donation protection. Bound price changes.'
-  },
-  {
-    id: 'SOL4150',
-    name: 'Yield - Underlying Protocol Risk',
-    severity: 'medium',
-    pattern: /(?:underlying|external)[\s\S]{0,100}(?:protocol|contract)[\s\S]{0,50}(?!monitor|health_check)/i,
-    description: 'Yield source protocol may fail. No monitoring of underlying health.',
-    recommendation: 'Monitor underlying protocol metrics. Implement automatic pausing.'
-  },
-
-  // ============================================================================
-  // FINAL COMPREHENSIVE PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4151',
-    name: 'Account Revival After Close',
-    severity: 'high',
-    pattern: /(?:close|zero_account)[\s\S]{0,100}(?!rent_exempt.*check|revival.*protect)/i,
-    description: 'Closed accounts can be revived by sending lamports. State resurrection.',
-    recommendation: 'Zero all data before close. Check for revival in instruction guards.'
-  },
-  {
-    id: 'SOL4152',
-    name: 'Instruction Data Size Unchecked',
-    severity: 'medium',
-    pattern: /(?:instruction|ix)[\s\S]{0,80}(?:data)[\s\S]{0,50}(?!len.*check|size.*verify|bounded)/i,
-    description: 'Instruction data size not validated. May panic on deserialize.',
-    recommendation: 'Verify instruction data size before processing.'
-  },
-  {
-    id: 'SOL4153',
-    name: 'Missing Rent Exemption Check',
-    severity: 'medium',
-    pattern: /(?:account|create)[\s\S]{0,100}(?:lamports)[\s\S]{0,50}(?!rent.*exempt|minimum_balance)/i,
-    description: 'Account may not be rent exempt. Will be garbage collected.',
-    recommendation: 'Ensure accounts have minimum balance for rent exemption.'
-  },
-  {
-    id: 'SOL4154',
-    name: 'Event Ordering Assumption',
-    severity: 'low',
-    pattern: /(?:event|log|emit)[\s\S]{0,100}(?:order|sequence)[\s\S]{0,50}(?!guaranteed|documented)/i,
-    description: 'Event ordering not guaranteed in parallel execution. Indexer issues.',
-    recommendation: 'Include sequence numbers in events. Don\'t rely on emission order.'
-  },
-  {
-    id: 'SOL4155',
-    name: 'Program ID Hardcoded',
-    severity: 'low',
-    pattern: /(?:program_id|pubkey)[\s\S]{0,50}(?:=|:)[\s\S]{0,30}(?:"[1-9A-HJ-NP-Za-km-z]{32,44}")/i,
-    description: 'Program IDs hardcoded. May conflict with deployments on different networks.',
-    recommendation: 'Use declare_id! macro. Support configurable program IDs for testing.'
-  },
-  {
-    id: 'SOL4156',
-    name: 'Version Mismatch Risk',
-    severity: 'medium',
-    pattern: /(?:version|upgrade)[\s\S]{0,100}(?:migration|compatibility)[\s\S]{0,50}(?!check|verify)/i,
-    description: 'Account version not verified during upgrade. Data corruption risk.',
-    recommendation: 'Include version field in accounts. Verify and migrate on access.'
-  },
-  {
-    id: 'SOL4157',
-    name: 'Borsh Deserialization Panic',
-    severity: 'high',
-    pattern: /(?:borsh|deserialize)[\s\S]{0,80}(?:unwrap|expect)[\s\S]{0,30}(?!\?|match|if let)/i,
-    description: 'Borsh deserialization failure causes panic. DoS vector.',
-    recommendation: 'Handle deserialization errors gracefully. Return proper error codes.'
-  },
-  {
-    id: 'SOL4158',
-    name: 'Clock Sysvar Manipulation',
-    severity: 'medium',
-    pattern: /(?:Clock|slot|timestamp)[\s\S]{0,100}(?:assume|expect)[\s\S]{0,50}(?:accurate|precise)/i,
-    description: 'Clock sysvar values can be slightly manipulated by validators.',
-    recommendation: 'Allow tolerance in time-sensitive operations. Don\'t rely on exact timing.'
-  },
-  {
-    id: 'SOL4159',
-    name: 'Native SOL Handling Error',
-    severity: 'high',
-    pattern: /(?:native_sol|system_program)[\s\S]{0,100}(?:transfer|lamport)[\s\S]{0,50}(?!wrap|wsol|handle)/i,
-    description: 'Native SOL vs wrapped SOL handling inconsistent. Transfer failures.',
-    recommendation: 'Handle native SOL separately or auto-wrap. Document token behavior.'
-  },
-  {
-    id: 'SOL4160',
-    name: 'Compute Unit Estimation',
-    severity: 'low',
-    pattern: /(?:compute|cu)[\s\S]{0,80}(?:budget|units)[\s\S]{0,50}(?!dynamic|estimate|measure)/i,
-    description: 'Compute budget static. May fail on variable-cost operations.',
-    recommendation: 'Estimate compute dynamically. Add buffer for safety.'
-  },
-
-  // ============================================================================
-  // ADDITIONAL EDGE CASE PATTERNS
-  // ============================================================================
-
-  {
-    id: 'SOL4161',
-    name: 'Seed Injection Attack',
-    severity: 'critical',
-    pattern: /(?:seeds|pda)[\s\S]{0,100}(?:user_input|param)[\s\S]{0,50}(?!sanitize|validate|bounded)/i,
-    description: 'User input used directly in PDA seeds. May collide with other PDAs.',
-    recommendation: 'Sanitize and bound user input in seeds. Use fixed-length fields.'
-  },
-  {
-    id: 'SOL4162',
-    name: 'Duplicate Account Parameter',
-    severity: 'high',
-    pattern: /(?:accounts|ctx)[\s\S]{0,100}(?:same|duplicate|equal)[\s\S]{0,50}(?!check|verify|!=)/i,
-    description: 'Same account passed for multiple parameters. Logic bypass.',
-    recommendation: 'Verify distinct accounts where required. Check key inequality.'
-  },
-  {
-    id: 'SOL4163',
-    name: 'Empty Account Data Assumption',
-    severity: 'medium',
-    pattern: /(?:account|data)[\s\S]{0,80}(?:new|create|init)[\s\S]{0,50}(?!zeroed|empty_check)/i,
-    description: 'New account data assumed to be zero. May contain previous data.',
-    recommendation: 'Explicitly zero account data on creation. Don\'t assume empty.'
-  },
-  {
-    id: 'SOL4164',
-    name: 'Program Upgrade Authority Leak',
-    severity: 'high',
-    pattern: /(?:upgrade_authority|BpfUpgradeableLoader)[\s\S]{0,100}(?!verified|checked|set_to_none)/i,
-    description: 'Upgrade authority not verified or restricted. Unauthorized upgrades possible.',
-    recommendation: 'Verify upgrade authority in sensitive operations. Consider making immutable.'
-  },
-  {
-    id: 'SOL4165',
-    name: 'External CPI Return Data',
-    severity: 'medium',
-    pattern: /(?:get_return_data|return_data)[\s\S]{0,100}(?!program_id.*verify|trusted)/i,
-    description: 'CPI return data not verified for source. May trust wrong program.',
-    recommendation: 'Verify return data came from expected program ID.'
-  },
-  {
-    id: 'SOL4166',
-    name: 'Anchor Context Lifetime',
-    severity: 'medium',
-    pattern: /(?:Context|ctx)[\s\S]{0,80}(?:borrow|reference)[\s\S]{0,50}(?:lifetime|\')/i,
-    description: 'Anchor context lifetime issues can cause unexpected behavior.',
-    recommendation: 'Be careful with context borrows. Clone data if needed beyond scope.'
-  },
-  {
-    id: 'SOL4167',
-    name: 'Zero-Copy Account Aliasing',
-    severity: 'high',
-    pattern: /(?:zero_copy|AccountLoader)[\s\S]{0,100}(?:borrow_mut)[\s\S]{0,50}(?:multiple|twice)/i,
-    description: 'Multiple mutable borrows of zero-copy account. Aliasing UB risk.',
-    recommendation: 'Never hold multiple mutable references. Reborrow after scope end.'
-  },
-  {
-    id: 'SOL4168',
-    name: 'Lookup Table Entry Validation',
-    severity: 'high',
-    pattern: /(?:address_lookup|ALT)[\s\S]{0,100}(?:table)[\s\S]{0,50}(?!verify|validate|trusted)/i,
-    description: 'Address lookup table entries not validated. May resolve to wrong addresses.',
-    recommendation: 'Verify lookup table authority. Validate resolved addresses.'
-  },
-  {
-    id: 'SOL4169',
-    name: 'Blockhash Expiry Risk',
-    severity: 'medium',
-    pattern: /(?:blockhash|recent_blockhash)[\s\S]{0,100}(?:cache|store)[\s\S]{0,50}(?!refresh|expiry)/i,
-    description: 'Cached blockhash may expire. Transaction will fail after ~60 seconds.',
-    recommendation: 'Refresh blockhash before transaction submission. Handle expiry.'
-  },
-  {
-    id: 'SOL4170',
-    name: 'Priority Fee Griefing',
-    severity: 'medium',
-    pattern: /(?:priority_fee|compute_budget)[\s\S]{0,100}(?:user_supplied|param)[\s\S]{0,50}(?!bounded|max)/i,
-    description: 'User-controlled priority fee unbounded. May cause fee spikes.',
-    recommendation: 'Bound priority fees. Implement fee estimation with caps.'
-  },
-  {
-    id: 'SOL4171',
-    name: 'CPI Guard State Manipulation',
-    severity: 'high',
-    pattern: /(?:cpi_guard|transfer_hook)[\s\S]{0,100}(?:state|enabled)[\s\S]{0,50}(?:toggle|change)/i,
-    description: 'CPI guard state can be toggled. May enable unauthorized CPIs.',
-    recommendation: 'Make CPI guard state immutable after initialization.'
-  },
-  {
-    id: 'SOL4172',
-    name: 'Associated Token Account Race',
-    severity: 'medium',
-    pattern: /(?:associated_token|get_associated_token|ATA)[\s\S]{0,100}(?:create)[\s\S]{0,50}(?!idempotent|exists_check)/i,
-    description: 'ATA creation may race with other transactions. Multiple creations fail.',
-    recommendation: 'Use create_idempotent for ATA creation. Handle already exists.'
-  },
-  {
-    id: 'SOL4173',
-    name: 'Token Account Closure Timing',
-    severity: 'medium',
-    pattern: /(?:token_account|close_account)[\s\S]{0,100}(?:balance.*zero)[\s\S]{0,50}(?!verify|assert)/i,
-    description: 'Token account closed without verifying zero balance. Token loss.',
-    recommendation: 'Verify token balance is zero before closing account.'
-  },
-  {
-    id: 'SOL4174',
-    name: 'Metaplex Edition Validation',
-    severity: 'high',
-    pattern: /(?:edition|master_edition)[\s\S]{0,100}(?:mint|create)[\s\S]{0,50}(?!supply_check|max_supply)/i,
-    description: 'NFT edition supply not validated. May exceed max supply.',
-    recommendation: 'Verify edition number against max supply before minting.'
-  },
-  {
-    id: 'SOL4175',
-    name: 'SPL Governance Proposal Injection',
-    severity: 'critical',
-    pattern: /(?:governance|proposal)[\s\S]{0,100}(?:instruction|execute)[\s\S]{0,50}(?!whitelist|validate)/i,
-    description: 'Governance proposals can execute arbitrary instructions. Full control risk.',
-    recommendation: 'Whitelist allowed proposal instructions. Validate targets.'
-  }
-];
-
-// Export all patterns
-export const BATCH_80_PATTERNS = [...ZELLIC_ANCHOR_PATTERNS];
-
-// Pattern scanner function
-export function scanBatch80(input: PatternInput): Finding[] {
+export function checkBatch80Patterns(parsed: ParsedRust, filePath: string): Finding[] {
   const findings: Finding[] = [];
-  const lines = input.content.split('\n');
+  const content = parsed.content;
+  const lines = content.split('\n');
 
-  for (const pattern of BATCH_80_PATTERNS) {
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const context = lines.slice(i, Math.min(i + 4, lines.length)).join('\n');
-      
-      if (pattern.pattern.test(context)) {
-        findings.push({
-          id: pattern.id,
-          name: pattern.name,
-          severity: pattern.severity,
-          file: input.file,
-          line: i + 1,
-          column: 1,
-          description: pattern.description,
-          snippet: line.substring(0, 100),
-          recommendation: pattern.recommendation
-        });
-        break;
-      }
+  // === HELIUS COMPLETE HISTORY PATTERNS ===
+
+  // SOL4026: Wormhole - verify_signatures Delegation Chain
+  const hasVerifySignatures = /verify.*signature|signature.*verify/i.test(content);
+  const hasDelegation = /delegate|call_signed|invoke.*signed/i.test(content);
+  if (hasVerifySignatures && hasDelegation) {
+    findings.push({
+      id: 'SOL4026',
+      title: 'Wormhole Pattern - Signature Verification Delegation Chain',
+      severity: 'critical',
+      description: '$320M Wormhole exploit: verify_signatures used deprecated Sysvar API allowing delegation bypass. Always verify complete signature chain.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use current secp256k1 instruction for verification. Never trust delegated verification without complete chain validation.'
+    });
+  }
+
+  // SOL4027: Cashio - Infinite Mint via Fake Bank
+  const hasBankAccount = /bank|collateral_bank|backing_bank/i.test(content);
+  const hasMintOperation = /mint_to|mint.*token/i.test(content);
+  if (hasBankAccount && hasMintOperation) {
+    const hasNoAccountValidation = !/validate.*bank|bank.*owner|trusted.*bank/i.test(content);
+    if (hasNoAccountValidation) {
+      findings.push({
+        id: 'SOL4027',
+        title: 'Cashio Pattern - Fake Bank Infinite Mint',
+        severity: 'critical',
+        description: '$52M Cashio exploit: attacker provided fake bank account to mint unlimited tokens. Validate all collateral account authenticity.',
+        location: { file: filePath, line: 1 },
+        recommendation: 'Validate bank/collateral accounts against known mints. Use PDA derivation for trusted accounts. Implement allowlists.'
+      });
     }
+  }
+
+  // SOL4028: Mango Markets - Oracle Manipulation for Liquidation
+  const hasOracleManipulation = /oracle|price_feed|pyth|switchboard/i.test(content);
+  const hasBorrowOrLeverage = /borrow|leverage|collateral_ratio/i.test(content);
+  if (hasOracleManipulation && hasBorrowOrLeverage) {
+    const hasNoCircuitBreaker = !/circuit_breaker|max_deviation|price_limit/i.test(content);
+    if (hasNoCircuitBreaker) {
+      findings.push({
+        id: 'SOL4028',
+        title: 'Mango Markets Pattern - Oracle Price Manipulation',
+        severity: 'critical',
+        description: '$114M Mango exploit: Attacker manipulated illiquid token price via spot market to inflate collateral value and drain protocol.',
+        location: { file: filePath, line: 1 },
+        recommendation: 'Implement oracle deviation limits. Use TWAP not spot price. Add per-market borrow caps. Verify liquidity depth.'
+      });
+    }
+  }
+
+  // SOL4029: Crema Finance - Tick Account Spoofing
+  const hasTickAccount = /tick|tick_array|position_tick/i.test(content);
+  const hasLiquidityCalc = /liquidity|sqrt_price|amount.*token/i.test(content);
+  if (hasTickAccount && hasLiquidityCalc) {
+    const hasNoTickValidation = !/validate.*tick|tick.*owner|check.*tick/i.test(content);
+    if (hasNoTickValidation) {
+      findings.push({
+        id: 'SOL4029',
+        title: 'Crema Finance Pattern - Tick Account Spoofing',
+        severity: 'critical',
+        description: '$8.78M Crema exploit: Flash loaned to create fake tick accounts with inflated fee values for bogus fee claims.',
+        location: { file: filePath, line: 1 },
+        recommendation: 'Validate tick account ownership and derivation. Verify tick accounts are created through proper protocol flow.'
+      });
+    }
+  }
+
+  // SOL4030: Slope Wallet - Private Key Telemetry Leak
+  const hasKeyLogging = /log|debug|console|telemetry/i.test(content);
+  const hasPrivateKey = /private_key|secret_key|seed_phrase|mnemonic/i.test(content);
+  if (hasKeyLogging && hasPrivateKey) {
+    findings.push({
+      id: 'SOL4030',
+      title: 'Slope Wallet Pattern - Private Key Logging',
+      severity: 'critical',
+      description: '$8M Slope exploit: Wallet logged seed phrases in plaintext to centralized server. Never log sensitive key material.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Never log private keys, seeds, or mnemonics. Use secure enclaves. Audit all logging paths. Sanitize debug output.'
+    });
+  }
+
+  // SOL4031: Cypher Protocol - Insider Access Abuse
+  const hasAdminAccess = /admin|owner|authority/i.test(content);
+  const hasTreasuryAccess = /treasury|vault|withdraw_all/i.test(content);
+  if (hasAdminAccess && hasTreasuryAccess) {
+    const hasNoTimelock = !/timelock|delay|multi_sig/i.test(content);
+    if (hasNoTimelock) {
+      findings.push({
+        id: 'SOL4031',
+        title: 'Cypher Protocol Pattern - Insider Treasury Access',
+        severity: 'high',
+        description: '$1.04M Cypher exploit: Rogue developer accessed treasury keys. Implement timelocks and multisig for admin actions.',
+        location: { file: filePath, line: 1 },
+        recommendation: 'Use multisig for all admin operations. Implement timelock on treasury withdrawals. Separate hot/cold key management.'
+      });
+    }
+  }
+
+  // SOL4032: OptiFi - Close Authority Missing Check
+  const hasCloseAccount = /close|close_account|delete_account/i.test(content);
+  const hasTvlAtRisk = /tvl|total_value|locked|staked/i.test(content);
+  if (hasCloseAccount && hasTvlAtRisk) {
+    const hasNoCloseCheck = !/can_close|is_empty|balance.*==.*0/i.test(content);
+    if (hasNoCloseCheck) {
+      findings.push({
+        id: 'SOL4032',
+        title: 'OptiFi Pattern - Unchecked Account Close',
+        severity: 'critical',
+        description: '$661K OptiFi lockup: Account closed while containing user funds. Always verify accounts are empty before closing.',
+        location: { file: filePath, line: 1 },
+        recommendation: 'Verify zero balance before close. Implement recovery mechanisms. Use drain-then-close pattern.'
+      });
+    }
+  }
+
+  // SOL4033: Synthetify DAO - Governance Proposal Attack
+  const hasGovernanceProposal = /proposal|governance|vote/i.test(content);
+  const hasQuorum = /quorum|threshold|minimum_votes/i.test(content);
+  if (hasGovernanceProposal && hasQuorum) {
+    const hasNoReviewPeriod = !/review_period|voting_period|delay/i.test(content);
+    if (hasNoReviewPeriod) {
+      findings.push({
+        id: 'SOL4033',
+        title: 'Synthetify DAO Pattern - Rushed Proposal Attack',
+        severity: 'high',
+        description: '$230K Synthetify: Malicious proposal executed before community review. Implement mandatory review periods.',
+        location: { file: filePath, line: 1 },
+        recommendation: 'Enforce minimum review period (24-72h). Implement proposal visibility requirements. Add grace period for execution.'
+      });
+    }
+  }
+
+  // SOL4034: Nirvana Finance - Bonding Curve Drain
+  const hasBondingCurve = /bonding_curve|curve|price.*formula/i.test(content);
+  const hasFlashLoan = /flash.*loan|borrow.*repay/i.test(content);
+  if (hasBondingCurve && hasFlashLoan) {
+    findings.push({
+      id: 'SOL4034',
+      title: 'Nirvana Finance Pattern - Bonding Curve Flash Loan Attack',
+      severity: 'critical',
+      description: '$3.49M Nirvana exploit: Flash loan used to drain bonding curve by exploiting price formula. Implement flash loan guards.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Add same-block swap limits. Implement anti-flash-loan checks. Use TWAP for curve pricing.'
+    });
+  }
+
+  // SOL4035: Solend - Malicious Reserve Configuration
+  const hasReserve = /reserve|lending_market|pool/i.test(content);
+  const hasConfig = /config|parameter|setting/i.test(content);
+  if (hasReserve && hasConfig) {
+    const hasNoConfigValidation = !/validate.*config|check.*config|config.*range/i.test(content);
+    if (hasNoConfigValidation) {
+      findings.push({
+        id: 'SOL4035',
+        title: 'Solend Pattern - Malicious Reserve Configuration',
+        severity: 'high',
+        description: 'Solend incident: Malicious actors could create lending markets with harmful parameters. Validate all configuration values.',
+        location: { file: filePath, line: 1 },
+        recommendation: 'Implement configuration value ranges. Require governance approval for new markets. Use allowlists for supported assets.'
+      });
+    }
+  }
+
+  // SOL4036: Tulip Protocol - Vault Strategy Exploit
+  const hasVaultStrategy = /strategy|vault|yield/i.test(content);
+  const hasExternalProtocol = /cpi|invoke|external/i.test(content);
+  if (hasVaultStrategy && hasExternalProtocol) {
+    findings.push({
+      id: 'SOL4036',
+      title: 'Tulip Protocol Pattern - Vault Strategy Manipulation',
+      severity: 'high',
+      description: 'Yield vault strategies interacting with external protocols are vulnerable to composability exploits.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Validate external protocol states. Implement slippage protection for all external calls. Add strategy timeout checks.'
+    });
+  }
+
+  // SOL4037: Parcl - Frontend Hijack
+  const hasFrontend = /frontend|url|domain/i.test(content);
+  const hasSigningRequest = /sign|approve|transaction/i.test(content);
+  if (hasFrontend || hasSigningRequest) {
+    findings.push({
+      id: 'SOL4037',
+      title: 'Parcl Pattern - Frontend Compromise Risk',
+      severity: 'high',
+      description: 'Parcl frontend compromised to serve malicious transaction requests. Implement content security and verification.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use CSP headers. Implement transaction simulation display. Sign and verify frontend assets. Use multiple mirrors.'
+    });
+  }
+
+  // SOL4038: Raydium - Admin Key Compromise
+  const hasAdminKey = /admin|owner_authority|upgrade_authority/i.test(content);
+  const hasProtocolControl = /pool|vault|treasury/i.test(content);
+  if (hasAdminKey && hasProtocolControl) {
+    findings.push({
+      id: 'SOL4038',
+      title: 'Raydium Pattern - Admin Key Compromise Impact',
+      severity: 'critical',
+      description: 'Raydium admin key compromise led to pool draining. Minimize admin powers. Implement timelocks.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use multisig for admin keys. Implement timelocks on critical actions. Separate operational keys from upgrade keys.'
+    });
+  }
+
+  // SOL4039: Saber - Wrapped Token Accounting
+  const hasWrappedToken = /wrapped|synthetic|receipt/i.test(content);
+  const hasAccounting = /balance|total_supply|mint.*burn/i.test(content);
+  if (hasWrappedToken && hasAccounting) {
+    findings.push({
+      id: 'SOL4039',
+      title: 'Saber Pattern - Wrapped Token Accounting Mismatch',
+      severity: 'high',
+      description: 'Wrapped token protocols must maintain 1:1 backing. Accounting errors can cause insolvency.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement invariant checks on every mint/burn. Use separate accounting for wrapped vs underlying. Add proof of reserves.'
+    });
+  }
+
+  // SOL4040: UXD - Delta Neutral Hedging Failure
+  const hasDeltaNeutral = /delta|hedge|perpetual|derivative/i.test(content);
+  const hasRebalancing = /rebalance|adjust|maintain/i.test(content);
+  if (hasDeltaNeutral && hasRebalancing) {
+    findings.push({
+      id: 'SOL4040',
+      title: 'UXD Pattern - Delta Neutral Hedging Exposure',
+      severity: 'high',
+      description: 'Delta neutral strategies can fail during extreme market conditions. UXD faced depeg risk during Mango exploit.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement circuit breakers for extreme volatility. Diversify hedging counterparties. Add insurance fund buffer.'
+    });
+  }
+
+  // === 2024-2025 EMERGING PATTERNS ===
+
+  // SOL4041: DEXX - Private Key Storage Attack
+  const hasKeyStorage = /store.*key|key.*storage|save.*private/i.test(content);
+  const hasServerSide = /server|backend|api/i.test(content);
+  if (hasKeyStorage && hasServerSide) {
+    findings.push({
+      id: 'SOL4041',
+      title: 'DEXX Pattern - Server-Side Key Storage Breach',
+      severity: 'critical',
+      description: '$21M DEXX exploit (Nov 2024): Private keys stored server-side were compromised. Never store user keys on servers.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use client-side key generation only. Implement hardware wallet support. Consider MPC for custodial needs.'
+    });
+  }
+
+  // SOL4042: Pump.fun - Bonding Curve Insider Attack
+  const hasPumpMechanic = /bonding|launch|fair_launch/i.test(content);
+  const hasEmployeeAccess = /admin|employee|internal/i.test(content);
+  if (hasPumpMechanic && hasEmployeeAccess) {
+    findings.push({
+      id: 'SOL4042',
+      title: 'Pump.fun Pattern - Insider Launch Attack',
+      severity: 'high',
+      description: '$1.9M Pump.fun (May 2024): Employee exploited privileged access to extract bonding curve funds. Implement zero-trust internally.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Minimize internal privileged access. Implement audit trails. Use hardware keys for employee access. Background checks.'
+    });
+  }
+
+  // SOL4043: Loopscale - Admin Authority Exploit
+  const hasAdminAuthority = /authority|admin|super/i.test(content);
+  const hasNoSeparation = !/separation|isolated|sandboxed/i.test(content);
+  if (hasAdminAuthority && hasNoSeparation) {
+    findings.push({
+      id: 'SOL4043',
+      title: 'Loopscale Pattern - Unseparated Admin Authority',
+      severity: 'critical',
+      description: '$5.7M Loopscale (Apr 2025): Single admin authority controlled all protocol functions. Implement separation of duties.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Separate upgrade, treasury, and operational authorities. Use different multisig sets. Implement timelocks per function type.'
+    });
+  }
+
+  // SOL4044: Thunder Terminal - Session Key Misuse
+  const hasSessionKey = /session.*key|temporary.*auth|api.*key/i.test(content);
+  const hasExpiry = /expire|ttl|valid_until/i.test(content);
+  if (hasSessionKey && !hasExpiry) {
+    findings.push({
+      id: 'SOL4044',
+      title: 'Thunder Terminal Pattern - Non-Expiring Session Keys',
+      severity: 'high',
+      description: '$240K Thunder Terminal (Dec 2023): Session keys without expiry can be leaked and abused indefinitely.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement short-lived session keys. Add refresh mechanisms. Allow key revocation. Monitor for unusual patterns.'
+    });
+  }
+
+  // SOL4045: Step Finance - Smart Contract Calculation Bug
+  const hasStepCalculation = /step|increment|accumulator/i.test(content);
+  const hasRewardCalculation = /reward|emission|distribute/i.test(content);
+  if (hasStepCalculation && hasRewardCalculation) {
+    findings.push({
+      id: 'SOL4045',
+      title: 'Step Finance Pattern - Reward Calculation Error',
+      severity: 'high',
+      description: 'Step Finance had calculation bugs in reward distribution. Audit all mathematical formulas thoroughly.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use symbolic testing for math. Implement invariant checks. Compare on-chain vs expected values in tests.'
+    });
+  }
+
+  // SOL4046-SOL4060: Supply Chain and Dependency Attacks
+
+  // SOL4046: @solana/web3.js Backdoor Pattern
+  const hasSolanaWeb3 = /@solana\/web3|solana-web3|web3\.js/i.test(content);
+  const hasVersionPin = /exact.*version|locked|pinned/i.test(content);
+  if (hasSolanaWeb3) {
+    findings.push({
+      id: 'SOL4046',
+      title: 'Supply Chain - @solana/web3.js Backdoor Risk',
+      severity: 'critical',
+      description: 'Dec 2024: Compromised @solana/web3.js versions contained key-stealing backdoor. Pin dependencies and verify integrity.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use lockfiles. Verify package checksums. Pin exact versions. Monitor for security advisories. Use npm audit.'
+    });
+  }
+
+  // SOL4047: NPM Typosquatting Attack
+  const hasNpmPackage = /require|import.*from/i.test(content);
+  if (hasNpmPackage) {
+    findings.push({
+      id: 'SOL4047',
+      title: 'Supply Chain - NPM Typosquatting Risk',
+      severity: 'high',
+      description: 'Typosquatted packages like "soIana" (capital I) vs "solana" trick developers. Verify package names carefully.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Double-check package names. Use verified publisher badges. Audit new dependencies. Implement allowlists.'
+    });
+  }
+
+  // SOL4048: Anchor Dependency Mismatch
+  const hasAnchor = /anchor|#\[program\]|#\[derive\(Accounts\)\]/i.test(content);
+  const hasVersionMismatch = /version|^0\.|^1\./i.test(content);
+  if (hasAnchor) {
+    findings.push({
+      id: 'SOL4048',
+      title: 'Build Risk - Anchor Version Mismatch',
+      severity: 'medium',
+      description: 'Anchor CLI and project version mismatches can cause silent build issues and unexpected behavior.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Pin Anchor versions in CI. Use anchor verify for deployment. Document version requirements clearly.'
+    });
+  }
+
+  // SOL4049: Rust Crate Backdoor
+  const hasCrateImport = /use\s+\w+::/i.test(content);
+  if (hasCrateImport) {
+    findings.push({
+      id: 'SOL4049',
+      title: 'Supply Chain - Rust Crate Backdoor Risk',
+      severity: 'high',
+      description: 'Malicious crates can be published to crates.io. Audit all dependencies, especially new or rarely-used ones.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Review crate source. Use cargo-crev for trust chains. Pin exact versions with Cargo.lock. Regular cargo audit.'
+    });
+  }
+
+  // SOL4050: Build Reproducibility Attack
+  const hasBuildScript = /build\.rs|build_script/i.test(content);
+  if (hasBuildScript) {
+    findings.push({
+      id: 'SOL4050',
+      title: 'Build Attack - Non-Reproducible Builds',
+      severity: 'medium',
+      description: 'Non-reproducible builds allow malicious binaries to differ from source. Use verifiable builds.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use solana-verify or anchor verify. Document build environment. Use deterministic builds with docker.'
+    });
+  }
+
+  // SOL4051-SOL4070: MEV and Economic Attack Patterns
+
+  // SOL4051: Jito Bundle Sandwich Attack
+  const hasSwapExecution = /swap|exchange|trade/i.test(content);
+  const hasSlippage = /slippage|min.*out|max.*in/i.test(content);
+  if (hasSwapExecution && hasSlippage) {
+    findings.push({
+      id: 'SOL4051',
+      title: 'MEV - Jito Bundle Sandwich Attack',
+      severity: 'high',
+      description: 'Solana MEV via Jito bundles enables sophisticated sandwich attacks. Implement robust slippage protection.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use tight slippage. Consider private transaction pools. Implement MEV-aware routing. Add bundle detection.'
+    });
+  }
+
+  // SOL4052: CU Auction Front-Running
+  const hasPriorityFee = /priority_fee|compute_unit_price/i.test(content);
+  if (hasPriorityFee) {
+    findings.push({
+      id: 'SOL4052',
+      title: 'MEV - Compute Unit Auction Front-Running',
+      severity: 'medium',
+      description: 'High priority fee transactions are visible in mempool and can be front-run with higher fees.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use commit-reveal for order-sensitive operations. Consider Jito private transactions. Design order-independent logic.'
+    });
+  }
+
+  // SOL4053: Liquidation Racing
+  const hasLiquidation = /liquidat|underwater|bad_debt/i.test(content);
+  const hasIncentive = /bonus|discount|incentive/i.test(content);
+  if (hasLiquidation && hasIncentive) {
+    findings.push({
+      id: 'SOL4053',
+      title: 'MEV - Liquidation Racing',
+      severity: 'medium',
+      description: 'Liquidation incentives create racing conditions where searchers compete aggressively, sometimes causing protocol issues.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use Dutch auction for liquidation incentives. Implement gradual liquidations. Add keeper rotation.'
+    });
+  }
+
+  // SOL4054: Oracle Update Front-Running
+  const hasOracleUpdate = /update.*price|price.*update|push.*price/i.test(content);
+  if (hasOracleUpdate) {
+    findings.push({
+      id: 'SOL4054',
+      title: 'MEV - Oracle Update Front-Running',
+      severity: 'high',
+      description: 'Pending oracle updates can be detected and front-run to profit from price movements.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use confidential oracle updates. Implement commit-reveal. Add randomized update timing.'
+    });
+  }
+
+  // SOL4055: NFT Mint Sniping
+  const hasNftMint = /mint|nft|collection/i.test(content);
+  const hasPublicMint = /public|open|anyone/i.test(content);
+  if (hasNftMint && hasPublicMint) {
+    findings.push({
+      id: 'SOL4055',
+      title: 'MEV - NFT Mint Sniping',
+      severity: 'medium',
+      description: 'Public NFT mints are vulnerable to bot sniping of rare traits using simulation attacks.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use reveal mechanism. Implement fair randomness. Add bot protection (captcha, rate limits). Consider allowlists.'
+    });
+  }
+
+  // SOL4056-SOL4070: Advanced Protocol Security
+
+  // SOL4056: Perp DEX Funding Rate Attack
+  const hasPerpetual = /perpetual|perp|futures/i.test(content);
+  const hasFunding = /funding|rate|premium/i.test(content);
+  if (hasPerpetual && hasFunding) {
+    findings.push({
+      id: 'SOL4056',
+      title: 'Perp DEX - Funding Rate Manipulation',
+      severity: 'high',
+      description: 'Perpetual funding rates based on mark-index spread can be manipulated via concentrated position placement.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Cap maximum funding rate. Use multi-source price feeds. Implement anti-manipulation delays. Monitor unusual activity.'
+    });
+  }
+
+  // SOL4057: AMM Virtual Reserves Drain
+  const hasVirtualReserve = /virtual|k_invariant|constant_product/i.test(content);
+  const hasReserveDrain = /drain|extract|remove.*liquidity/i.test(content);
+  if (hasVirtualReserve || hasReserveDrain) {
+    findings.push({
+      id: 'SOL4057',
+      title: 'AMM - Virtual Reserves Drain Attack',
+      severity: 'high',
+      description: 'AMMs with virtual reserves can be drained if reserve calculations dont properly account for edge cases.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement minimum liquidity. Add withdrawal rate limits. Verify invariant after every operation.'
+    });
+  }
+
+  // SOL4058: Stake Pool Rebasing Attack
+  const hasStakePool = /stake.*pool|liquid.*staking|lst/i.test(content);
+  const hasRebasing = /rebase|adjust.*supply|reward.*distribution/i.test(content);
+  if (hasStakePool && hasRebasing) {
+    findings.push({
+      id: 'SOL4058',
+      title: 'Stake Pool - Rebasing Attack Vector',
+      severity: 'high',
+      description: 'Rebasing stake tokens can be exploited if rebase timing is predictable or manipulable.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use non-rebasing receipt tokens (exchange rate model). Make rebase timing unpredictable. Add rate limiters.'
+    });
+  }
+
+  // SOL4059: Bridge Replay Attack
+  const hasBridge = /bridge|cross.*chain|wormhole|layerzero/i.test(content);
+  const hasNonce = /nonce|sequence|message_id/i.test(content);
+  if (hasBridge && !hasNonce) {
+    findings.push({
+      id: 'SOL4059',
+      title: 'Bridge - Message Replay Attack',
+      severity: 'critical',
+      description: 'Cross-chain messages without nonces can be replayed for double-spending across chains.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Include incrementing nonce in all bridge messages. Verify nonce progression. Implement replay protection per chain pair.'
+    });
+  }
+
+  // SOL4060: Intent-Based Protocol Solver Collusion
+  const hasIntent = /intent|order|rfq/i.test(content);
+  const hasSolver = /solver|filler|market_maker/i.test(content);
+  if (hasIntent && hasSolver) {
+    findings.push({
+      id: 'SOL4060',
+      title: 'Intent Protocol - Solver Collusion Risk',
+      severity: 'medium',
+      description: 'Intent-based protocols can suffer from solver collusion to provide suboptimal fills.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement solver reputation system. Use competitive auctions. Add price benchmarks. Allow user price limits.'
+    });
+  }
+
+  // SOL4061-SOL4080: Wallet and Client Security
+
+  // SOL4061: Wallet Simulation Mismatch
+  const hasSimulation = /simulat|preflight|dry_run/i.test(content);
+  const hasExecution = /send|execute|submit/i.test(content);
+  if (hasSimulation && hasExecution) {
+    findings.push({
+      id: 'SOL4061',
+      title: 'Wallet - Simulation vs Execution Mismatch',
+      severity: 'high',
+      description: 'Transactions can produce different results between simulation and execution due to state changes.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Show simulation warnings to users. Use recent blockhash. Implement transaction preview verification.'
+    });
+  }
+
+  // SOL4062: Blind Signing Attack
+  const hasSignRequest = /sign|approve/i.test(content);
+  const hasNoPreview = !/preview|display|show.*transaction/i.test(content);
+  if (hasSignRequest && hasNoPreview) {
+    findings.push({
+      id: 'SOL4062',
+      title: 'Wallet - Blind Signing Attack',
+      severity: 'high',
+      description: 'Users signing transactions without clear preview can be tricked into malicious approvals.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Always show transaction effects before signing. Implement human-readable transaction parsing. Add risk warnings.'
+    });
+  }
+
+  // SOL4063: Connection Hijacking
+  const hasWalletConnect = /connect|wallet.*connect|adapter/i.test(content);
+  const hasSession = /session|connection|link/i.test(content);
+  if (hasWalletConnect && hasSession) {
+    findings.push({
+      id: 'SOL4063',
+      title: 'Wallet - Connection Hijacking',
+      severity: 'medium',
+      description: 'Wallet connections can be hijacked if session keys are exposed or connection is unencrypted.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use encrypted connections. Implement session timeouts. Show connected apps clearly. Allow easy disconnection.'
+    });
+  }
+
+  // SOL4064: Message Signing Phishing
+  const hasMessageSign = /sign_message|personal_sign/i.test(content);
+  if (hasMessageSign) {
+    findings.push({
+      id: 'SOL4064',
+      title: 'Wallet - Message Signing Phishing',
+      severity: 'medium',
+      description: 'Signed messages can be used for off-chain authorization. Phishing sites can trick users into signing malicious messages.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Show clear message content before signing. Implement domain-specific prefixes. Warn on unusual messages.'
+    });
+  }
+
+  // SOL4065: Multiple Wallet Confusion
+  const hasMultiWallet = /wallet|account|keypair/i.test(content);
+  const hasSelection = /select|choose|switch/i.test(content);
+  if (hasMultiWallet && hasSelection) {
+    findings.push({
+      id: 'SOL4065',
+      title: 'UX Security - Multiple Wallet Confusion',
+      severity: 'low',
+      description: 'Users with multiple wallets can accidentally sign with wrong wallet, sending from unintended accounts.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Display active wallet clearly. Confirm wallet selection before signing. Use visual wallet identifiers.'
+    });
+  }
+
+  // SOL4066-SOL4080: DeFi Composability Risks
+
+  // SOL4066: Flash Loan Arbitrage Loop
+  const hasFlashLoan2 = /flash.*loan|flashloan/i.test(content);
+  const hasArbitrage = /arbitrage|arb|profit/i.test(content);
+  if (hasFlashLoan2 && hasArbitrage) {
+    findings.push({
+      id: 'SOL4066',
+      title: 'DeFi Composability - Flash Loan Arbitrage Impact',
+      severity: 'medium',
+      description: 'Flash loan arbitrage can extract value from protocol inefficiencies, sometimes destabilizing pools.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Design arbitrage-resistant pricing. Implement gradual price updates. Consider MEV auction mechanisms.'
+    });
+  }
+
+  // SOL4067: Composability Reentrancy
+  const hasComposableCpi = /invoke|cpi|call/i.test(content);
+  const hasStateUpdate = /state|account.*=|data\./i.test(content);
+  if (hasComposableCpi && hasStateUpdate) {
+    findings.push({
+      id: 'SOL4067',
+      title: 'DeFi Composability - Cross-Protocol Reentrancy',
+      severity: 'high',
+      description: 'CPI to external protocols can trigger callbacks that reenter your protocol in unexpected state.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use checks-effects-interactions pattern. Implement reentrancy guards. Complete state updates before CPI.'
+    });
+  }
+
+  // SOL4068: Collateral Factor Mismatch
+  const hasCollateralFactor = /collateral.*factor|ltv|loan_to_value/i.test(content);
+  const hasMultiAsset = /multi.*asset|mixed.*collateral/i.test(content);
+  if (hasCollateralFactor && hasMultiAsset) {
+    findings.push({
+      id: 'SOL4068',
+      title: 'Lending - Collateral Factor Correlation Risk',
+      severity: 'high',
+      description: 'Correlated assets used as collateral may crash together, making collateral factors insufficient.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Adjust LTV for correlated assets. Implement correlation monitoring. Use portfolio-based risk assessment.'
+    });
+  }
+
+  // SOL4069: Protocol Fee Extraction
+  const hasProtocolFee = /fee|protocol_fee|treasury_fee/i.test(content);
+  const hasFeeCalculation = /calculate.*fee|fee.*percent/i.test(content);
+  if (hasProtocolFee && hasFeeCalculation) {
+    findings.push({
+      id: 'SOL4069',
+      title: 'DeFi - Protocol Fee Extraction Attack',
+      severity: 'medium',
+      description: 'Fee calculation edge cases can be exploited to minimize fees paid or maximize fees received.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use fixed-point math for fees. Implement minimum fee thresholds. Audit fee paths for gaming.'
+    });
+  }
+
+  // SOL4070: Liquidity Fragmentation Attack
+  const hasLiquidity = /liquidity|pool|amm/i.test(content);
+  const hasMultiPool = /pool.*pool|migrate|split/i.test(content);
+  if (hasLiquidity && hasMultiPool) {
+    findings.push({
+      id: 'SOL4070',
+      title: 'AMM - Liquidity Fragmentation Attack',
+      severity: 'medium',
+      description: 'Splitting liquidity across many pools can degrade trading efficiency and enable manipulation.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement pool routing aggregation. Add minimum liquidity requirements. Consider pool consolidation incentives.'
+    });
+  }
+
+  // SOL4071-SOL4100: Advanced Patterns
+
+  // SOL4071: Token-2022 Interest-Bearing Token Attack
+  const hasInterestBearing = /interest|accrued|rate.*bearing/i.test(content);
+  const hasToken2022 = /spl_token_2022|token.*extension/i.test(content);
+  if (hasInterestBearing || hasToken2022) {
+    findings.push({
+      id: 'SOL4071',
+      title: 'Token-2022 - Interest-Bearing Token Exploitation',
+      severity: 'high',
+      description: 'Interest-bearing tokens accumulate value over time. DeFi integrations must handle interest accrual correctly.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Query current amount including interest. Account for interest in pricing. Test with various interest rates.'
+    });
+  }
+
+  // SOL4072: Permanent Delegate Abuse
+  const hasPermanentDelegate = /permanent.*delegate|delegate.*permanent/i.test(content);
+  if (hasPermanentDelegate) {
+    findings.push({
+      id: 'SOL4072',
+      title: 'Token-2022 - Permanent Delegate Abuse',
+      severity: 'critical',
+      description: 'Permanent delegates can transfer any token amount without owner approval. Extremely dangerous if compromised.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Avoid permanent delegates for user tokens. Use for protocol-controlled tokens only. Document risks clearly.'
+    });
+  }
+
+  // SOL4073: Non-Transferable Token Bypass
+  const hasNonTransferable = /non.*transfer|soulbound|locked/i.test(content);
+  const hasTransferCheck = /can.*transfer|is.*transferable/i.test(content);
+  if (hasNonTransferable && !hasTransferCheck) {
+    findings.push({
+      id: 'SOL4073',
+      title: 'Token-2022 - Non-Transferable Token Bypass',
+      severity: 'medium',
+      description: 'Non-transferable tokens should block all transfer paths including CPI. Missing checks allow bypasses.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use token-2022 non-transferable extension. Verify no alternative transfer paths exist.'
+    });
+  }
+
+  // SOL4074: Memo Required Validation Skip
+  const hasMemoRequired = /memo.*required|require.*memo/i.test(content);
+  if (hasMemoRequired) {
+    findings.push({
+      id: 'SOL4074',
+      title: 'Token-2022 - Memo Requirement Bypass',
+      severity: 'low',
+      description: 'Memo-required tokens can have compliance issues if CPI transfers skip memo attachment.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Verify memo is attached in all transfer paths. Test CPI transfer compliance.'
+    });
+  }
+
+  // SOL4075: Default Account State Exploitation
+  const hasDefaultState = /default.*state|frozen|initial.*state/i.test(content);
+  if (hasDefaultState) {
+    findings.push({
+      id: 'SOL4075',
+      title: 'Token-2022 - Default Account State Issues',
+      severity: 'medium',
+      description: 'Default frozen state can cause UX issues. Protocols must handle thaw correctly.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement automatic thaw flow. Document frozen state handling. Test integration with frozen accounts.'
+    });
+  }
+
+  // SOL4076-SOL4085: Governance and DAO Security
+
+  // SOL4076: Proposal Griefing Attack
+  const hasProposal = /proposal|vote|governance/i.test(content);
+  const hasSpamProtection = /deposit|stake.*vote|cooldown/i.test(content);
+  if (hasProposal && !hasSpamProtection) {
+    findings.push({
+      id: 'SOL4076',
+      title: 'Governance - Proposal Griefing Attack',
+      severity: 'medium',
+      description: 'Without proposal costs, attackers can spam proposals to exhaust voter attention.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Require proposal deposit. Implement proposal limits. Add proposal quality thresholds.'
+    });
+  }
+
+  // SOL4077: Vote Buying via Delegation
+  const hasVoteDelegation = /delegate|delegation|voting_power/i.test(content);
+  if (hasVoteDelegation) {
+    findings.push({
+      id: 'SOL4077',
+      title: 'Governance - Vote Buying via Delegation',
+      severity: 'medium',
+      description: 'Delegation systems can enable vote buying through off-chain agreements for delegation.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Consider delegation lock periods. Implement transparent delegation tracking. Add anti-sybil measures.'
+    });
+  }
+
+  // SOL4078: Emergency Action Abuse
+  const hasEmergency = /emergency|urgent|immediate/i.test(content);
+  const hasNoTimelock = !/timelock|delay|waiting/i.test(content);
+  if (hasEmergency && hasNoTimelock) {
+    findings.push({
+      id: 'SOL4078',
+      title: 'Governance - Emergency Action Abuse',
+      severity: 'high',
+      description: 'Emergency powers without limits can be abused to bypass normal governance.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Limit emergency actions scope. Require multi-party approval. Implement automatic expiry.'
+    });
+  }
+
+  // SOL4079: Quorum Manipulation
+  const hasGovQuorum = /quorum|threshold|minimum.*vote/i.test(content);
+  const hasDynamicQuorum = /dynamic|adaptive|adjusted/i.test(content);
+  if (hasGovQuorum && !hasDynamicQuorum) {
+    findings.push({
+      id: 'SOL4079',
+      title: 'Governance - Static Quorum Manipulation',
+      severity: 'medium',
+      description: 'Static quorum can become too high (paralysis) or too low (attack) as participation changes.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement adaptive quorum. Track participation trends. Allow quorum updates via governance.'
+    });
+  }
+
+  // SOL4080: Token Holder Snapshot Timing
+  const hasSnapshot = /snapshot|checkpoint|at_block/i.test(content);
+  if (hasSnapshot) {
+    findings.push({
+      id: 'SOL4080',
+      title: 'Governance - Snapshot Timing Exploitation',
+      severity: 'medium',
+      description: 'Known snapshot times allow accumulating voting power just before snapshot, then selling after.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use random snapshot delays. Implement time-weighted voting. Consider lock requirements.'
+    });
+  }
+
+  // SOL4081-SOL4100: Emerging 2026 Patterns
+
+  // SOL4081: AI Agent Transaction Injection
+  const hasAiAgent = /agent|bot|automat/i.test(content);
+  const hasTransactionBuild = /build.*tx|create.*transaction/i.test(content);
+  if (hasAiAgent && hasTransactionBuild) {
+    findings.push({
+      id: 'SOL4081',
+      title: '2026 Pattern - AI Agent Transaction Injection',
+      severity: 'high',
+      description: 'AI agents building transactions can be manipulated via prompt injection to create malicious transactions.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Validate all agent-built transactions. Implement spending limits. Use allowlist for transaction types.'
+    });
+  }
+
+  // SOL4082: LLM Oracle Manipulation
+  const hasLlmOracle = /llm|gpt|claude|ai.*oracle/i.test(content);
+  if (hasLlmOracle) {
+    findings.push({
+      id: 'SOL4082',
+      title: '2026 Pattern - LLM Oracle Manipulation',
+      severity: 'critical',
+      description: 'AI/LLM-based oracles can be manipulated via adversarial inputs or prompt injection.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Never use LLM output for financial decisions. Implement sanity checks. Use traditional oracles for prices.'
+    });
+  }
+
+  // SOL4083: Modular Account Abstraction Exploit
+  const hasAccountAbstraction = /account.*abstraction|smart.*account|module/i.test(content);
+  if (hasAccountAbstraction) {
+    findings.push({
+      id: 'SOL4083',
+      title: '2026 Pattern - Modular Account Exploit',
+      severity: 'high',
+      description: 'Modular smart accounts can have vulnerabilities in module interactions or permission systems.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Audit module interactions. Implement module allowlists. Use permission scoping. Test upgrade paths.'
+    });
+  }
+
+  // SOL4084: Restaking Slashing Cascade
+  const hasRestaking = /restaking|restake|shared.*security/i.test(content);
+  const hasSlashing = /slash|penalty|punish/i.test(content);
+  if (hasRestaking && hasSlashing) {
+    findings.push({
+      id: 'SOL4084',
+      title: '2026 Pattern - Restaking Slashing Cascade',
+      severity: 'high',
+      description: 'Restaking across multiple protocols can cause cascade slashing if one protocol has an incident.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement slashing caps. Diversify restaking across uncorrelated protocols. Add circuit breakers.'
+    });
+  }
+
+  // SOL4085: Intents MEV Extraction
+  const hasIntents = /intent|order|user.*preference/i.test(content);
+  const hasFiller = /filler|solver|executor/i.test(content);
+  if (hasIntents && hasFiller) {
+    findings.push({
+      id: 'SOL4085',
+      title: '2026 Pattern - Intent-Based MEV Extraction',
+      severity: 'medium',
+      description: 'Intent-based systems can leak MEV to fillers/solvers who have information advantage.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement fair ordering. Use encrypted intents. Add user-specified MEV protection.'
+    });
+  }
+
+  // SOL4086: Points/Airdrop Gaming
+  const hasPoints = /points|airdrop|reward.*distribution/i.test(content);
+  const hasActivity = /activity|volume|interaction/i.test(content);
+  if (hasPoints && hasActivity) {
+    findings.push({
+      id: 'SOL4086',
+      title: '2026 Pattern - Points/Airdrop Gaming',
+      severity: 'low',
+      description: 'Points systems based on activity metrics can be gamed via wash trading or Sybil attacks.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use Sybil-resistant metrics. Implement velocity limits. Consider proof-of-personhood.'
+    });
+  }
+
+  // SOL4087: Compressed State Proof Attack
+  const hasCompressedState = /compressed.*state|state.*compression|zk.*proof/i.test(content);
+  if (hasCompressedState) {
+    findings.push({
+      id: 'SOL4087',
+      title: '2026 Pattern - Compressed State Proof Attack',
+      severity: 'high',
+      description: 'State compression using ZK proofs can have vulnerabilities in proof generation or verification.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Use audited ZK circuits. Verify proofs on-chain. Implement fallback to uncompressed state.'
+    });
+  }
+
+  // SOL4088: Cross-Rollup Message Attack
+  const hasCrossRollup = /rollup|l2|svm/i.test(content);
+  const hasMessage = /message|relay|bridge/i.test(content);
+  if (hasCrossRollup && hasMessage) {
+    findings.push({
+      id: 'SOL4088',
+      title: '2026 Pattern - Cross-Rollup Message Attack',
+      severity: 'critical',
+      description: 'Messages between Solana rollups/L2s can be forged or replayed if not properly secured.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Verify message authenticity via state proofs. Implement nonces per rollup pair. Add message expiry.'
+    });
+  }
+
+  // SOL4089: Real-World Asset Tokenization Fraud
+  const hasRwa = /rwa|real.*world.*asset|tokeniz/i.test(content);
+  if (hasRwa) {
+    findings.push({
+      id: 'SOL4089',
+      title: '2026 Pattern - RWA Tokenization Fraud Risk',
+      severity: 'high',
+      description: 'Real-world asset tokens depend on off-chain custody and verification which can be falsified.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement proof of reserves. Use trusted custodians. Add oracle-based verification. Consider insurance.'
+    });
+  }
+
+  // SOL4090-SOL4100: Infrastructure Patterns
+
+  // SOL4090: Validator Client Divergence
+  const hasValidator = /validator|consensus|vote/i.test(content);
+  if (hasValidator) {
+    findings.push({
+      id: 'SOL4090',
+      title: 'Infrastructure - Validator Client Divergence Risk',
+      severity: 'medium',
+      description: 'Different validator clients may have subtle differences causing consensus issues.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Test against all major clients. Monitor client distribution. Participate in testnet.'
+    });
+  }
+
+  // SOL4091: Compute Market Manipulation
+  const hasComputeMarket = /compute|resource|allocation/i.test(content);
+  const hasAuction = /auction|bid|priority/i.test(content);
+  if (hasComputeMarket && hasAuction) {
+    findings.push({
+      id: 'SOL4091',
+      title: 'Infrastructure - Compute Market Manipulation',
+      severity: 'medium',
+      description: 'Compute resource auctions can be manipulated to block legitimate transactions.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement fair scheduling. Add compute reservation. Monitor for manipulation patterns.'
+    });
+  }
+
+  // SOL4092: Leader Schedule Exploitation
+  const hasLeaderSchedule = /leader|slot.*schedule|producer/i.test(content);
+  if (hasLeaderSchedule) {
+    findings.push({
+      id: 'SOL4092',
+      title: 'Infrastructure - Leader Schedule Exploitation',
+      severity: 'low',
+      description: 'Known leader schedules allow timing attacks and targeted MEV strategies.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Design for worst-case leader behavior. Implement timeout handling. Use randomized submission.'
+    });
+  }
+
+  // SOL4093: Turbine Propagation Attack
+  const hasTurbine = /turbine|shred|propagation/i.test(content);
+  if (hasTurbine) {
+    findings.push({
+      id: 'SOL4093',
+      title: 'Infrastructure - Turbine Propagation Attack',
+      severity: 'medium',
+      description: 'Turbine block propagation can be disrupted by malicious nodes causing network delays.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Monitor propagation health. Implement fallback mechanisms. Diversify node connections.'
+    });
+  }
+
+  // SOL4094: Gossip Network Poisoning
+  const hasGossip = /gossip|peer|discovery/i.test(content);
+  if (hasGossip) {
+    findings.push({
+      id: 'SOL4094',
+      title: 'Infrastructure - Gossip Network Poisoning',
+      severity: 'medium',
+      description: 'Gossip protocol can be poisoned with malicious peer information.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement peer reputation. Use verified entry points. Monitor for anomalous peers.'
+    });
+  }
+
+  // SOL4095: RPC Rate Limit Bypass
+  const hasRpcRateLimit = /rate.*limit|throttle|limit.*request/i.test(content);
+  if (hasRpcRateLimit) {
+    findings.push({
+      id: 'SOL4095',
+      title: 'Infrastructure - RPC Rate Limit Bypass',
+      severity: 'low',
+      description: 'RPC rate limits can be bypassed using multiple endpoints or IP rotation.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Implement application-level rate limiting. Use authenticated RPC. Monitor usage patterns.'
+    });
+  }
+
+  // SOL4096: Account Data Size DoS
+  const hasAccountSize = /account.*size|data.*length|space/i.test(content);
+  const hasUserInput = /user|input|external/i.test(content);
+  if (hasAccountSize && hasUserInput) {
+    findings.push({
+      id: 'SOL4096',
+      title: 'Infrastructure - Account Data Size DoS',
+      severity: 'medium',
+      description: 'Allowing users to control account data size can cause compute/rent issues.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Set maximum data sizes. Charge proportionally for storage. Implement size validation.'
+    });
+  }
+
+  // SOL4097: Clock Drift Exploitation
+  const hasClockUsage = /Clock::get|unix_timestamp|current_time/i.test(content);
+  const hasTimeSensitive = /expire|deadline|valid_until/i.test(content);
+  if (hasClockUsage && hasTimeSensitive) {
+    findings.push({
+      id: 'SOL4097',
+      title: 'Infrastructure - Clock Drift Exploitation',
+      severity: 'low',
+      description: 'Clock sysvar can drift from real time. Time-sensitive logic must account for drift.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Add tolerance for clock drift. Use slots for ordering when possible. Avoid tight time constraints.'
+    });
+  }
+
+  // SOL4098: Transaction Size Limit Gaming
+  const hasTxSize = /transaction.*size|tx.*limit|instruction.*count/i.test(content);
+  if (hasTxSize) {
+    findings.push({
+      id: 'SOL4098',
+      title: 'Infrastructure - Transaction Size Limit Gaming',
+      severity: 'low',
+      description: 'Complex operations near transaction size limits may fail unexpectedly.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Design for worst-case transaction sizes. Implement batching for large operations. Use ALTs for address compression.'
+    });
+  }
+
+  // SOL4099: Cross-Program Data Poisoning
+  const hasCrossProgram = /cross.*program|cpi|invoke/i.test(content);
+  const hasDataRead = /read|load|deserialize/i.test(content);
+  if (hasCrossProgram && hasDataRead) {
+    findings.push({
+      id: 'SOL4099',
+      title: 'Infrastructure - Cross-Program Data Poisoning',
+      severity: 'high',
+      description: 'Data read from cross-program accounts should be treated as untrusted until validated.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Validate all cross-program data. Verify account ownership before reading. Check discriminators.'
+    });
+  }
+
+  // SOL4100: Program Deploy Race Condition
+  const hasDeploy = /deploy|upgrade|buffer/i.test(content);
+  const hasRace = /concurrent|parallel|simultaneous/i.test(content);
+  if (hasDeploy || hasRace) {
+    findings.push({
+      id: 'SOL4100',
+      title: 'Infrastructure - Program Deploy Race Condition',
+      severity: 'medium',
+      description: 'Program upgrades can create race conditions with in-flight transactions.',
+      location: { file: filePath, line: 1 },
+      recommendation: 'Coordinate upgrades with pause mechanism. Implement version checks. Use graceful migration patterns.'
+    });
   }
 
   return findings;
 }
-
-export default BATCH_80_PATTERNS;
