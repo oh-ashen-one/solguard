@@ -263,7 +263,7 @@
 - Pattern Categories: 80+ distinct security categories
 - Real-World Exploits: 50+ major incidents with detailed patterns
 
-**Git:** Committed and pushed to main
+**Git:** Committed and pushed to main (f2c11e1)
 
 ---
 
