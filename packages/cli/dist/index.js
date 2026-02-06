@@ -14999,6 +14999,797 @@ function checkBatch73Patterns(input) {
   return findings;
 }
 
+// src/patterns/solana-batched-patterns-74.ts
+function createFinding8(id, title, severity, description, path, line, recommendation) {
+  return {
+    id,
+    title,
+    severity,
+    description,
+    location: { file: path, line },
+    recommendation
+  };
+}
+function checkBatch74Patterns(input) {
+  const findings = [];
+  const { rust, path } = input;
+  if (!rust?.content) return findings;
+  const content = rust.content;
+  const lines = content.split("\n");
+  if (content.includes("state") && content.includes("update")) {
+    if (!content.includes("invariant") && !content.includes("assert")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("update")) + 1;
+      findings.push(createFinding8(
+        "SOL3476",
+        "State Update Without Invariant Check",
+        "high",
+        "State updates should verify invariants are preserved",
+        path,
+        lineNum,
+        "Add invariant assertions after state updates"
+      ));
+    }
+  }
+  if (content.includes("total_supply") || content.includes("totalSupply")) {
+    if (content.includes("mint") || content.includes("burn")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("total_supply")) + 1;
+      findings.push(createFinding8(
+        "SOL3477",
+        "Total Supply Must Track Mint/Burn",
+        "high",
+        "Total supply should equal sum of all balances",
+        path,
+        lineNum,
+        "Update total_supply atomically with mint/burn"
+      ));
+    }
+  }
+  if (content.includes("balance") && (content.includes("transfer") || content.includes("move"))) {
+    const lineNum = content.split("\n").findIndex((l) => l.includes("balance")) + 1;
+    findings.push(createFinding8(
+      "SOL3478",
+      "Balance Transfer Invariant",
+      "medium",
+      "Sum of balances should remain constant in transfers",
+      path,
+      lineNum,
+      "Verify from_balance + to_balance unchanged"
+    ));
+  }
+  if (content.includes("nonce") || content.includes("counter") || content.includes("sequence")) {
+    if (!content.includes("checked_add") && !content.includes("saturating")) {
+      const lineNum = content.split("\n").findIndex(
+        (l) => l.includes("nonce") || l.includes("counter") || l.includes("sequence")
+      ) + 1;
+      findings.push(createFinding8(
+        "SOL3479",
+        "Counter May Overflow",
+        "high",
+        "Monotonic counters should use checked arithmetic",
+        path,
+        lineNum,
+        "Use checked_add and verify no overflow"
+      ));
+    }
+  }
+  if (content.includes("collateral") && content.includes("debt")) {
+    if (!content.includes("ratio") && !content.includes("factor")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("collateral")) + 1;
+      findings.push(createFinding8(
+        "SOL3480",
+        "Collateralization Ratio Not Maintained",
+        "critical",
+        "Operations should maintain minimum collateral ratio",
+        path,
+        lineNum,
+        "Check collateral_ratio >= MIN_RATIO after operations"
+      ));
+    }
+  }
+  if (content.includes("pool") && (content.includes("reserve") || content.includes("liquidity"))) {
+    if (!content.includes("k") && !content.includes("product")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("pool")) + 1;
+      findings.push(createFinding8(
+        "SOL3481",
+        "AMM Constant Product Not Verified",
+        "critical",
+        "AMM operations should preserve x*y=k invariant",
+        path,
+        lineNum,
+        "Verify new_x * new_y >= k after swaps"
+      ));
+    }
+  }
+  if (content.includes("interest") && content.includes("accrued")) {
+    const lineNum = content.split("\n").findIndex((l) => l.includes("interest")) + 1;
+    findings.push(createFinding8(
+      "SOL3482",
+      "Interest Accrual Must Be Consistent",
+      "medium",
+      "Accrued interest should match time elapsed and rate",
+      path,
+      lineNum,
+      "Verify: accrued = principal * rate * time / YEAR_SECONDS"
+    ));
+  }
+  if (content.includes("withdraw") || content.includes("redeem")) {
+    if (!content.includes("available") && !content.includes("liquidity")) {
+      const lineNum = content.split("\n").findIndex(
+        (l) => l.includes("withdraw") || l.includes("redeem")
+      ) + 1;
+      findings.push(createFinding8(
+        "SOL3483",
+        "Withdrawal May Exceed Available",
+        "high",
+        "Withdrawals must not exceed available liquidity",
+        path,
+        lineNum,
+        "Check withdraw_amount <= available_liquidity"
+      ));
+    }
+  }
+  const criticalFunctions = ["upgrade", "pause", "withdraw", "mint", "burn", "set_config"];
+  for (const fn of criticalFunctions) {
+    if (content.includes(fn)) {
+      if (!content.includes("authority") && !content.includes("admin") && !content.includes("owner")) {
+        const lineNum = content.split("\n").findIndex((l) => l.includes(fn)) + 1;
+        findings.push(createFinding8(
+          "SOL3484",
+          `Critical Function '${fn}' Missing Access Control`,
+          "critical",
+          "Critical functions must verify caller authorization",
+          path,
+          lineNum,
+          "Add authority/admin check before execution"
+        ));
+        break;
+      }
+    }
+  }
+  if ((content.includes("transfer") || content.includes("invoke")) && content.includes("balance")) {
+    if (!content.includes("lock") && !content.includes("nonReentrant")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("transfer")) + 1;
+      findings.push(createFinding8(
+        "SOL3485",
+        "Token Operation May Be Reentrant",
+        "critical",
+        "Token operations with external calls may be vulnerable to reentrancy",
+        path,
+        lineNum,
+        "Use checks-effects-interactions pattern or reentrancy guard"
+      ));
+    }
+  }
+  if (content.includes("flash") && content.includes("loan")) {
+    if (!content.includes("repay") && !content.includes("callback")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("flash")) + 1;
+      findings.push(createFinding8(
+        "SOL3486",
+        "Flash Loan Repayment Not Enforced",
+        "critical",
+        "Flash loans must verify full repayment with fee",
+        path,
+        lineNum,
+        "Verify repaid_amount >= borrowed_amount + fee"
+      ));
+    }
+  }
+  if (content.includes("admin") || content.includes("owner")) {
+    if (!content.includes("multisig") && !content.includes("timelock") && !content.includes("dao")) {
+      const lineNum = content.split("\n").findIndex(
+        (l) => l.includes("admin") || l.includes("owner")
+      ) + 1;
+      findings.push(createFinding8(
+        "SOL3487",
+        "Single Point of Admin Control",
+        "high",
+        "Admin functions should use multisig or timelock",
+        path,
+        lineNum,
+        "Implement multisig or timelock for admin functions"
+      ));
+    }
+  }
+  if (content.includes("initialize") || content.includes("init")) {
+    if (!content.includes("initialized") && !content.includes("already")) {
+      const lineNum = content.split("\n").findIndex(
+        (l) => l.includes("initialize") || l.includes("init")
+      ) + 1;
+      findings.push(createFinding8(
+        "SOL3488",
+        "Initialization Can Be Called Multiple Times",
+        "critical",
+        "Initialize function must be callable only once",
+        path,
+        lineNum,
+        "Add initialized flag and check it"
+      ));
+    }
+  }
+  if (content.includes("mint") && !content.includes("max_supply") && !content.includes("cap")) {
+    const lineNum = content.split("\n").findIndex((l) => l.includes("mint")) + 1;
+    findings.push(createFinding8(
+      "SOL3489",
+      "Token Minting Without Supply Cap",
+      "high",
+      "Unlimited minting can lead to inflation",
+      path,
+      lineNum,
+      "Add max_supply check before minting"
+    ));
+  }
+  if (content.includes("price") && content.includes("feed")) {
+    if (!content.includes("stale") && !content.includes("valid") && !content.includes("confidence")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("price")) + 1;
+      findings.push(createFinding8(
+        "SOL3490",
+        "Price Feed Used Without Validation",
+        "critical",
+        "Price feeds must be validated for staleness and confidence",
+        path,
+        lineNum,
+        "Check price.timestamp, confidence_interval, and status"
+      ));
+    }
+  }
+  if (content.includes("AccountInfo") && !content.includes("Account<")) {
+    if (!content.includes("discriminator") && !content.includes("try_from")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("AccountInfo")) + 1;
+      findings.push(createFinding8(
+        "SOL3491",
+        "Raw AccountInfo Without Type Verification",
+        "critical",
+        "AccountInfo must verify account type via discriminator",
+        path,
+        lineNum,
+        "Use Anchor Account<> type or manually check discriminator"
+      ));
+    }
+  }
+  if (content.includes("seeds") && content.includes("bump")) {
+    if (!content.includes("find_program_address")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("seeds")) + 1;
+      findings.push(createFinding8(
+        "SOL3492",
+        "PDA Created Without find_program_address",
+        "high",
+        "PDA should be derived using find_program_address for canonical bump",
+        path,
+        lineNum,
+        "Use Pubkey::find_program_address() to get canonical bump"
+      ));
+    }
+  }
+  if (content.includes("pub fn") && !content.includes("Signer") && !content.includes("is_signer")) {
+    if (content.includes("transfer") || content.includes("withdraw") || content.includes("update")) {
+      findings.push(createFinding8(
+        "SOL3493",
+        "Sensitive Function May Lack Signer Check",
+        "high",
+        "Functions modifying state should verify signer authorization",
+        path,
+        1,
+        "Add Signer constraint or manual is_signer check"
+      ));
+    }
+  }
+  if (content.includes("token_account") || content.includes("TokenAccount")) {
+    if (!content.includes(".owner") || !content.includes("==")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("token_account")) + 1;
+      findings.push(createFinding8(
+        "SOL3494",
+        "Token Account Owner Not Verified",
+        "critical",
+        "Token account owner must match expected owner",
+        path,
+        lineNum,
+        "Verify token_account.owner == expected_owner"
+      ));
+    }
+  }
+  if (content.includes("create_account") && !content.includes("rent")) {
+    const lineNum = content.split("\n").findIndex((l) => l.includes("create_account")) + 1;
+    findings.push(createFinding8(
+      "SOL3495",
+      "New Account May Not Be Rent Exempt",
+      "medium",
+      "New accounts should be funded for rent exemption",
+      path,
+      lineNum,
+      "Fund with Rent::get()?.minimum_balance(space)"
+    ));
+  }
+  if (content.includes("invoke") || content.includes("CPI")) {
+    if (!content.includes("program_id") || !content.includes("key")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("invoke")) + 1;
+      findings.push(createFinding8(
+        "SOL3496",
+        "CPI Target Program Not Validated",
+        "critical",
+        "CPI must verify target program ID",
+        path,
+        lineNum,
+        "Verify program_id matches expected program"
+      ));
+    }
+  }
+  if (content.includes("try_from") || content.includes("deserialize")) {
+    if (!content.includes("data.len()") && !content.includes("data_len")) {
+      const lineNum = content.split("\n").findIndex(
+        (l) => l.includes("try_from") || l.includes("deserialize")
+      ) + 1;
+      findings.push(createFinding8(
+        "SOL3497",
+        "Deserialization Without Length Check",
+        "high",
+        "Data length should be verified before deserialization",
+        path,
+        lineNum,
+        "Check data.len() >= EXPECTED_SIZE before parsing"
+      ));
+    }
+  }
+  if (content.includes("close") || content.includes("Close")) {
+    if (!content.includes("sol_destination") && !content.includes("recipient")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("close")) + 1;
+      findings.push(createFinding8(
+        "SOL3498",
+        "Close Account Destination Not Specified",
+        "high",
+        "Closed account lamports must go to specified destination",
+        path,
+        lineNum,
+        "Specify close destination: #[account(close = destination)]"
+      ));
+    }
+  }
+  if (content.includes("system_program") || content.includes("SystemProgram")) {
+    if (!content.includes("system_program::ID") && !content.includes("key() ==")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("system")) + 1;
+      findings.push(createFinding8(
+        "SOL3499",
+        "System Program ID Not Verified",
+        "high",
+        "System program account should verify ID",
+        path,
+        lineNum,
+        "Use #[account(address = system_program::ID)]"
+      ));
+    }
+  }
+  if (content.includes("token_program") || content.includes("TokenProgram")) {
+    if (!content.includes("token::ID") && !content.includes("TOKEN_PROGRAM_ID")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("token")) + 1;
+      findings.push(createFinding8(
+        "SOL3500",
+        "Token Program ID Not Verified",
+        "high",
+        "Token program account should verify ID",
+        path,
+        lineNum,
+        "Use #[account(address = token::ID)]"
+      ));
+    }
+  }
+  if (content.includes("set_authority") || content.includes("authority =")) {
+    if (!content.includes("pending") && !content.includes("accept")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("authority")) + 1;
+      findings.push(createFinding8(
+        "SOL3501",
+        "Authority Transfer Without Two-Step Process",
+        "high",
+        "Authority transfers should use two-step process to prevent accidents",
+        path,
+        lineNum,
+        "Implement propose_authority() then accept_authority()"
+      ));
+    }
+  }
+  if (content.includes("#[program]") || content.includes("declare_id!")) {
+    if (!content.includes("paused") && !content.includes("pause")) {
+      findings.push(createFinding8(
+        "SOL3502",
+        "Protocol Missing Emergency Pause",
+        "medium",
+        "Protocols should have emergency pause functionality",
+        path,
+        1,
+        "Implement pause mechanism for emergency response"
+      ));
+    }
+  }
+  if (content.includes("transfer") || content.includes("mint") || content.includes("burn")) {
+    if (!content.includes("emit!") && !content.includes("log") && !content.includes("msg!")) {
+      const lineNum = content.split("\n").findIndex(
+        (l) => l.includes("transfer") || l.includes("mint") || l.includes("burn")
+      ) + 1;
+      findings.push(createFinding8(
+        "SOL3503",
+        "State Change Without Event Emission",
+        "low",
+        "Important state changes should emit events for tracking",
+        path,
+        lineNum,
+        "Add emit!() or msg!() for state changes"
+      ));
+    }
+  }
+  if (content.includes("/") && content.includes("u64")) {
+    if (!content.includes("checked_div") && !content.includes("floor") && !content.includes("ceil")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("/")) + 1;
+      findings.push(createFinding8(
+        "SOL3504",
+        "Division May Lose Precision",
+        "high",
+        "Integer division truncates - use checked_div and specify rounding",
+        path,
+        lineNum,
+        "Use checked_div and handle remainder appropriately"
+      ));
+    }
+  }
+  if (content.includes("clock") && content.includes("unix_timestamp")) {
+    if (content.includes("<") || content.includes(">")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("timestamp")) + 1;
+      findings.push(createFinding8(
+        "SOL3505",
+        "Timestamp Comparison May Be Gamed",
+        "medium",
+        "Validators have limited ability to manipulate timestamps",
+        path,
+        lineNum,
+        "Use reasonable tolerance for timestamp comparisons"
+      ));
+    }
+  }
+  if (content.includes("price") && content.includes("oracle")) {
+    if (content.includes("settle") || content.includes("execute")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("settle") || l.includes("execute")) + 1;
+      findings.push(createFinding8(
+        "SOL3506",
+        "Oracle Price Settlement Front-Runnable",
+        "high",
+        "Settlement using oracle prices can be front-run",
+        path,
+        lineNum,
+        "Use commit-reveal or batch auctions for settlements"
+      ));
+    }
+  }
+  if (content.includes("fee") && (content.includes("%") || content.includes("bps"))) {
+    if (!content.includes("max_fee") && !content.includes("MAX") && !content.includes("<=")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("fee")) + 1;
+      findings.push(createFinding8(
+        "SOL3507",
+        "Fee Percentage Without Maximum",
+        "medium",
+        "Fees should have reasonable maximum cap",
+        path,
+        lineNum,
+        "Add MAX_FEE constant and enforce it"
+      ));
+    }
+  }
+  if (content.includes("reward") && content.includes("rate")) {
+    if (!content.includes("min") && !content.includes("max")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("reward")) + 1;
+      findings.push(createFinding8(
+        "SOL3508",
+        "Reward Rate Without Bounds",
+        "medium",
+        "Reward rates should have minimum and maximum bounds",
+        path,
+        lineNum,
+        "Enforce MIN_RATE <= rate <= MAX_RATE"
+      ));
+    }
+  }
+  if (content.includes("balance") && content.includes("transfer")) {
+    if (!content.includes("minimum") && !content.includes("MIN")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("transfer")) + 1;
+      findings.push(createFinding8(
+        "SOL3509",
+        "Transfer May Allow Dust Amounts",
+        "low",
+        "Small transfers can be used for spam attacks",
+        path,
+        lineNum,
+        "Enforce minimum transfer amount"
+      ));
+    }
+  }
+  if (content.includes("slash") || content.includes("penalty")) {
+    if (!content.includes("dispute") && !content.includes("appeal")) {
+      const lineNum = content.split("\n").findIndex(
+        (l) => l.includes("slash") || l.includes("penalty")
+      ) + 1;
+      findings.push(createFinding8(
+        "SOL3510",
+        "Slashing Without Dispute Mechanism",
+        "medium",
+        "Slashing should have dispute/appeal process",
+        path,
+        lineNum,
+        "Implement dispute period before finalizing slashes"
+      ));
+    }
+  }
+  if (content.includes("try_borrow_mut") && content.includes("RefCell")) {
+    const lineNum = content.split("\n").findIndex((l) => l.includes("try_borrow_mut")) + 1;
+    findings.push(createFinding8(
+      "SOL3511",
+      "Potential Race Condition in State Access",
+      "high",
+      "Concurrent state mutations may race",
+      path,
+      lineNum,
+      "Ensure single writer pattern or use atomic operations"
+    ));
+  }
+  if (content.includes("commit") && content.includes("reveal")) {
+    if (!content.includes("block") && !content.includes("slot")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("reveal")) + 1;
+      findings.push(createFinding8(
+        "SOL3512",
+        "Commit-Reveal Without Block Delay",
+        "high",
+        "Reveal should be delayed by minimum number of blocks",
+        path,
+        lineNum,
+        "Require minimum block delay between commit and reveal"
+      ));
+    }
+  }
+  if (content.includes("iter") && content.includes("for")) {
+    if (!content.includes("limit") && !content.includes("max_iter")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("iter")) + 1;
+      findings.push(createFinding8(
+        "SOL3513",
+        "Unbounded Iteration May Cause DoS",
+        "high",
+        "Unbounded loops can exhaust compute budget",
+        path,
+        lineNum,
+        "Add iteration limit or pagination"
+      ));
+    }
+  }
+  if (content.includes("error!") || content.includes("Error {")) {
+    if (content.includes("internal") || content.includes("secret") || content.includes("key")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("error")) + 1;
+      findings.push(createFinding8(
+        "SOL3514",
+        "Error Message May Leak Sensitive Info",
+        "low",
+        "Error messages should not reveal internal details",
+        path,
+        lineNum,
+        "Use generic error messages for security-sensitive failures"
+      ));
+    }
+  }
+  if (content.includes("hash") && (content.includes("md5") || content.includes("sha1"))) {
+    const lineNum = content.split("\n").findIndex(
+      (l) => l.includes("md5") || l.includes("sha1")
+    ) + 1;
+    findings.push(createFinding8(
+      "SOL3515",
+      "Weak Hash Function Used",
+      "high",
+      "MD5 and SHA1 are cryptographically weak",
+      path,
+      lineNum,
+      "Use SHA256 or better for cryptographic hashing"
+    ));
+  }
+  if (content.includes("stake") && content.includes("reward")) {
+    if (!content.includes("pro_rata") && !content.includes("share")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("reward")) + 1;
+      findings.push(createFinding8(
+        "SOL3516",
+        "Staking Rewards May Not Be Fair",
+        "medium",
+        "Rewards should be distributed proportionally to stake",
+        path,
+        lineNum,
+        "Calculate rewards = stake_amount * total_rewards / total_staked"
+      ));
+    }
+  }
+  if (content.includes("delegate") && content.includes("delegate")) {
+    const lineNum = content.split("\n").findIndex((l) => l.includes("delegate")) + 1;
+    findings.push(createFinding8(
+      "SOL3517",
+      "Delegation Chain May Be Unbounded",
+      "medium",
+      "Delegation chains should have maximum depth",
+      path,
+      lineNum,
+      "Limit delegation depth to prevent gas bombs"
+    ));
+  }
+  if (content.includes("batch") || content.includes("multi")) {
+    if (!content.includes("max_count") && !content.includes("MAX")) {
+      const lineNum = content.split("\n").findIndex(
+        (l) => l.includes("batch") || l.includes("multi")
+      ) + 1;
+      findings.push(createFinding8(
+        "SOL3518",
+        "Batch Operation Without Limit",
+        "high",
+        "Batch operations should have maximum count",
+        path,
+        lineNum,
+        "Limit batch size to fit in compute budget"
+      ));
+    }
+  }
+  if (content.includes("invoke") || content.includes("call")) {
+    const invokeCount = (content.match(/invoke/g) || []).length;
+    if (invokeCount > 2) {
+      findings.push(createFinding8(
+        "SOL3519",
+        "Deep Call Stack May Fail",
+        "medium",
+        `${invokeCount} invokes detected - may exceed CPI depth limit of 4`,
+        path,
+        1,
+        "Reduce call depth or restructure logic"
+      ));
+    }
+  }
+  if (content.includes("liquidat")) {
+    if (!content.includes("circuit_breaker") && !content.includes("pause")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("liquidat")) + 1;
+      findings.push(createFinding8(
+        "SOL3520",
+        "Mass Liquidation Without Circuit Breaker",
+        "high",
+        "Liquidation cascades should trigger circuit breakers",
+        path,
+        lineNum,
+        "Implement circuit breaker for mass liquidation events"
+      ));
+    }
+  }
+  if (content.includes("oracle") || content.includes("price_feed")) {
+    if (!content.includes("timestamp") && !content.includes("updated")) {
+      const lineNum = content.split("\n").findIndex(
+        (l) => l.includes("oracle") || l.includes("price_feed")
+      ) + 1;
+      findings.push(createFinding8(
+        "SOL3521",
+        "Oracle Without Freshness Check",
+        "critical",
+        "Oracle prices must be checked for staleness",
+        path,
+        lineNum,
+        "Verify: current_time - oracle.last_updated < MAX_STALENESS"
+      ));
+    }
+  }
+  if (content.includes("vote") && content.includes("lock")) {
+    if (!content.includes("duration") && !content.includes("unlock_time")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("lock")) + 1;
+      findings.push(createFinding8(
+        "SOL3522",
+        "Vote Lock Without Duration",
+        "medium",
+        "Vote locks should have specified duration",
+        path,
+        lineNum,
+        "Set and enforce lock duration"
+      ));
+    }
+  }
+  if (content.includes("merkle") && content.includes("proof")) {
+    if (!content.includes("max_depth") && !content.includes("HEIGHT")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("merkle")) + 1;
+      findings.push(createFinding8(
+        "SOL3523",
+        "Merkle Proof Without Depth Limit",
+        "medium",
+        "Merkle proofs should have maximum depth",
+        path,
+        lineNum,
+        "Limit proof depth to reasonable maximum"
+      ));
+    }
+  }
+  if (content.includes("decimals") && content.includes("mint")) {
+    const lineNum = content.split("\n").findIndex((l) => l.includes("decimals")) + 1;
+    findings.push(createFinding8(
+      "SOL3524",
+      "Verify Token Decimal Consistency",
+      "medium",
+      "Token operations should handle varying decimals correctly",
+      path,
+      lineNum,
+      "Normalize amounts based on token decimals"
+    ));
+  }
+  if (content.includes("associated_token") || content.includes("ATA")) {
+    if (!content.includes("get_or_create") && !content.includes("init_if_needed")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("associated")) + 1;
+      findings.push(createFinding8(
+        "SOL3525",
+        "ATA May Not Exist",
+        "medium",
+        "Associated token account should be created if missing",
+        path,
+        lineNum,
+        "Use init_if_needed or get_associated_token_address_and_bump_seed"
+      ));
+    }
+  }
+  if (content.includes("upgrade") && content.includes("program")) {
+    if (!content.includes("buffer") && !content.includes("deploy")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("upgrade")) + 1;
+      findings.push(createFinding8(
+        "SOL3526",
+        "Program Upgrade Process Unclear",
+        "medium",
+        "Program upgrades should follow safe deployment process",
+        path,
+        lineNum,
+        "Use proper upgrade buffer and deployment process"
+      ));
+    }
+  }
+  if (content.includes("config") && content.includes("load")) {
+    if (!content.includes("validate") && !content.includes("check")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("config")) + 1;
+      findings.push(createFinding8(
+        "SOL3527",
+        "Config Loaded Without Validation",
+        "medium",
+        "Config values should be validated after loading",
+        path,
+        lineNum,
+        "Validate config values are within expected ranges"
+      ));
+    }
+  }
+  if (content.includes("epoch")) {
+    if (!content.includes("boundary") && !content.includes("transition")) {
+      const lineNum = content.split("\n").findIndex((l) => l.includes("epoch")) + 1;
+      findings.push(createFinding8(
+        "SOL3528",
+        "Epoch Boundary Not Handled",
+        "low",
+        "Consider edge cases at epoch boundaries",
+        path,
+        lineNum,
+        "Handle epoch transition cases explicitly"
+      ));
+    }
+  }
+  if (content.includes("#[derive(Accounts)]") || content.includes("AccountMeta")) {
+    findings.push(createFinding8(
+      "SOL3529",
+      "Verify Instruction Account Order",
+      "info",
+      "Account order in instruction must match expected order",
+      path,
+      1,
+      "Document and verify account order in instructions"
+    ));
+  }
+  if (content.includes("set_return_data") || content.includes("return_data")) {
+    const lineNum = content.split("\n").findIndex((l) => l.includes("return_data")) + 1;
+    findings.push(createFinding8(
+      "SOL3530",
+      "Return Data Size Should Be Limited",
+      "low",
+      "Return data has maximum size limit",
+      path,
+      lineNum,
+      "Ensure return data fits in 1024 bytes"
+    ));
+  }
+  return findings;
+}
+
 // src/patterns/index.ts
 var CORE_PATTERNS = [
   {
@@ -15541,6 +16332,10 @@ async function runPatterns(input) {
   }
   try {
     findings.push(...checkBatch73Patterns(input));
+  } catch (error) {
+  }
+  try {
+    findings.push(...checkBatch74Patterns(input));
   } catch (error) {
   }
   const seen = /* @__PURE__ */ new Set();
