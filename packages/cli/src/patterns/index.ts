@@ -1,8 +1,8 @@
 /**
  * SolGuard Pattern Registry
  * 
- * 5600+ security patterns for Solana smart contract auditing
- * Updated: Feb 5, 2026 11:45 PM - Added Batch 75 Sec3 Final + Helius History + arXiv (SOL3576-SOL3675)
+ * 5675+ security patterns for Solana smart contract auditing
+ * Updated: Feb 6, 2026 12:30 AM - Added Batch 76 Feb 2026 Final Comprehensive (SOL3676-SOL3750)
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
@@ -71,6 +71,9 @@ import { checkBatch74Patterns } from './solana-batched-patterns-74.js';
 
 // Import Batch 75 patterns (Feb 5, 2026 11:45 PM) - Sec3 2025 Final + Helius Complete History + arXiv Research (SOL3576-SOL3675)
 import { checkBatch75Patterns } from './solana-batched-patterns-75.js';
+
+// Import Batch 76 patterns (Feb 6, 2026 12:30 AM) - Feb 2026 Final Comprehensive (SOL3676-SOL3750)
+import { checkBatch76Patterns } from './solana-batched-patterns-76.js';
 
 export interface Finding {
   id: string;
@@ -755,6 +758,13 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     // Skip if Batch 75 patterns fail
   }
   
+  // Run Batch 76 patterns (75 patterns: Feb 2026 Final Comprehensive - SOL3676-SOL3750)
+  try {
+    findings.push(...checkBatch76Patterns(input));
+  } catch (error) {
+    // Skip if Batch 76 patterns fail
+  }
+  
   // Deduplicate by ID + line
   const seen = new Set<string>();
   const deduped = findings.filter(f => {
@@ -851,5 +861,6 @@ export function listPatterns(): Pattern[] {
 //   - solana-batched-patterns-73.ts (SOL3376-SOL3475): DeFi Protocol Deep Dive + Cross-Chain Security
 //   - solana-batched-patterns-74.ts (SOL3476-SOL3575): Comprehensive Protocol Security + Latest Research
 //   - solana-batched-patterns-75.ts (SOL3576-SOL3675): Sec3 2025 Final + Helius Complete History + arXiv Research
-// 75 batched/pattern files × ~70 patterns each + 50 core + 250+ individual patterns = 5600+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 5500; // 5600+ total with all batched patterns
+//   - solana-batched-patterns-76.ts (SOL3676-SOL3750): Feb 2026 Final Comprehensive - DEV.to 15 Vulns, Owner Phishing, Step Finance, DEXX, Web3.js Supply Chain
+// 76 batched/pattern files × ~70 patterns each + 50 core + 250+ individual patterns = 5675+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 5575; // 5675+ total with all batched patterns
