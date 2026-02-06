@@ -1,8 +1,8 @@
 /**
  * SolGuard Pattern Registry
  * 
- * 5125+ security patterns for Solana smart contract auditing
- * Updated: Feb 5, 2026 10:00 PM - Added Batch 70 Step Finance, Phishing, 2026 Threats (SOL3126-SOL3200)
+ * 5200+ security patterns for Solana smart contract auditing
+ * Updated: Feb 5, 2026 10:30 PM - Added Batch 71 DEV.to Critical Vulns, Step Finance Details, CertiK 2026 Stats (SOL3201-SOL3275)
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
@@ -56,6 +56,9 @@ import { checkBatch69Patterns } from './solana-batched-patterns-69.js';
 
 // Import Batch 70 patterns (Feb 5, 2026 10:00 PM) - Step Finance, Phishing Attacks, 2026 Emerging Patterns (SOL3126-SOL3200)
 import { checkBatch70Patterns } from './solana-batched-patterns-70.js';
+
+// Import Batch 71 patterns (Feb 5, 2026 10:30 PM) - DEV.to 15 Critical Vulns, Step Finance Details, CertiK Jan 2026 Stats (SOL3201-SOL3275)
+import { checkBatch71Patterns } from './solana-batched-patterns-71.js';
 
 export interface Finding {
   id: string;
@@ -705,6 +708,13 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     // Skip if Batch 70 patterns fail
   }
   
+  // Run Batch 71 patterns (75 patterns: DEV.to Critical Vulns, Step Finance Details, CertiK Jan 2026, Phishing Campaign - SOL3201-SOL3275)
+  try {
+    findings.push(...checkBatch71Patterns(input));
+  } catch (error) {
+    // Skip if Batch 71 patterns fail
+  }
+  
   // Deduplicate by ID + line
   const seen = new Set<string>();
   const deduped = findings.filter(f => {
@@ -796,5 +806,6 @@ export function listPatterns(): Pattern[] {
 //   - solana-batched-patterns-68.ts (SOL3051-SOL3075): Jan 2026 Threats - Owner Phishing, Trust Wallet $7M Breach, Consensus Vulns, Incident Response
 //   - solana-batched-patterns-69.ts (SOL3076-SOL3125): Deep Exploit Analysis - Solend, Wormhole, Cashio, Mango, Crema, DEXX Forensics
 //   - solana-batched-patterns-70.ts (SOL3126-SOL3200): Step Finance $30M Hack, Owner Phishing Attacks, 2026 Emerging Threats, Protocol-Specific Deep Patterns
-// 70 batched/pattern files × ~70 patterns each + 50 core + 250+ individual patterns = 5125+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 5025; // 5125+ total with all batched patterns
+//   - solana-batched-patterns-71.ts (SOL3201-SOL3275): DEV.to 15 Critical Vulns, Step Finance Details, CertiK Jan 2026 ($400M), Phishing Campaign Deep Dive
+// 71 batched/pattern files × ~70 patterns each + 50 core + 250+ individual patterns = 5200+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 5100; // 5200+ total with all batched patterns
