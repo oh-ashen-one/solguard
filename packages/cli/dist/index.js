@@ -17247,6 +17247,1803 @@ function checkBatch76Patterns(input) {
   return findings;
 }
 
+// src/patterns/solana-batched-patterns-77.ts
+var ARXIV_ACADEMIC_PATTERNS = [
+  // 3.1.1 Missing Signer Check (arXiv)
+  {
+    id: "SOL3776",
+    name: "arXiv 3.1.1 - Missing Signer Verification (Solend Pattern)",
+    severity: "critical",
+    pattern: /(?:authority|admin|owner)[\s\S]{0,50}AccountInfo[\s\S]{0,100}(?!\.is_signer)/,
+    description: "Authority account without signer verification. Solend $2M pattern documented in arXiv.",
+    recommendation: "Always verify authority.is_signer() before privileged operations."
+  },
+  {
+    id: "SOL3777",
+    name: "arXiv 3.1.1 - Key Match Without Signature",
+    severity: "critical",
+    pattern: /\.key\s*==[\s\S]{0,30}\.key[\s\S]{0,100}(?!is_signer)/,
+    description: "Key comparison without signer check allows spoofing.",
+    recommendation: "Combine key comparison with is_signer verification."
+  },
+  // 3.1.2 Missing Ownership Check (arXiv)
+  {
+    id: "SOL3778",
+    name: "arXiv 3.1.2 - Missing Account Ownership Verification",
+    severity: "critical",
+    pattern: /AccountInfo[\s\S]{0,100}\.data[\s\S]{0,100}(?!owner\s*==|owner\(\))/,
+    description: "Account data access without ownership check. arXiv documented vulnerability.",
+    recommendation: "Verify account.owner() == expected_program_id before data access."
+  },
+  {
+    id: "SOL3779",
+    name: "arXiv 3.1.2 - Forged Account Injection",
+    severity: "critical",
+    pattern: /try_borrow_data[\s\S]{0,100}(?!owner_check|verify_owner)/,
+    description: "Borrowing account data without ownership verification allows forged accounts.",
+    recommendation: "Check account ownership before borrowing data."
+  },
+  // 3.1.3 Missing Rent Exemption Check
+  {
+    id: "SOL3780",
+    name: "arXiv 3.1.3 - Missing Rent Exemption Check",
+    severity: "medium",
+    pattern: /(?:create|init)[\s\S]{0,100}(?:account|pda)[\s\S]{0,100}(?!rent_exempt|minimum_balance)/,
+    description: "Account creation without rent exemption verification.",
+    recommendation: "Verify account has rent-exempt minimum balance."
+  },
+  // Account Type Confusion (arXiv)
+  {
+    id: "SOL3781",
+    name: "arXiv - Account Type Confusion Attack",
+    severity: "critical",
+    pattern: /try_from_slice[\s\S]{0,100}(?!discriminator|type_check)/,
+    description: "Deserialization without type verification enables confusion attacks.",
+    recommendation: "Verify 8-byte discriminator before deserialization."
+  },
+  // Cross-Instance Reinitialization (arXiv)
+  {
+    id: "SOL3782",
+    name: "arXiv - Cross-Instance Reinitialization Attack",
+    severity: "high",
+    pattern: /initialize[\s\S]{0,100}(?:program_id|cross_program)[\s\S]{0,100}(?!instance_check)/,
+    description: "Initialization vulnerable to cross-program instance attacks.",
+    recommendation: "Verify program instance matches expected deployment."
+  },
+  // Oracle Manipulation (Solend $1.26M - arXiv Table 1)
+  {
+    id: "SOL3783",
+    name: "arXiv Table 1 - Oracle Attack Pattern (Solend)",
+    severity: "critical",
+    pattern: /oracle[\s\S]{0,100}(?:price|feed)[\s\S]{0,100}(?!aggregate|multi_source)/,
+    description: "Single oracle source vulnerable to manipulation. Solend $1.26M (arXiv Table 1).",
+    recommendation: "Use multiple oracle sources with aggregation."
+  },
+  // Flash Loan Attack (Mango $100M, Nirvana $3.5M - arXiv Table 1)
+  {
+    id: "SOL3784",
+    name: "arXiv Table 1 - Flash Loan Attack (Mango/Nirvana)",
+    severity: "critical",
+    pattern: /(?:flash_loan|borrow)[\s\S]{0,100}(?!same_block|atomic_check)/,
+    description: "Flash loan without same-block detection. Mango $100M, Nirvana $3.5M (arXiv).",
+    recommendation: "Add same-block/same-slot detection for flash loan protection."
+  },
+  // Cascade Attack (Tulip/UXD via Mango - arXiv Table 1)
+  {
+    id: "SOL3785",
+    name: "arXiv Table 1 - Cascade Attack (Tulip/UXD)",
+    severity: "high",
+    pattern: /(?:integrated|connected)[\s\S]{0,100}(?:protocol|pool)[\s\S]{0,100}(?!isolation|circuit_breaker)/,
+    description: "Cross-protocol integration without isolation. Tulip $2.5M, UXD $20M via Mango.",
+    recommendation: "Implement circuit breakers and protocol isolation."
+  },
+  // Operational Error (OptiFi $661K - arXiv Table 1)
+  {
+    id: "SOL3786",
+    name: "arXiv Table 1 - Operational Error (OptiFi)",
+    severity: "high",
+    pattern: /(?:close|shutdown)[\s\S]{0,100}program[\s\S]{0,100}(?!funds_check|balance_check)/,
+    description: "Program close without checking locked funds. OptiFi $661K (arXiv).",
+    recommendation: "Verify no funds locked before program closure."
+  },
+  // Unverified Accounts (Cashio $52M - arXiv Table 1)
+  {
+    id: "SOL3787",
+    name: "arXiv Table 1 - Unverified Account Bypass (Cashio)",
+    severity: "critical",
+    pattern: /(?:collateral|mint)[\s\S]{0,100}(?:verify|validate)[\s\S]{0,100}(?!chain_of_trust)/,
+    description: "Collateral verification without chain of trust. Cashio $52M (arXiv).",
+    recommendation: "Establish and verify complete chain of trust for accounts."
+  },
+  // Deprecated Function (Wormhole 120K ETH - arXiv Table 1)
+  {
+    id: "SOL3788",
+    name: "arXiv Table 1 - Deprecated Function Exploit (Wormhole)",
+    severity: "critical",
+    pattern: /verify_signatures_address|deprecated|unsafe_function/,
+    description: "Use of deprecated security function. Wormhole 120K ETH (arXiv).",
+    recommendation: "Audit for deprecated functions, use current security APIs."
+  },
+  // eBPF/SBF Specific Issues (arXiv)
+  {
+    id: "SOL3789",
+    name: "arXiv - eBPF Syscall Abuse",
+    severity: "high",
+    pattern: /syscall[\s\S]{0,50}(?:invoke|sol_)[\s\S]{0,100}(?!validate_input)/,
+    description: "Direct syscall usage without input validation.",
+    recommendation: "Validate all inputs before syscall invocation."
+  },
+  {
+    id: "SOL3790",
+    name: "arXiv - LLVM Compilation Vulnerability",
+    severity: "medium",
+    pattern: /(?:#\[repr|#\[inline)[\s\S]{0,50}(?:never|always)/,
+    description: "Compiler directives may affect security properties.",
+    recommendation: "Audit compiler directives for security implications."
+  }
+];
+var SEALEVEL_ATTACKS = [
+  {
+    id: "SOL3791",
+    name: "Sealevel - Duplicate Mutable Accounts",
+    severity: "high",
+    pattern: /(?:account_a|source)[\s\S]{0,30}mut[\s\S]{0,30}(?:account_b|dest)[\s\S]{0,30}mut[\s\S]{0,100}(?!key.*!=)/,
+    description: "Same account passed as multiple mutable arguments.",
+    recommendation: "Verify all mutable accounts are distinct: a.key() != b.key()."
+  },
+  {
+    id: "SOL3792",
+    name: "Sealevel - Account Type Confusion",
+    severity: "critical",
+    pattern: /(?:cast|transmute)[\s\S]{0,50}(?:AccountInfo|&\[u8\])[\s\S]{0,100}(?!discriminator)/,
+    description: "Unsafe account type casting without discriminator check.",
+    recommendation: "Always verify discriminator before type casting."
+  },
+  {
+    id: "SOL3793",
+    name: "Sealevel - Sysvar Address Spoofing",
+    severity: "high",
+    pattern: /sysvar[\s\S]{0,100}(?:clock|rent|slot)[\s\S]{0,100}(?!check_id|is_sysvar)/,
+    description: "Sysvar account without address verification.",
+    recommendation: "Verify sysvar addresses match expected IDs."
+  },
+  {
+    id: "SOL3794",
+    name: "Sealevel - Arbitrary Program CPI",
+    severity: "critical",
+    pattern: /invoke(?:_signed)?[\s\S]{0,100}(?:program|cpi_program)[\s\S]{0,100}(?!==\s*(?:TOKEN|SYSTEM|ASSOCIATED))/,
+    description: "CPI to arbitrary program without ID verification.",
+    recommendation: "Hardcode or verify program IDs for all CPI calls."
+  },
+  {
+    id: "SOL3795",
+    name: "Sealevel - PDA Not Verified",
+    severity: "high",
+    pattern: /create_program_address[\s\S]{0,100}(?!==|verify|check)/,
+    description: "PDA address created but not verified.",
+    recommendation: "Verify PDA address matches expected derivation."
+  },
+  {
+    id: "SOL3796",
+    name: "Sealevel - Bump Seed Canonicalization",
+    severity: "high",
+    pattern: /bump[\s\S]{0,50}(?:u8|param)[\s\S]{0,100}(?!canonical|find_program)/,
+    description: "User-provided bump seed allows shadow PDAs.",
+    recommendation: "Use find_program_address for canonical bump."
+  },
+  {
+    id: "SOL3797",
+    name: "Sealevel - Closing Account Without Zeroing",
+    severity: "high",
+    pattern: /close[\s\S]{0,100}lamports[\s\S]{0,100}(?!\.fill\(0\)|zero|clear)/,
+    description: "Account closure without data zeroing enables resurrection.",
+    recommendation: "Zero all data before transferring lamports."
+  },
+  {
+    id: "SOL3798",
+    name: "Sealevel - Missing Owner Check on Read",
+    severity: "critical",
+    pattern: /\.try_borrow_data\(\)[\s\S]{0,50}(?!owner|program_id)/,
+    description: "Reading account data without verifying owner.",
+    recommendation: "Check account.owner == program_id before reading."
+  },
+  {
+    id: "SOL3799",
+    name: "Sealevel - init_if_needed Race",
+    severity: "high",
+    pattern: /init_if_needed/,
+    description: "init_if_needed creates race condition vulnerability.",
+    recommendation: "Use explicit initialization with existence check."
+  },
+  {
+    id: "SOL3800",
+    name: "Sealevel - Reallocation Vulnerability",
+    severity: "medium",
+    pattern: /realloc[\s\S]{0,100}(?!bounds_check|max_size)/,
+    description: "Account reallocation without size bounds.",
+    recommendation: "Validate reallocation size against maximum."
+  }
+];
+var NEODYME_PATTERNS = [
+  {
+    id: "SOL3801",
+    name: "Neodyme - Rounding Error ($2.6B Risk)",
+    severity: "critical",
+    pattern: /(?:round|as\s+u64)[\s\S]{0,50}(?:amount|value)[\s\S]{0,100}(?!floor_for_deposit|ceil_for_withdraw)/,
+    description: "Rounding error in financial calculation. $2.6B at risk pattern.",
+    recommendation: "Use floor for deposits (favor protocol), ceil for withdrawals (favor protocol)."
+  },
+  {
+    id: "SOL3802",
+    name: "Neodyme - Integer Overflow in Checked Mode",
+    severity: "high",
+    pattern: /\+|\-|\*|\/[\s\S]{0,30}(?:amount|balance|fee)[\s\S]{0,50}(?!checked_|saturating_)/,
+    description: "Arithmetic operation without overflow protection.",
+    recommendation: "Use checked_add/sub/mul/div for all arithmetic."
+  },
+  {
+    id: "SOL3803",
+    name: "Neodyme - Verify invoke_signed Properly",
+    severity: "critical",
+    pattern: /invoke_signed[\s\S]{0,100}(?!seeds_check|signer_seeds)/,
+    description: "invoke_signed without proper seeds verification.",
+    recommendation: "Verify signer seeds match expected PDA derivation."
+  },
+  {
+    id: "SOL3804",
+    name: "Neodyme - Account Confusions Without Anchor",
+    severity: "high",
+    pattern: /pub\s+struct[\s\S]{0,100}AccountInfo[\s\S]{0,100}(?!#\[account\])/,
+    description: "Manual account handling without Anchor type safety.",
+    recommendation: "Use Anchor #[account] for type-safe account handling."
+  },
+  {
+    id: "SOL3805",
+    name: "Neodyme - Unvalidated Reference Account",
+    severity: "high",
+    pattern: /(?:reference|ref)[\s\S]{0,50}(?:account|info)[\s\S]{0,100}(?!verify|validate|check)/,
+    description: "Reference account passed without validation.",
+    recommendation: "Validate all reference accounts, even read-only ones."
+  }
+];
+var OTTERSEC_PATTERNS = [
+  {
+    id: "SOL3806",
+    name: "OtterSec - LP Token Oracle Manipulation ($200M)",
+    severity: "critical",
+    pattern: /lp[\s\S]{0,50}(?:price|value)[\s\S]{0,100}(?:reserve|balance)[\s\S]{0,100}(?!fair_price|virtual)/,
+    description: "LP token pricing using spot reserves. $200M at risk pattern.",
+    recommendation: "Use fair/virtual pricing for LP tokens."
+  },
+  {
+    id: "SOL3807",
+    name: "OtterSec - AMM Price Manipulation for Oracle",
+    severity: "critical",
+    pattern: /(?:amm|dex)[\s\S]{0,100}(?:price|quote)[\s\S]{0,100}(?:oracle|feed)/,
+    description: "Using AMM spot price as oracle enables manipulation.",
+    recommendation: "Use TWAP or external oracles, not AMM spot prices."
+  },
+  {
+    id: "SOL3808",
+    name: "OtterSec - Lending Protocol via LP Attack",
+    severity: "critical",
+    pattern: /(?:lending|borrow)[\s\S]{0,100}lp[\s\S]{0,100}(?:collateral|deposit)/,
+    description: "LP tokens as lending collateral without manipulation protection.",
+    recommendation: "Use manipulation-resistant LP valuation for collateral."
+  },
+  {
+    id: "SOL3809",
+    name: "OtterSec - Drift Oracle Guardrails Pattern",
+    severity: "medium",
+    pattern: /oracle[\s\S]{0,100}(?!guardrail|bound|limit|max_deviation)/,
+    description: "Oracle without guardrails allows extreme price movements.",
+    recommendation: "Implement oracle guardrails (max deviation, staleness, confidence)."
+  }
+];
+var KUDELSKI_PATTERNS = [
+  {
+    id: "SOL3810",
+    name: "Kudelski - Ownership Validation Missing",
+    severity: "critical",
+    pattern: /(?:program|account)[\s\S]{0,50}(?:data|info)[\s\S]{0,100}(?!owner\s*==|verify_owner)/,
+    description: "Account ownership not validated (Kudelski).",
+    recommendation: "Verify account ownership before trusting data."
+  },
+  {
+    id: "SOL3811",
+    name: "Kudelski - Data Validation Missing",
+    severity: "high",
+    pattern: /try_borrow_data[\s\S]{0,100}(?!validate|check|verify)/,
+    description: "Account data read without validation (Kudelski).",
+    recommendation: "Validate account data format and constraints."
+  },
+  {
+    id: "SOL3812",
+    name: "Kudelski - Unmodified Reference Accounts",
+    severity: "medium",
+    pattern: /(?:reference|readonly)[\s\S]{0,50}account[\s\S]{0,100}(?!verify_validity)/,
+    description: "Reference-only accounts not validated (Kudelski).",
+    recommendation: "Verify validity of unmodified reference accounts."
+  },
+  {
+    id: "SOL3813",
+    name: "Kudelski - Wormhole Signature Delegation Chain",
+    severity: "critical",
+    pattern: /(?:signature|verify)[\s\S]{0,100}(?:delegate|chain)[\s\S]{0,100}(?!complete_verification)/,
+    description: "Signature verification delegation without complete chain.",
+    recommendation: "Ensure complete verification chain for delegated signatures."
+  }
+];
+var ZELLIC_ANCHOR_PATTERNS = [
+  {
+    id: "SOL3814",
+    name: "Zellic - Anchor Seeds Constraint Mismatch",
+    severity: "high",
+    pattern: /seeds\s*=\s*\[[\s\S]{0,100}\][\s\S]{0,50}(?!bump)/,
+    description: "PDA seeds defined without bump constraint.",
+    recommendation: "Always include bump constraint with seeds."
+  },
+  {
+    id: "SOL3815",
+    name: "Zellic - Anchor has_one Without Constraint",
+    severity: "medium",
+    pattern: /has_one[\s\S]{0,50}(?!constraint|@)/,
+    description: "has_one attribute without additional constraint.",
+    recommendation: "Combine has_one with constraint for full validation."
+  },
+  {
+    id: "SOL3816",
+    name: "Zellic - Anchor close Without Balance Check",
+    severity: "high",
+    pattern: /#\[account\([\s\S]{0,100}close[\s\S]{0,100}\)][\s\S]{0,200}(?!balance_check)/,
+    description: "Anchor close attribute without verifying zero balance.",
+    recommendation: "Verify account has expected balance before closing."
+  },
+  {
+    id: "SOL3817",
+    name: "Zellic - Anchor Realloc Without Zero Init",
+    severity: "medium",
+    pattern: /realloc[\s\S]{0,50}(?!zero\s*=\s*true)/,
+    description: "Anchor realloc without zero initialization.",
+    recommendation: "Use realloc::zero = true to zero new bytes."
+  },
+  {
+    id: "SOL3818",
+    name: "Zellic - UncheckedAccount Without CHECK",
+    severity: "high",
+    pattern: /UncheckedAccount[\s\S]{0,100}(?!\/\/\/\s*CHECK)/,
+    description: "UncheckedAccount without /// CHECK documentation.",
+    recommendation: "Document security justification with /// CHECK comment."
+  },
+  {
+    id: "SOL3819",
+    name: "Zellic - AccountInfo in Anchor (Should Use Typed)",
+    severity: "medium",
+    pattern: /(?:pub\s+)?(?:\w+):\s*AccountInfo[\s\S]{0,50}(?!\/\/\/\s*CHECK)/,
+    description: "Raw AccountInfo usage in Anchor instead of typed account.",
+    recommendation: "Use Account<'info, T>, Signer, or Program types."
+  }
+];
+var SEC3_AUDIT_PATTERNS = [
+  {
+    id: "SOL3820",
+    name: "Sec3 Part 1 - Common Attack Surface: Entry Point",
+    severity: "high",
+    pattern: /(?:process|handle)_instruction[\s\S]{0,100}(?!validate_accounts|check_program_id)/,
+    description: "Instruction entry point without account validation.",
+    recommendation: "Validate all accounts at instruction entry."
+  },
+  {
+    id: "SOL3821",
+    name: "Sec3 Part 1 - State Transition Analysis",
+    severity: "high",
+    pattern: /state[\s\S]{0,50}(?:=|:=)[\s\S]{0,100}(?!match|enum|verify_transition)/,
+    description: "State modification without transition verification.",
+    recommendation: "Define and verify valid state transitions."
+  },
+  {
+    id: "SOL3822",
+    name: "Sec3 Part 2 - Automated Scanning Gap",
+    severity: "medium",
+    pattern: /unsafe[\s\S]{0,30}(?:code|fn|impl)/,
+    description: "Unsafe Rust code requires manual security review.",
+    recommendation: "Minimize unsafe code, audit thoroughly when required."
+  },
+  {
+    id: "SOL3823",
+    name: "Sec3 Part 3 - PoC Framework Integration",
+    severity: "info",
+    pattern: /(?:test|spec)[\s\S]{0,100}(?!exploit|attack|malicious)/,
+    description: "Tests may not include adversarial scenarios.",
+    recommendation: "Include exploit PoC tests using Neodyme framework."
+  },
+  {
+    id: "SOL3824",
+    name: "Sec3 Part 4 - Anchor #[program] Handler",
+    severity: "medium",
+    pattern: /#\[program\][\s\S]{0,200}pub\s+fn[\s\S]{0,100}(?!ctx\.accounts)/,
+    description: "Anchor handler not using ctx.accounts pattern.",
+    recommendation: "Use ctx.accounts for validated account access."
+  },
+  {
+    id: "SOL3825",
+    name: "Sec3 - Unsafe Library Reference",
+    severity: "medium",
+    pattern: /use\s+(?:unsafe_|deprecated_)/,
+    description: "Importing unsafe or deprecated library.",
+    recommendation: "Audit dependencies with cargo audit, update unsafe refs."
+  }
+];
+var TRAIL_OF_BITS_PATTERNS = [
+  {
+    id: "SOL3826",
+    name: "ToB - DeFi Composability Risk",
+    severity: "high",
+    pattern: /(?:composed|integrated)[\s\S]{0,100}(?:protocol|defi)[\s\S]{0,100}(?!risk_assessment)/,
+    description: "DeFi protocol composition without risk assessment.",
+    recommendation: "Assess risks of composed protocol interactions."
+  },
+  {
+    id: "SOL3827",
+    name: "ToB - Price Oracle Dependency",
+    severity: "high",
+    pattern: /(?:price|oracle)[\s\S]{0,100}(?:single|one)[\s\S]{0,100}(?!fallback|backup)/,
+    description: "Single price oracle dependency creates failure point.",
+    recommendation: "Implement oracle fallback mechanisms."
+  },
+  {
+    id: "SOL3828",
+    name: "ToB - Liquidation Path Analysis",
+    severity: "high",
+    pattern: /liquidat(?:e|ion)[\s\S]{0,100}(?!path_analysis|cascade_check)/,
+    description: "Liquidation without cascade analysis.",
+    recommendation: "Analyze liquidation paths for cascade risks."
+  },
+  {
+    id: "SOL3829",
+    name: "ToB - Emergency Mechanism",
+    severity: "medium",
+    pattern: /(?:pause|emergency|shutdown)[\s\S]{0,100}(?!admin_only|multisig)/,
+    description: "Emergency mechanism without proper access control.",
+    recommendation: "Require multisig for emergency operations."
+  },
+  {
+    id: "SOL3830",
+    name: "ToB - Upgrade Path Security",
+    severity: "high",
+    pattern: /upgrade[\s\S]{0,100}(?:authority|admin)[\s\S]{0,100}(?!timelock|governance)/,
+    description: "Program upgrade without timelock or governance.",
+    recommendation: "Add timelock or governance for upgrades."
+  }
+];
+var EXPLOIT_DEEP_PATTERNS = [
+  // Wormhole Deep Dive
+  {
+    id: "SOL3831",
+    name: "Wormhole - SignatureSet Account Spoofing",
+    severity: "critical",
+    pattern: /(?:signature|guardian)[\s\S]{0,100}(?:set|verify)[\s\S]{0,100}(?!account_owner_check)/,
+    description: "Signature verification accepting fake SignatureSet. Wormhole $326M.",
+    recommendation: "Verify SignatureSet account owned by expected program."
+  },
+  {
+    id: "SOL3832",
+    name: "Wormhole - VAA Verification Bypass",
+    severity: "critical",
+    pattern: /vaa[\s\S]{0,100}(?:verify|validate)[\s\S]{0,100}(?!guardian_set|quorum)/,
+    description: "VAA verification without guardian set validation.",
+    recommendation: "Verify VAA against current guardian set with quorum."
+  },
+  // Mango Markets Deep Dive
+  {
+    id: "SOL3833",
+    name: "Mango - Self-Trading Oracle Manipulation",
+    severity: "critical",
+    pattern: /(?:perp|trade)[\s\S]{0,100}(?:oracle|mark_price)[\s\S]{0,100}(?!self_trade_check)/,
+    description: "Perp trading allows self-trades affecting oracle. Mango $116M.",
+    recommendation: "Detect and prevent self-trades affecting price."
+  },
+  {
+    id: "SOL3834",
+    name: "Mango - Unrealized PnL as Collateral",
+    severity: "critical",
+    pattern: /(?:pnl|profit)[\s\S]{0,100}(?:unrealized|open)[\s\S]{0,100}(?:collateral|margin)/,
+    description: "Unrealized PnL counted as collateral before settlement.",
+    recommendation: "Only count settled PnL as collateral."
+  },
+  {
+    id: "SOL3835",
+    name: "Mango - Position Concentration Missing",
+    severity: "high",
+    pattern: /position[\s\S]{0,100}(?:size|value)[\s\S]{0,100}(?!concentration_limit|max_position)/,
+    description: "No position concentration limits.",
+    recommendation: "Implement position size limits relative to market."
+  },
+  // Cashio Deep Dive
+  {
+    id: "SOL3836",
+    name: "Cashio - Root of Trust Chain Bypass",
+    severity: "critical",
+    pattern: /collateral[\s\S]{0,100}(?:chain|nested)[\s\S]{0,100}(?!root_of_trust)/,
+    description: "Collateral chain without root of trust. Cashio $52M.",
+    recommendation: "Verify complete chain to trusted root account."
+  },
+  {
+    id: "SOL3837",
+    name: "Cashio - Saber LP Token Authenticity",
+    severity: "critical",
+    pattern: /lp[\s\S]{0,50}token[\s\S]{0,100}(?:mint|verify)[\s\S]{0,100}(?!pool_owner_check)/,
+    description: "LP token accepted without pool ownership verification.",
+    recommendation: "Verify LP token mint owned by expected pool program."
+  },
+  // Crema CLMM Deep Dive
+  {
+    id: "SOL3838",
+    name: "Crema - Fake Tick Account Creation",
+    severity: "critical",
+    pattern: /tick[\s\S]{0,100}(?:account|create)[\s\S]{0,100}(?!program_owner)/,
+    description: "Tick account created without program ownership. Crema $8.8M.",
+    recommendation: "Verify tick accounts owned by CLMM program."
+  },
+  {
+    id: "SOL3839",
+    name: "Crema - Fee Accumulator Manipulation",
+    severity: "critical",
+    pattern: /fee[\s\S]{0,100}(?:accumulator|collected)[\s\S]{0,100}(?!authentic_source)/,
+    description: "Fee data from unverified source.",
+    recommendation: "Verify fee accumulator from authenticated source."
+  },
+  {
+    id: "SOL3840",
+    name: "Crema - Flash Loan Fee Claim Amplification",
+    severity: "critical",
+    pattern: /(?:flash_loan|claim)[\s\S]{0,100}fee[\s\S]{0,100}(?!position_check)/,
+    description: "Fee claim without position verification.",
+    recommendation: "Verify position ownership and duration before fee claim."
+  },
+  // Slope Wallet Deep Dive
+  {
+    id: "SOL3841",
+    name: "Slope - Seed Phrase Logging to Telemetry",
+    severity: "critical",
+    pattern: /(?:seed|mnemonic|phrase)[\s\S]{0,100}(?:log|send|transmit)/,
+    description: "Seed phrase sent to telemetry. Slope $8M.",
+    recommendation: "Never log or transmit seed phrases."
+  },
+  {
+    id: "SOL3842",
+    name: "Slope - Unencrypted Key Storage",
+    severity: "critical",
+    pattern: /(?:key|secret)[\s\S]{0,100}(?:store|save)[\s\S]{0,100}(?!encrypt|secure)/,
+    description: "Private keys stored without encryption.",
+    recommendation: "Always encrypt private keys at rest."
+  },
+  {
+    id: "SOL3843",
+    name: "Slope - Sensitive Data in Telemetry",
+    severity: "critical",
+    pattern: /telemetry[\s\S]{0,100}(?:send|track)[\s\S]{0,100}(?!sanitize|filter_sensitive)/,
+    description: "Telemetry may include sensitive data.",
+    recommendation: "Sanitize all telemetry to remove sensitive data."
+  },
+  // Audius Governance Deep Dive
+  {
+    id: "SOL3844",
+    name: "Audius - Malicious Proposal Acceptance",
+    severity: "critical",
+    pattern: /proposal[\s\S]{0,100}(?:submit|create)[\s\S]{0,100}(?!validation|review)/,
+    description: "Governance proposal accepted without validation. Audius $6.1M.",
+    recommendation: "Validate proposal content and submitter permissions."
+  },
+  {
+    id: "SOL3845",
+    name: "Audius - Treasury Permission Reconfiguration",
+    severity: "critical",
+    pattern: /treasury[\s\S]{0,100}(?:permission|authority)[\s\S]{0,100}(?!timelock|delay)/,
+    description: "Treasury permissions changeable without delay.",
+    recommendation: "Add timelock for treasury permission changes."
+  },
+  // Nirvana Finance Deep Dive
+  {
+    id: "SOL3846",
+    name: "Nirvana - Bonding Curve Flash Loan",
+    severity: "critical",
+    pattern: /bonding[\s\S]{0,100}(?:curve|price)[\s\S]{0,100}(?!flash_guard|atomic)/,
+    description: "Bonding curve exploitable via flash loan. Nirvana $3.5M.",
+    recommendation: "Add flash loan protection to bonding curves."
+  },
+  {
+    id: "SOL3847",
+    name: "Nirvana - Instant Price Impact",
+    severity: "high",
+    pattern: /(?:buy|sell)[\s\S]{0,100}(?:price|impact)[\s\S]{0,100}(?!slippage_limit)/,
+    description: "Trade without slippage limit allows manipulation.",
+    recommendation: "Enforce slippage limits on all trades."
+  }
+];
+var PROTOCOL_SPECIFIC = [
+  // Pyth Oracle
+  {
+    id: "SOL3848",
+    name: "Pyth - Confidence Interval Not Checked",
+    severity: "high",
+    pattern: /pyth[\s\S]{0,100}(?:price|get)[\s\S]{0,100}(?!conf|confidence)/,
+    description: "Pyth price used without confidence interval check.",
+    recommendation: "Verify Pyth confidence interval is acceptable."
+  },
+  {
+    id: "SOL3849",
+    name: "Pyth - Expo Scaling Error",
+    severity: "high",
+    pattern: /pyth[\s\S]{0,100}(?:price|expo)[\s\S]{0,100}(?!scale|adjust_expo)/,
+    description: "Pyth price not scaled by expo.",
+    recommendation: "Always scale Pyth price by 10^expo."
+  },
+  // Switchboard Oracle
+  {
+    id: "SOL3850",
+    name: "Switchboard - Aggregator Staleness",
+    severity: "high",
+    pattern: /switchboard[\s\S]{0,100}(?:result|value)[\s\S]{0,100}(?!staleness|timestamp)/,
+    description: "Switchboard result used without staleness check.",
+    recommendation: "Check aggregator timestamp freshness."
+  },
+  // Marinade Finance
+  {
+    id: "SOL3851",
+    name: "Marinade - mSOL Pricing Attack",
+    severity: "high",
+    pattern: /msol[\s\S]{0,100}(?:price|rate)[\s\S]{0,100}(?!verify_rate)/,
+    description: "mSOL exchange rate not verified.",
+    recommendation: "Verify mSOL rate from Marinade program."
+  },
+  {
+    id: "SOL3852",
+    name: "Marinade - Delayed Unstake Ticket",
+    severity: "medium",
+    pattern: /marinade[\s\S]{0,100}(?:unstake|ticket)[\s\S]{0,100}(?!epoch_check)/,
+    description: "Marinade unstake ticket epoch not verified.",
+    recommendation: "Verify ticket epoch matches current epoch."
+  },
+  // Jupiter Aggregator
+  {
+    id: "SOL3853",
+    name: "Jupiter - Route Manipulation",
+    severity: "high",
+    pattern: /jupiter[\s\S]{0,100}(?:route|swap)[\s\S]{0,100}(?!min_out|slippage)/,
+    description: "Jupiter route without slippage protection.",
+    recommendation: "Always set min_out for Jupiter swaps."
+  },
+  // Drift Protocol
+  {
+    id: "SOL3854",
+    name: "Drift - Oracle Guard Rails",
+    severity: "high",
+    pattern: /drift[\s\S]{0,100}(?:oracle|price)[\s\S]{0,100}(?!guard|limit)/,
+    description: "Drift oracle without guard rails.",
+    recommendation: "Use Drift oracle guard rails for price bounds."
+  },
+  // Solend Protocol
+  {
+    id: "SOL3855",
+    name: "Solend - Reserve Refresh Required",
+    severity: "high",
+    pattern: /solend[\s\S]{0,100}(?:reserve|rate)[\s\S]{0,100}(?!refresh)/,
+    description: "Solend reserve not refreshed before use.",
+    recommendation: "Refresh reserve before reading rates."
+  },
+  // Orca Whirlpool
+  {
+    id: "SOL3856",
+    name: "Orca - Tick Array Bounds",
+    severity: "high",
+    pattern: /whirlpool[\s\S]{0,100}(?:tick|array)[\s\S]{0,100}(?!bounds_check)/,
+    description: "Orca tick array access without bounds check.",
+    recommendation: "Verify tick index within array bounds."
+  },
+  // Raydium
+  {
+    id: "SOL3857",
+    name: "Raydium - Pool Authority Leak",
+    severity: "critical",
+    pattern: /raydium[\s\S]{0,100}(?:pool|authority)[\s\S]{0,100}(?!admin_only)/,
+    description: "Raydium pool authority access pattern.",
+    recommendation: "Verify admin permissions for pool operations."
+  },
+  // Metaplex
+  {
+    id: "SOL3858",
+    name: "Metaplex - Collection Authority",
+    severity: "high",
+    pattern: /metaplex[\s\S]{0,100}(?:collection|authority)[\s\S]{0,100}(?!verify)/,
+    description: "Collection authority not verified.",
+    recommendation: "Verify collection authority for NFT operations."
+  },
+  // Phoenix
+  {
+    id: "SOL3859",
+    name: "Phoenix - Order Book Crossing",
+    severity: "high",
+    pattern: /phoenix[\s\S]{0,100}(?:order|book)[\s\S]{0,100}(?!cross_check)/,
+    description: "Phoenix order without crossing check.",
+    recommendation: "Handle order book crossing conditions."
+  }
+];
+var MEV_INFRASTRUCTURE_PATTERNS = [
+  {
+    id: "SOL3860",
+    name: "MEV - JIT Liquidity Attack",
+    severity: "high",
+    pattern: /(?:liquidity|provision)[\s\S]{0,100}(?:add|remove)[\s\S]{0,100}(?!sandwich_protection)/,
+    description: "Liquidity operation vulnerable to JIT sandwich.",
+    recommendation: "Use private transactions or MEV protection."
+  },
+  {
+    id: "SOL3861",
+    name: "MEV - Order Flow Extraction",
+    severity: "medium",
+    pattern: /(?:order|trade)[\s\S]{0,100}(?:submit|send)[\s\S]{0,100}(?!private|protected)/,
+    description: "Trade order visible in mempool for front-running.",
+    recommendation: "Use Jito bundles or private transaction submission."
+  },
+  {
+    id: "SOL3862",
+    name: "MEV - Time-Bandit Reorganization",
+    severity: "high",
+    pattern: /(?:finality|confirm)[\s\S]{0,100}(?!sufficient_slots)/,
+    description: "Insufficient confirmation slots for finality.",
+    recommendation: "Wait for sufficient slot confirmations."
+  },
+  {
+    id: "SOL3863",
+    name: "Infra - Validator Stake Concentration",
+    severity: "medium",
+    pattern: /validator[\s\S]{0,100}(?:stake|delegation)[\s\S]{0,100}(?!diversity)/,
+    description: "Stake concentration risk in validator selection.",
+    recommendation: "Diversify stake across multiple validators."
+  },
+  {
+    id: "SOL3864",
+    name: "Infra - Hosting Provider Concentration",
+    severity: "medium",
+    pattern: /(?:deploy|host)[\s\S]{0,100}(?:aws|gcp|azure)[\s\S]{0,100}(?!multi_provider)/,
+    description: "Single cloud provider concentration risk.",
+    recommendation: "Distribute infrastructure across providers."
+  },
+  {
+    id: "SOL3865",
+    name: "Infra - RPC Provider Manipulation",
+    severity: "high",
+    pattern: /rpc[\s\S]{0,100}(?:endpoint|url)[\s\S]{0,100}(?!fallback|multi)/,
+    description: "Single RPC provider enables manipulation.",
+    recommendation: "Use multiple RPC providers with fallback."
+  }
+];
+var TESTING_DEPLOYMENT_PATTERNS = [
+  {
+    id: "SOL3866",
+    name: "Testing - Devnet Address in Mainnet",
+    severity: "critical",
+    pattern: /(?:devnet|testnet)[\s\S]{0,50}(?:address|pubkey|endpoint)/,
+    description: "Devnet/testnet reference in mainnet code.",
+    recommendation: "Remove all devnet/testnet references before mainnet."
+  },
+  {
+    id: "SOL3867",
+    name: "Testing - Debug Code in Production",
+    severity: "high",
+    pattern: /(?:debug|console\.log|println!)[\s\S]{0,50}(?!#\[cfg\(test\)\])/,
+    description: "Debug code in production build.",
+    recommendation: "Remove debug code or gate with cfg(test)."
+  },
+  {
+    id: "SOL3868",
+    name: "Testing - Missing Fuzzing",
+    severity: "medium",
+    pattern: /(?:test|spec)[\s\S]{0,100}(?!fuzz|arbitrary|quickcheck)/,
+    description: "Test suite without fuzzing.",
+    recommendation: "Add fuzz testing for input validation."
+  },
+  {
+    id: "SOL3869",
+    name: "Deployment - Upgrade Authority Active",
+    severity: "medium",
+    pattern: /upgrade[\s\S]{0,50}authority[\s\S]{0,100}(?!revoked|none)/,
+    description: "Upgrade authority still active.",
+    recommendation: "Consider revoking upgrade authority after deployment."
+  },
+  {
+    id: "SOL3870",
+    name: "Deployment - Mainnet Without Audit",
+    severity: "high",
+    pattern: /mainnet[\s\S]{0,100}(?:deploy|launch)[\s\S]{0,100}(?!audit|reviewed)/,
+    description: "Mainnet deployment without audit reference.",
+    recommendation: "Complete security audit before mainnet launch."
+  }
+];
+var MISC_ADVANCED_PATTERNS = [
+  {
+    id: "SOL3871",
+    name: "Misc - Timestamp Manipulation",
+    severity: "medium",
+    pattern: /(?:clock|unix_timestamp)[\s\S]{0,100}(?!slot_based|tolerance)/,
+    description: "Timestamp used without manipulation protection.",
+    recommendation: "Use slot-based timing or add timestamp tolerance."
+  },
+  {
+    id: "SOL3872",
+    name: "Misc - Slot-Based Randomness (Predictable)",
+    severity: "high",
+    pattern: /(?:random|seed)[\s\S]{0,50}(?:slot|hash)[\s\S]{0,100}(?!vrf|commit_reveal)/,
+    description: "Slot-based randomness is predictable.",
+    recommendation: "Use VRF or commit-reveal for randomness."
+  },
+  {
+    id: "SOL3873",
+    name: "Misc - CPI Return Data Spoofing",
+    severity: "high",
+    pattern: /(?:cpi|invoke)[\s\S]{0,100}(?:return|result)[\s\S]{0,100}(?!verify_program)/,
+    description: "CPI return data accepted without program verification.",
+    recommendation: "Verify program ID before trusting return data."
+  },
+  {
+    id: "SOL3874",
+    name: "Misc - Close Account Balance Drain",
+    severity: "high",
+    pattern: /close[\s\S]{0,100}(?:account|pda)[\s\S]{0,100}(?!destination_check)/,
+    description: "Account close without destination verification.",
+    recommendation: "Verify close destination is expected recipient."
+  },
+  {
+    id: "SOL3875",
+    name: "Misc - Rent Exemption Threshold",
+    severity: "medium",
+    pattern: /(?:lamports|balance)[\s\S]{0,100}(?!>=.*rent_exempt|minimum_balance)/,
+    description: "Balance check without rent exemption consideration.",
+    recommendation: "Account for rent-exempt minimum in balance checks."
+  }
+];
+var BATCH_77_PATTERNS = [
+  ...ARXIV_ACADEMIC_PATTERNS,
+  ...SEALEVEL_ATTACKS,
+  ...NEODYME_PATTERNS,
+  ...OTTERSEC_PATTERNS,
+  ...KUDELSKI_PATTERNS,
+  ...ZELLIC_ANCHOR_PATTERNS,
+  ...SEC3_AUDIT_PATTERNS,
+  ...TRAIL_OF_BITS_PATTERNS,
+  ...EXPLOIT_DEEP_PATTERNS,
+  ...PROTOCOL_SPECIFIC,
+  ...MEV_INFRASTRUCTURE_PATTERNS,
+  ...TESTING_DEPLOYMENT_PATTERNS,
+  ...MISC_ADVANCED_PATTERNS
+];
+function scanBatch77(input) {
+  const findings = [];
+  const content = input.content;
+  const filePath = input.filePath || "unknown";
+  for (const pattern of BATCH_77_PATTERNS) {
+    const match = pattern.pattern.exec(content);
+    if (match) {
+      const lines = content.substring(0, match.index).split("\n");
+      const line = lines.length;
+      findings.push({
+        id: pattern.id,
+        name: pattern.name,
+        severity: pattern.severity,
+        description: pattern.description,
+        recommendation: pattern.recommendation,
+        file: filePath,
+        line,
+        snippet: match[0].substring(0, 200)
+      });
+    }
+  }
+  return findings;
+}
+var BATCH_77_COUNT = BATCH_77_PATTERNS.length;
+
+// src/patterns/solana-batched-patterns-78.ts
+var STEP_FINANCE_PATTERNS = [
+  {
+    id: "SOL3876",
+    name: "Step Finance - Treasury Wallet Without Multisig",
+    severity: "critical",
+    pattern: /(?:treasury|protocol_wallet|reserve)[\s\S]{0,100}(?:Signer|authority)[\s\S]{0,50}(?!multisig|threshold|quorum)/i,
+    description: "Treasury wallet controlled by single signer. Step Finance lost $30M+ when treasury keys were compromised.",
+    recommendation: "Implement multisig (2-of-3 or higher) for all treasury operations. Use Squads or similar."
+  },
+  {
+    id: "SOL3877",
+    name: "Step Finance - Executive Key Exposure",
+    severity: "critical",
+    pattern: /(?:admin|owner|authority)[\s\S]{0,80}(?:single|solo|direct)[\s\S]{0,50}(?:transfer|withdraw|drain)/i,
+    description: "Single executive key controls critical operations. Step Finance breach involved executive wallet compromise.",
+    recommendation: "Distribute authority across multiple keys with threshold requirements."
+  },
+  {
+    id: "SOL3878",
+    name: "Step Finance - Commission Fund Drain Risk",
+    severity: "high",
+    pattern: /(?:commission|fee|revenue)[\s\S]{0,80}(?:withdraw|transfer|claim)[\s\S]{0,50}(?!timelock|delay|multisig)/i,
+    description: "Commission funds withdrawable without delay. Step Finance treasury included accumulated fees.",
+    recommendation: "Implement withdrawal delays and multisig for protocol fees."
+  },
+  {
+    id: "SOL3879",
+    name: "Step Finance - Monero Conversion Risk",
+    severity: "high",
+    pattern: /(?:bridge|swap|convert)[\s\S]{0,100}(?:cross.?chain|external|off.?chain)/i,
+    description: "Stolen funds were rapidly converted to Monero for obfuscation. Consider tracking mechanisms.",
+    recommendation: "Implement large transfer delays and circuit breakers for suspicious conversion patterns."
+  },
+  {
+    id: "SOL3880",
+    name: "Step Finance - STEP Token Price Impact",
+    severity: "medium",
+    pattern: /(?:token|native)[\s\S]{0,80}(?:price|value)[\s\S]{0,50}(?:treasury|protocol)/i,
+    description: "Treasury breach caused STEP token to crater. Protocol token should have protective mechanisms.",
+    recommendation: "Implement buyback mechanisms and treasury diversification."
+  },
+  {
+    id: "SOL3881",
+    name: "Step Finance - Hot Wallet Authority Pattern",
+    severity: "critical",
+    pattern: /(?:hot.?wallet|operational|active)[\s\S]{0,80}(?:authority|admin|owner)[\s\S]{0,50}(?:treasury|reserve)/i,
+    description: "Hot wallet has authority over treasury funds. Step Finance pattern of executive key compromise.",
+    recommendation: "Cold storage for treasury with hardware wallet multisig."
+  },
+  {
+    id: "SOL3882",
+    name: "Step Finance - Missing Withdrawal Limits",
+    severity: "high",
+    pattern: /(?:withdraw|transfer|drain)[\s\S]{0,100}amount[\s\S]{0,50}(?!max|limit|cap|threshold)/i,
+    description: "Unlimited withdrawal amounts possible. Attackers drained 261,854 SOL (~$30M) in single operation.",
+    recommendation: "Implement daily/weekly withdrawal limits with escalating approval requirements."
+  },
+  {
+    id: "SOL3883",
+    name: "Step Finance - No Emergency Pause",
+    severity: "high",
+    pattern: /(?:treasury|withdraw|transfer)[\s\S]{0,200}(?!pause|freeze|halt|emergency)/i,
+    description: "No emergency pause mechanism for treasury operations.",
+    recommendation: "Implement emergency pause controlled by security council."
+  },
+  {
+    id: "SOL3884",
+    name: "Step Finance - Missing Anomaly Detection",
+    severity: "medium",
+    pattern: /(?:treasury|protocol|reserve)[\s\S]{0,150}(?!monitor|alert|detect|anomaly)/i,
+    description: "No on-chain anomaly detection for treasury operations.",
+    recommendation: "Implement transaction monitoring and automated alerts for unusual patterns."
+  },
+  {
+    id: "SOL3885",
+    name: "Step Finance - Destination Validation Missing",
+    severity: "high",
+    pattern: /(?:withdraw|transfer)[\s\S]{0,100}(?:destination|recipient|to)[\s\S]{0,50}(?!whitelist|allowlist|validate)/i,
+    description: "No destination validation for large transfers. Funds went to attacker-controlled addresses.",
+    recommendation: "Implement address whitelisting for treasury withdrawals."
+  },
+  // ============================================================================
+  // DEV.TO DEEP DIVE - INTEGER OVERFLOW/UNDERFLOW (Feb 2026)
+  // ============================================================================
+  {
+    id: "SOL3886",
+    name: "DEV.to #8 - Fee Calculation Overflow",
+    severity: "critical",
+    pattern: /(?:fee|commission|tax)[\s\S]{0,30}\*[\s\S]{0,20}(?:amount|balance|value)/i,
+    description: "Fee multiplication without overflow protection. Integer overflow can zero out fees.",
+    recommendation: "Use checked_mul or saturating_mul for all fee calculations."
+  },
+  {
+    id: "SOL3887",
+    name: "DEV.to #8 - Balance Subtraction Underflow",
+    severity: "critical",
+    pattern: /balance[\s\S]{0,20}-[\s\S]{0,20}(?:amount|withdrawal|transfer)[\s\S]{0,30}(?!checked|saturating)/i,
+    description: "Balance subtraction without underflow check can wrap to max u64.",
+    recommendation: "Use checked_sub for all balance decrements."
+  },
+  {
+    id: "SOL3888",
+    name: "DEV.to #8 - Token Supply Overflow",
+    severity: "critical",
+    pattern: /(?:supply|total_minted)[\s\S]{0,20}\+[\s\S]{0,20}(?:mint_amount|new_tokens)[\s\S]{0,30}(?!checked|saturating)/i,
+    description: "Token supply addition without overflow check.",
+    recommendation: "Use checked_add for supply changes with MAX_SUPPLY validation."
+  },
+  {
+    id: "SOL3889",
+    name: "DEV.to #8 - i32 Timestamp Year 2038",
+    severity: "medium",
+    pattern: /(?:timestamp|time|date)[\s\S]{0,30}i32/i,
+    description: "Using i32 for timestamps will overflow on January 19, 2038.",
+    recommendation: "Use i64 or u64 for all timestamp values."
+  },
+  {
+    id: "SOL3890",
+    name: "DEV.to #8 - Price Calculation Overflow",
+    severity: "critical",
+    pattern: /(?:price|rate|exchange)[\s\S]{0,30}\*[\s\S]{0,20}(?:amount|quantity)[\s\S]{0,30}(?!u128|checked|saturating)/i,
+    description: "Price * amount can easily overflow u64. Use u128 for intermediate calculations.",
+    recommendation: "Cast to u128 for multiplication, then validate result fits in u64."
+  },
+  // ============================================================================
+  // DEV.TO DEEP DIVE - DUPLICATE MUTABLE ACCOUNTS (#10)
+  // ============================================================================
+  {
+    id: "SOL3891",
+    name: "DEV.to #10 - Duplicate Mutable Account Risk",
+    severity: "critical",
+    pattern: /(?:transfer|move)[\s\S]{0,100}(?:from|source)[\s\S]{0,50}(?:to|destination)[\s\S]{0,30}(?!key.*!=|!=.*key)/i,
+    description: "Transfer without checking source != destination. Can double balance via self-transfer.",
+    recommendation: "Always validate from_account.key() != to_account.key()."
+  },
+  {
+    id: "SOL3892",
+    name: "DEV.to #10 - Self-Reference Account Attack",
+    severity: "critical",
+    pattern: /(?:debit|subtract)[\s\S]{0,50}(?:credit|add)[\s\S]{0,100}(?!same|duplicate|!=)/i,
+    description: "Debit and credit operations can be applied to same account, creating money.",
+    recommendation: "Check all account pairs for uniqueness before operations."
+  },
+  {
+    id: "SOL3893",
+    name: "DEV.to #10 - Anchor Duplicate Account Check Missing",
+    severity: "high",
+    pattern: /#\[account\([\s\S]{0,100}mut[\s\S]{0,100}(?!constraint.*!=)/i,
+    description: "Mutable accounts without constraint checking uniqueness.",
+    recommendation: "Add constraint = from.key() != to.key() for account pairs."
+  },
+  // ============================================================================
+  // DEV.TO DEEP DIVE - CLOSE ACCOUNT WITHOUT ZEROING (#9)
+  // ============================================================================
+  {
+    id: "SOL3894",
+    name: "DEV.to #9 - Close Account Data Not Zeroed",
+    severity: "critical",
+    pattern: /(?:close|lamports.*=.*0)[\s\S]{0,100}(?!data.*=.*0|zero|clear|memset)/i,
+    description: "Closing account without zeroing data allows resurrection with stale data.",
+    recommendation: "Zero all account data bytes before close. Use Anchor close constraint."
+  },
+  {
+    id: "SOL3895",
+    name: "DEV.to #9 - Close Without Discriminator Clear",
+    severity: "critical",
+    pattern: /(?:close|destroy)[\s\S]{0,80}(?!discriminator.*0|disc.*clear)/i,
+    description: "Discriminator not cleared on close. Account can be reopened with same type.",
+    recommendation: "Set discriminator to zero or CLOSED marker on close."
+  },
+  {
+    id: "SOL3896",
+    name: "DEV.to #9 - Rent Siphoning Attack",
+    severity: "high",
+    pattern: /close[\s\S]{0,80}(?:lamports|rent)[\s\S]{0,50}(?!minimum|exempt|check)/i,
+    description: "Rent can be drained from account before close by making it non-exempt.",
+    recommendation: "Verify rent exemption before closing to recover full lamports."
+  },
+  {
+    id: "SOL3897",
+    name: "DEV.to #9 - Close Account Resurrection",
+    severity: "critical",
+    pattern: /(?:close|destroy)[\s\S]{0,100}(?:same.*slot|block|transaction)/i,
+    description: "Closed account can be resurrected within same transaction block.",
+    recommendation: "Implement close account cooldown or permanent closure markers."
+  },
+  // ============================================================================
+  // NOONES P2P BRIDGE EXPLOIT ($8M, Jan 2025)
+  // ============================================================================
+  {
+    id: "SOL3898",
+    name: "NoOnes - P2P Bridge Authentication Bypass",
+    severity: "critical",
+    pattern: /(?:bridge|cross.?chain|p2p)[\s\S]{0,100}(?:transfer|withdraw)[\s\S]{0,50}(?!verify|auth|sig)/i,
+    description: "P2P bridge without proper authentication. NoOnes lost $8M across multiple chains.",
+    recommendation: "Implement multi-party verification for all bridge operations."
+  },
+  {
+    id: "SOL3899",
+    name: "NoOnes - Cross-Chain Message Replay",
+    severity: "critical",
+    pattern: /(?:message|payload)[\s\S]{0,80}(?:bridge|relay)[\s\S]{0,50}(?!nonce|sequence|unique)/i,
+    description: "Cross-chain messages can be replayed. NoOnes exploit involved replay attacks.",
+    recommendation: "Include unique nonce or sequence number in all bridge messages."
+  },
+  {
+    id: "SOL3900",
+    name: "NoOnes - Multi-Chain Coordination Failure",
+    severity: "high",
+    pattern: /(?:multi.?chain|cross.?chain)[\s\S]{0,100}(?:transfer|bridge)[\s\S]{0,50}(?!finality|confirm)/i,
+    description: "Multi-chain operations without proper finality checks.",
+    recommendation: "Wait for source chain finality before executing destination chain operations."
+  },
+  // ============================================================================
+  // UPBIT HOT WALLET PATTERN ($36M, Nov 2025)
+  // ============================================================================
+  {
+    id: "SOL3901",
+    name: "Upbit - Exchange Hot Wallet Isolation Failure",
+    severity: "critical",
+    pattern: /(?:hot.?wallet|exchange)[\s\S]{0,100}(?:deposit|withdraw)[\s\S]{0,50}(?!hsm|isolated|air.?gap)/i,
+    description: "Exchange hot wallet without HSM isolation. Upbit lost $36M from hot wallet breach.",
+    recommendation: "Use HSM for hot wallet keys with strict access controls."
+  },
+  {
+    id: "SOL3902",
+    name: "Upbit - Deposit Address Validation Missing",
+    severity: "high",
+    pattern: /(?:deposit|receive)[\s\S]{0,80}(?:address|account)[\s\S]{0,50}(?!validate|verify|whitelist)/i,
+    description: "Deposit addresses not properly validated. Can accept attacker-controlled addresses.",
+    recommendation: "Validate all deposit addresses against known user accounts."
+  },
+  {
+    id: "SOL3903",
+    name: "Upbit - Withdrawal API Abuse",
+    severity: "critical",
+    pattern: /(?:withdraw|api)[\s\S]{0,100}(?!rate.?limit|throttle|cooldown)/i,
+    description: "Withdrawal API without rate limiting. Enables rapid fund extraction.",
+    recommendation: "Implement rate limits, velocity checks, and cooling periods for withdrawals."
+  },
+  // ============================================================================
+  // DECEMBER 2025 SOLANA CONSENSUS VULNERABILITIES
+  // ============================================================================
+  {
+    id: "SOL3904",
+    name: "Consensus Vuln - Network Stalling Attack Vector",
+    severity: "critical",
+    pattern: /(?:consensus|validator|vote)[\s\S]{0,100}(?:block|slot)[\s\S]{0,50}(?:stall|halt|freeze)/i,
+    description: "December 2025 disclosed consensus vulnerabilities could stall network.",
+    recommendation: "Update to patched Solana client versions (Anza/Firedancer/Jito coordinated fix)."
+  },
+  {
+    id: "SOL3905",
+    name: "Consensus Vuln - Validator Concentration Risk",
+    severity: "high",
+    pattern: /(?:validator|stake)[\s\S]{0,100}(?:concentration|centralize|single)/i,
+    description: "High validator concentration (Jito 88%) amplifies consensus vulnerabilities.",
+    recommendation: "Monitor validator client diversity and stake distribution."
+  },
+  // ============================================================================
+  // TRUST WALLET CHROME EXTENSION BREACH ($7M)
+  // ============================================================================
+  {
+    id: "SOL3906",
+    name: "Trust Wallet - Analytics Library Key Harvesting",
+    severity: "critical",
+    pattern: /(?:analytics|posthog|telemetry)[\s\S]{0,100}(?:key|private|seed|secret)/i,
+    description: "Analytics libraries can harvest keys. Trust Wallet lost $7M via posthog-js vulnerability.",
+    recommendation: "Never pass sensitive data to analytics. Audit all third-party dependencies."
+  },
+  {
+    id: "SOL3907",
+    name: "Trust Wallet - Third-Party Library Exposure",
+    severity: "high",
+    pattern: /(?:import|require|from)[\s\S]{0,50}(?:analytics|tracking|telemetry)/i,
+    description: "Third-party analytics libraries are a supply chain attack vector.",
+    recommendation: "Minimize third-party dependencies. Use CSP to restrict data exfiltration."
+  },
+  {
+    id: "SOL3908",
+    name: "Trust Wallet - Browser Extension Security",
+    severity: "high",
+    pattern: /(?:extension|browser|chrome)[\s\S]{0,100}(?:storage|key|private)/i,
+    description: "Browser extension key storage vulnerable to malicious extensions or XSS.",
+    recommendation: "Use encrypted storage with user-derived keys. Never store raw secrets."
+  },
+  // ============================================================================
+  // CERTIK JANUARY 2026 - $400M+ LOSSES
+  // ============================================================================
+  {
+    id: "SOL3909",
+    name: "CertiK 2026 - Private Key Logging",
+    severity: "critical",
+    pattern: /(?:log|print|debug|console)[\s\S]{0,50}(?:key|secret|private|seed)/i,
+    description: "Private keys logged to output. CertiK reports key exposure as top vulnerability.",
+    recommendation: "Never log sensitive data. Use dedicated secrets management."
+  },
+  {
+    id: "SOL3910",
+    name: "CertiK 2026 - Exit Scam Function",
+    severity: "critical",
+    pattern: /(?:drain|rug|emergency_withdraw|owner_withdraw)[\s\S]{0,50}(?:all|entire|full)/i,
+    description: "Function to drain all funds. Common rug pull indicator.",
+    recommendation: "Remove owner-only drain functions. Use timelock for emergency operations."
+  },
+  {
+    id: "SOL3911",
+    name: "CertiK 2026 - Flash Loan Without Guard",
+    severity: "high",
+    pattern: /(?:flash.?loan|borrow.?return)[\s\S]{0,100}(?!reentrancy|guard|lock)/i,
+    description: "Flash loan implementation without reentrancy protection.",
+    recommendation: "Implement reentrancy guards for all flash loan functions."
+  },
+  {
+    id: "SOL3912",
+    name: "CertiK 2026 - Single Oracle Dependency",
+    severity: "high",
+    pattern: /(?:oracle|price.?feed)[\s\S]{0,100}(?!fallback|backup|aggregate|multiple)/i,
+    description: "Single oracle without fallback. Oracle manipulation is #1 DeFi attack vector.",
+    recommendation: "Use multiple oracle sources with median or weighted aggregation."
+  },
+  {
+    id: "SOL3913",
+    name: "CertiK 2026 - Protocol Without Insurance",
+    severity: "medium",
+    pattern: /(?:protocol|defi|lending)[\s\S]{0,200}(?!insurance|reserve|coverage)/i,
+    description: "Protocol without insurance fund for black swan events.",
+    recommendation: "Maintain insurance reserve of 5-10% of TVL."
+  },
+  // ============================================================================
+  // ADVANCED ACCOUNT VALIDATION (DEV.to Deep Patterns)
+  // ============================================================================
+  {
+    id: "SOL3914",
+    name: "Advanced - AccountInfo Without Framework",
+    severity: "high",
+    pattern: /AccountInfo[\s\S]{0,100}(?!Account<|Signer<|UncheckedAccount)/i,
+    description: "Raw AccountInfo usage without Anchor type wrappers increases vulnerability surface.",
+    recommendation: "Use Anchor Account<T> types for automatic validation."
+  },
+  {
+    id: "SOL3915",
+    name: "Advanced - Manual Deserialization Risk",
+    severity: "high",
+    pattern: /(?:try_from_slice|deserialize|borsh::from)[\s\S]{0,80}(?!discriminator|check)/i,
+    description: "Manual deserialization without discriminator verification.",
+    recommendation: "Always check discriminator bytes before deserializing account data."
+  },
+  {
+    id: "SOL3916",
+    name: "Advanced - UncheckedAccount Without Doc",
+    severity: "medium",
+    pattern: /UncheckedAccount[\s\S]{0,30}(?!CHECK:|SAFETY:)/i,
+    description: "UncheckedAccount without safety documentation.",
+    recommendation: "Add /// CHECK: comment explaining why account is safe to use unchecked."
+  },
+  {
+    id: "SOL3917",
+    name: "Advanced - Shared Data Layout Attack",
+    severity: "critical",
+    pattern: /struct[\s\S]{0,200}pub[\s\S]{0,30}:[\s\S]{0,30}u64[\s\S]{0,100}pub[\s\S]{0,30}:[\s\S]{0,30}Pubkey/i,
+    description: "Struct layout similar to other types enables type cosplay attacks.",
+    recommendation: "Use unique discriminators and validate account type before use."
+  },
+  {
+    id: "SOL3918",
+    name: "Advanced - Zero Discriminator Check",
+    severity: "critical",
+    pattern: /discriminator[\s\S]{0,30}==[\s\S]{0,20}\[0[\s\S]{0,20}\]/i,
+    description: "Zero discriminator check allows uninitialized accounts to pass validation.",
+    recommendation: "Check for non-zero discriminator and match expected type."
+  },
+  // ============================================================================
+  // PDA SECURITY (DEV.to #5 Deep Patterns)
+  // ============================================================================
+  {
+    id: "SOL3919",
+    name: "PDA - create_program_address Without find",
+    severity: "high",
+    pattern: /create_program_address[\s\S]{0,100}(?!find_program_address)/i,
+    description: "Using create_program_address directly risks non-canonical bumps.",
+    recommendation: "Always use find_program_address to get canonical bump."
+  },
+  {
+    id: "SOL3920",
+    name: "PDA - User-Controlled Seeds",
+    severity: "high",
+    pattern: /seeds[\s\S]{0,50}(?:user|input|param)[\s\S]{0,30}(?:\.as_ref|\.to_bytes)/i,
+    description: "User-controlled values in PDA seeds can create collisions or shadow PDAs.",
+    recommendation: "Validate user inputs used in seeds. Use fixed prefixes."
+  },
+  {
+    id: "SOL3921",
+    name: "PDA - Bump Not Stored",
+    severity: "medium",
+    pattern: /find_program_address[\s\S]{0,100}(?!bump[\s\S]{0,20}=|store.*bump)/i,
+    description: "PDA bump not stored for later verification.",
+    recommendation: "Store canonical bump in account data for subsequent validations."
+  },
+  {
+    id: "SOL3922",
+    name: "PDA - Shadow PDA Creation Risk",
+    severity: "high",
+    pattern: /seeds[\s\S]{0,80}bump[\s\S]{0,50}(?:user|param|input)/i,
+    description: "User-provided bump allows creation of shadow PDAs at different addresses.",
+    recommendation: "Always derive bump using find_program_address, never accept from input."
+  },
+  // ============================================================================
+  // CPI SECURITY (DEV.to #7 Deep Patterns)
+  // ============================================================================
+  {
+    id: "SOL3923",
+    name: "CPI - Unchecked Target Program",
+    severity: "critical",
+    pattern: /invoke(?:_signed)?[\s\S]{0,80}(?:program|target)[\s\S]{0,50}(?!spl_token|token_program|system_program)/i,
+    description: "CPI to potentially user-controlled program ID.",
+    recommendation: "Hardcode trusted program IDs or validate against whitelist."
+  },
+  {
+    id: "SOL3924",
+    name: "CPI - Program ID From Account",
+    severity: "critical",
+    pattern: /(?:program|target)[\s\S]{0,30}\.key[\s\S]{0,50}invoke/i,
+    description: "CPI program ID read from account allows arbitrary program invocation.",
+    recommendation: "Use Program<T> type to verify program ID matches expected."
+  },
+  {
+    id: "SOL3925",
+    name: "CPI - Token Transfer Without SPL Verify",
+    severity: "critical",
+    pattern: /transfer[\s\S]{0,100}invoke[\s\S]{0,50}(?!spl_token::id|token_program::check)/i,
+    description: "Token transfer CPI without verifying SPL Token program ID.",
+    recommendation: "Always verify token_program.key() == spl_token::id() before CPI."
+  },
+  {
+    id: "SOL3926",
+    name: "CPI - Seeds With User Data",
+    severity: "high",
+    pattern: /invoke_signed[\s\S]{0,100}seeds[\s\S]{0,50}(?:user|input|param)/i,
+    description: "CPI seeds include user-controlled data, enabling seed manipulation.",
+    recommendation: "Validate all user inputs used in CPI seeds."
+  },
+  {
+    id: "SOL3927",
+    name: "CPI - Account Order Manipulation",
+    severity: "high",
+    pattern: /invoke[\s\S]{0,100}accounts[\s\S]{0,80}(?:vec!|&\[)[\s\S]{0,50}(?:input|user|param)/i,
+    description: "Account order in CPI can be manipulated if not validated.",
+    recommendation: "Validate account positions match expected program interface."
+  },
+  // ============================================================================
+  // REENTRANCY (DEV.to Deep Patterns)
+  // ============================================================================
+  {
+    id: "SOL3928",
+    name: "Reentrancy - State After CPI",
+    severity: "critical",
+    pattern: /invoke[\s\S]{0,150}(?:\.amount|\.balance|\.data)[\s\S]{0,30}=/i,
+    description: "State modified after CPI call is vulnerable to reentrancy.",
+    recommendation: "Update all state before CPI calls (checks-effects-interactions)."
+  },
+  {
+    id: "SOL3929",
+    name: "Reentrancy - Callback Without Guard",
+    severity: "critical",
+    pattern: /(?:callback|on_receive|after_transfer)[\s\S]{0,100}(?!reentrancy|guard|lock)/i,
+    description: "Callback function without reentrancy protection.",
+    recommendation: "Implement reentrancy guard using flag or mutex pattern."
+  },
+  {
+    id: "SOL3930",
+    name: "Reentrancy - Cross-Instruction Leak",
+    severity: "high",
+    pattern: /(?:instruction|ix)[\s\S]{0,100}(?:state|storage)[\s\S]{0,50}(?!reset|clear|finalize)/i,
+    description: "State not finalized between instructions allows cross-instruction attacks.",
+    recommendation: "Finalize all state changes at instruction end."
+  },
+  {
+    id: "SOL3931",
+    name: "Reentrancy - CPI Depth Exhaustion",
+    severity: "medium",
+    pattern: /invoke[\s\S]{0,80}invoke[\s\S]{0,80}invoke/i,
+    description: "Deep CPI chains can exceed stack depth (4 levels).",
+    recommendation: "Limit CPI depth and handle StackExhausted errors."
+  },
+  // ============================================================================
+  // PHISHING & SOCIAL ENGINEERING (Jan 2026)
+  // ============================================================================
+  {
+    id: "SOL3932",
+    name: "Phishing - SetAuthority Without Confirmation",
+    severity: "critical",
+    pattern: /(?:set_authority|transfer_authority|change_owner)[\s\S]{0,100}(?!confirm|two.?step|delay)/i,
+    description: "Authority change without two-step confirmation. Top phishing vector in Jan 2026.",
+    recommendation: "Implement two-step authority transfer with timelock."
+  },
+  {
+    id: "SOL3933",
+    name: "Phishing - Silent Ownership Transfer",
+    severity: "critical",
+    pattern: /(?:owner|authority)[\s\S]{0,50}=[\s\S]{0,50}(?:new|input|param)[\s\S]{0,50}(?!event|emit|log)/i,
+    description: "Ownership transfer without event emission hides malicious changes.",
+    recommendation: "Emit events for all authority/ownership changes."
+  },
+  {
+    id: "SOL3934",
+    name: "Phishing - Memo-Based Attack Vector",
+    severity: "medium",
+    pattern: /(?:memo|message|note)[\s\S]{0,80}(?:instruction|transaction)/i,
+    description: "Memo fields used for phishing. Users see legitimate-looking messages.",
+    recommendation: "Warn users not to trust memo contents for authorization."
+  },
+  {
+    id: "SOL3935",
+    name: "Phishing - Fake Airdrop Claim",
+    severity: "high",
+    pattern: /(?:airdrop|claim|reward)[\s\S]{0,100}(?:transfer|approve|delegate)/i,
+    description: "Airdrop claims that secretly approve token access.",
+    recommendation: "Never bundle approval operations with claims."
+  },
+  {
+    id: "SOL3936",
+    name: "Phishing - Unlimited Token Approval",
+    severity: "critical",
+    pattern: /(?:approve|delegate)[\s\S]{0,50}(?:u64::MAX|MAX_AMOUNT|unlimited)/i,
+    description: "Unlimited token approval enables future wallet drain.",
+    recommendation: "Request only necessary approval amounts with expiration."
+  },
+  {
+    id: "SOL3937",
+    name: "Phishing - Session Key Without Expiry",
+    severity: "high",
+    pattern: /(?:session|delegate|permission)[\s\S]{0,80}(?!expiry|expires|valid_until|ttl)/i,
+    description: "Session keys without expiration remain perpetually valid.",
+    recommendation: "All delegated permissions must have expiration timestamps."
+  },
+  {
+    id: "SOL3938",
+    name: "Phishing - Simulation Bypass via Owner",
+    severity: "critical",
+    pattern: /(?:simulate|preview)[\s\S]{0,100}(?:owner|authority)[\s\S]{0,50}(?:change|modify)/i,
+    description: "Owner field changes bypass transaction simulation protection.",
+    recommendation: "Simulation must include full ownership transfer detection."
+  },
+  // ============================================================================
+  // ORACLE SECURITY DEEP PATTERNS
+  // ============================================================================
+  {
+    id: "SOL3939",
+    name: "Oracle - Solend Attack Pattern ($1.26M)",
+    severity: "critical",
+    pattern: /(?:oracle|price)[\s\S]{0,100}(?:single|one)[\s\S]{0,50}(?:pool|source|feed)/i,
+    description: "Single oracle source like Solend attack. USDH priced at $8.80 instead of $1.",
+    recommendation: "Use multiple price sources with deviation checks."
+  },
+  {
+    id: "SOL3940",
+    name: "Oracle - Staleness Without Check",
+    severity: "high",
+    pattern: /(?:price|oracle)[\s\S]{0,100}(?!staleness|timestamp|age|fresh)/i,
+    description: "Oracle data used without staleness validation.",
+    recommendation: "Verify oracle timestamp within acceptable freshness window."
+  },
+  {
+    id: "SOL3941",
+    name: "Oracle - Confidence Interval Ignored",
+    severity: "high",
+    pattern: /(?:pyth|oracle)[\s\S]{0,80}(?:price|value)[\s\S]{0,50}(?!conf|confidence|deviation)/i,
+    description: "Oracle confidence interval not checked. Wide spreads indicate manipulation.",
+    recommendation: "Reject prices where confidence interval exceeds threshold."
+  },
+  {
+    id: "SOL3942",
+    name: "Oracle - TWAP Window Too Short",
+    severity: "high",
+    pattern: /(?:twap|time.?weighted)[\s\S]{0,50}(?:window|period)[\s\S]{0,30}(?:60|120|300)/i,
+    description: "TWAP window under 10 minutes susceptible to flash manipulation.",
+    recommendation: "Use minimum 30-minute TWAP for price-sensitive operations."
+  },
+  {
+    id: "SOL3943",
+    name: "Oracle - Flash Loan Price Attack",
+    severity: "critical",
+    pattern: /(?:flash.?loan|borrow)[\s\S]{0,100}(?:price|oracle|value)/i,
+    description: "Price read during flash loan can be manipulated within single transaction.",
+    recommendation: "Use TWAP or block-delayed prices for flash-loan-sensitive operations."
+  },
+  // ============================================================================
+  // LENDING PROTOCOL SECURITY
+  // ============================================================================
+  {
+    id: "SOL3944",
+    name: "Lending - Health Factor Bypass",
+    severity: "critical",
+    pattern: /(?:health|collateral)[\s\S]{0,80}(?:factor|ratio)[\s\S]{0,50}(?!check|require|assert)/i,
+    description: "Health factor not properly validated before borrow/withdraw.",
+    recommendation: "Require health_factor > 1.0 for all position changes."
+  },
+  {
+    id: "SOL3945",
+    name: "Lending - Liquidation Bonus Inflation",
+    severity: "high",
+    pattern: /(?:liquidation|bonus|incentive)[\s\S]{0,80}(?!max|cap|limit)/i,
+    description: "Unbounded liquidation bonus can be exploited. Solend pattern.",
+    recommendation: "Cap liquidation bonus at reasonable percentage (5-10%)."
+  },
+  {
+    id: "SOL3946",
+    name: "Lending - Interest Rate Spike",
+    severity: "high",
+    pattern: /(?:interest|rate|apy)[\s\S]{0,80}(?:utilization|curve)[\s\S]{0,50}(?!max|cap|ceiling)/i,
+    description: "Unbounded interest rate can spike to extreme values.",
+    recommendation: "Implement interest rate ceiling and gradual adjustment."
+  },
+  {
+    id: "SOL3947",
+    name: "Lending - Bad Debt Socialization",
+    severity: "high",
+    pattern: /(?:bad.?debt|underwater|insolvent)[\s\S]{0,100}(?!insurance|reserve|fund)/i,
+    description: "No mechanism to handle bad debt can leave protocol insolvent.",
+    recommendation: "Maintain insurance fund and implement bad debt socialization."
+  },
+  {
+    id: "SOL3948",
+    name: "Lending - Borrow Exceeds Collateral",
+    severity: "critical",
+    pattern: /(?:borrow|debt)[\s\S]{0,80}(?!<=|<|collateral|max)/i,
+    description: "Borrow amount not properly capped by collateral value.",
+    recommendation: "Enforce borrow_amount <= collateral_value * LTV."
+  },
+  // ============================================================================
+  // AMM/DEX SECURITY
+  // ============================================================================
+  {
+    id: "SOL3949",
+    name: "AMM - Constant Product Violation",
+    severity: "critical",
+    pattern: /(?:swap|trade)[\s\S]{0,100}(?:reserve|pool)[\s\S]{0,50}(?!invariant|k.*check|product)/i,
+    description: "AMM swap without constant product (k) verification.",
+    recommendation: "Verify reserve_a * reserve_b >= k after every swap."
+  },
+  {
+    id: "SOL3950",
+    name: "AMM - LP Token Inflation Attack",
+    severity: "critical",
+    pattern: /(?:mint|lp.?token)[\s\S]{0,100}(?:first|initial)[\s\S]{0,50}(?!minimum|burn|lock)/i,
+    description: "First depositor can inflate LP tokens. Classic vault attack.",
+    recommendation: "Burn minimum LP tokens on first deposit or use dead shares."
+  },
+  {
+    id: "SOL3951",
+    name: "AMM - Sandwich Attack Vector",
+    severity: "high",
+    pattern: /(?:swap|trade)[\s\S]{0,100}(?!slippage|min.?out|deadline)/i,
+    description: "Swap without slippage protection enables sandwich attacks.",
+    recommendation: "Require minimum output amount and deadline for all swaps."
+  },
+  {
+    id: "SOL3952",
+    name: "AMM - Reserve Manipulation",
+    severity: "critical",
+    pattern: /(?:reserve|pool.?balance)[\s\S]{0,50}=[\s\S]{0,50}(?!sync|update.?balance)/i,
+    description: "Direct reserve manipulation without sync to actual balances.",
+    recommendation: "Sync reserves from actual token balances, not cached values."
+  },
+  // ============================================================================
+  // GOVERNANCE SECURITY
+  // ============================================================================
+  {
+    id: "SOL3953",
+    name: "Governance - Flash Vote Attack",
+    severity: "critical",
+    pattern: /(?:vote|proposal)[\s\S]{0,100}(?:power|weight)[\s\S]{0,50}(?!snapshot|lock|delay)/i,
+    description: "Voting power not snapshotted allows flash loan governance attacks.",
+    recommendation: "Snapshot voting power at proposal creation."
+  },
+  {
+    id: "SOL3954",
+    name: "Governance - No Execution Delay",
+    severity: "high",
+    pattern: /(?:proposal|governance)[\s\S]{0,100}(?:execute|apply)[\s\S]{0,50}(?!delay|timelock|queue)/i,
+    description: "Proposals execute immediately without delay for review.",
+    recommendation: "Implement 24-48 hour delay between approval and execution."
+  },
+  {
+    id: "SOL3955",
+    name: "Governance - Quorum Manipulation",
+    severity: "high",
+    pattern: /(?:quorum|threshold)[\s\S]{0,80}(?:total|supply)[\s\S]{0,50}(?!snapshot|fixed)/i,
+    description: "Quorum based on current supply can be manipulated via minting/burning.",
+    recommendation: "Use fixed or snapshotted quorum values."
+  },
+  {
+    id: "SOL3956",
+    name: "Governance - Audius Pattern ($6.1M)",
+    severity: "critical",
+    pattern: /(?:proposal|governance)[\s\S]{0,100}(?:create|submit)[\s\S]{0,50}(?!validate|verify)/i,
+    description: "Malicious proposals without validation. Audius lost $6.1M to governance hijack.",
+    recommendation: "Validate proposal data and require multi-sig for sensitive operations."
+  },
+  // ============================================================================
+  // TOKEN-2022 SECURITY
+  // ============================================================================
+  {
+    id: "SOL3957",
+    name: "Token-2022 - Transfer Hook Reentrancy",
+    severity: "critical",
+    pattern: /(?:transfer.?hook|on.?transfer)[\s\S]{0,100}(?!reentrancy|guard|lock)/i,
+    description: "Transfer hooks can be reentrant, executing arbitrary code mid-transfer.",
+    recommendation: "Implement reentrancy guards in transfer hook handlers."
+  },
+  {
+    id: "SOL3958",
+    name: "Token-2022 - Confidential Transfer Leak",
+    severity: "high",
+    pattern: /(?:confidential|private)[\s\S]{0,80}(?:transfer|amount)[\s\S]{0,50}(?!decrypt|reveal)/i,
+    description: "Confidential transfer amounts may leak through side channels.",
+    recommendation: "Audit confidential transfer implementation for timing/size leaks."
+  },
+  {
+    id: "SOL3959",
+    name: "Token-2022 - Transfer Fee Bypass",
+    severity: "high",
+    pattern: /(?:transfer.?fee|fee.?config)[\s\S]{0,100}(?!enforce|validate|require)/i,
+    description: "Transfer fees can be bypassed through approval-based transfers.",
+    recommendation: "Enforce fees on all transfer paths including approvals."
+  },
+  {
+    id: "SOL3960",
+    name: "Token-2022 - Interest Bearing Manipulation",
+    severity: "high",
+    pattern: /(?:interest|rebase|rate)[\s\S]{0,80}(?:update|change)[\s\S]{0,50}(?!admin|auth|timelock)/i,
+    description: "Interest rate changes without proper authorization.",
+    recommendation: "Require admin + timelock for interest rate modifications."
+  },
+  {
+    id: "SOL3961",
+    name: "Token-2022 - Permanent Delegate Abuse",
+    severity: "critical",
+    pattern: /(?:permanent|unlimited)[\s\S]{0,50}(?:delegate|approval)/i,
+    description: "Permanent delegate can drain tokens at any time.",
+    recommendation: "Avoid permanent delegates. Use time-limited approvals."
+  },
+  // ============================================================================
+  // INFRASTRUCTURE SECURITY
+  // ============================================================================
+  {
+    id: "SOL3962",
+    name: "Infra - Jito Client Concentration",
+    severity: "medium",
+    pattern: /(?:validator|client|node)[\s\S]{0,100}(?:jito|mev)/i,
+    description: "Jito client at 88% concentration. Single vulnerability affects entire network.",
+    recommendation: "Encourage client diversity in documentation and partnerships."
+  },
+  {
+    id: "SOL3963",
+    name: "Infra - RPC Provider Manipulation",
+    severity: "high",
+    pattern: /(?:rpc|provider|endpoint)[\s\S]{0,100}(?!validate|verify|multiple)/i,
+    description: "Single RPC provider can return manipulated data.",
+    recommendation: "Use multiple RPC providers with response validation."
+  },
+  {
+    id: "SOL3964",
+    name: "Infra - Address Lookup Table Poisoning",
+    severity: "high",
+    pattern: /(?:lookup.?table|alt|address.?table)[\s\S]{0,100}(?!verify|validate|check)/i,
+    description: "Lookup tables can be poisoned with malicious addresses.",
+    recommendation: "Validate all addresses from lookup tables before use."
+  },
+  {
+    id: "SOL3965",
+    name: "Infra - Priority Fee Front-Running",
+    severity: "medium",
+    pattern: /(?:priority|fee)[\s\S]{0,80}(?:set|compute)/i,
+    description: "Priority fee setting enables MEV extraction through front-running.",
+    recommendation: "Use private transaction submission or Jito bundles."
+  },
+  {
+    id: "SOL3966",
+    name: "Infra - Durable Nonce Replay",
+    severity: "high",
+    pattern: /(?:durable|nonce)[\s\S]{0,80}(?:advance|use)[\s\S]{0,50}(?!single|once|consume)/i,
+    description: "Durable nonce reuse enables transaction replay.",
+    recommendation: "Consume nonce in same transaction as signed operation."
+  },
+  // ============================================================================
+  // TESTING & DEPLOYMENT PATTERNS
+  // ============================================================================
+  {
+    id: "SOL3967",
+    name: "Deploy - Devnet Address in Mainnet",
+    severity: "critical",
+    pattern: /(?:devnet|testnet)[\s\S]{0,50}(?:address|pubkey|program)/i,
+    description: "Devnet addresses in mainnet code will fail or use wrong programs.",
+    recommendation: "Use environment-specific configuration for all addresses."
+  },
+  {
+    id: "SOL3968",
+    name: "Deploy - Debug Code in Production",
+    severity: "high",
+    pattern: /(?:#\[cfg\(debug|println!|dbg!|console\.log)/i,
+    description: "Debug code in production increases attack surface and compute costs.",
+    recommendation: "Remove all debug statements before mainnet deployment."
+  },
+  {
+    id: "SOL3969",
+    name: "Deploy - Upgrade Authority Active",
+    severity: "medium",
+    pattern: /(?:upgrade|authority)[\s\S]{0,80}(?:active|enabled|present)/i,
+    description: "Active upgrade authority can push malicious updates.",
+    recommendation: "Set upgrade authority to null for immutable programs."
+  },
+  {
+    id: "SOL3970",
+    name: "Deploy - Missing Audit",
+    severity: "high",
+    pattern: /(?:mainnet|production)[\s\S]{0,100}(?!audit|review|certik|ottersec|sec3)/i,
+    description: "Deployment to mainnet without security audit.",
+    recommendation: "Obtain professional security audit before mainnet launch."
+  },
+  // ============================================================================
+  // MISCELLANEOUS CRITICAL PATTERNS
+  // ============================================================================
+  {
+    id: "SOL3971",
+    name: "Misc - Slot-Based Randomness",
+    severity: "high",
+    pattern: /(?:random|seed)[\s\S]{0,50}(?:slot|clock|timestamp)/i,
+    description: "Slot/timestamp-based randomness is predictable by validators.",
+    recommendation: "Use VRF (Switchboard) or commit-reveal for randomness."
+  },
+  {
+    id: "SOL3972",
+    name: "Misc - CPI Return Data Spoofing",
+    severity: "high",
+    pattern: /(?:return.?data|get_return|sol_get_return)/i,
+    description: "CPI return data can be spoofed by malicious programs.",
+    recommendation: "Verify calling program ID matches expected before trusting return data."
+  },
+  {
+    id: "SOL3973",
+    name: "Misc - Close Account Balance Drain",
+    severity: "high",
+    pattern: /(?:close|lamports.*=.*0)[\s\S]{0,80}(?:destination|recipient)/i,
+    description: "Close account destination can be manipulated to drain lamports.",
+    recommendation: "Hardcode or validate close account destination."
+  },
+  {
+    id: "SOL3974",
+    name: "Misc - Rent Exemption Threshold",
+    severity: "medium",
+    pattern: /(?:rent|lamports)[\s\S]{0,80}(?!minimum|exempt|check)/i,
+    description: "Account below rent exemption will be garbage collected.",
+    recommendation: "Verify rent exemption before account creation."
+  },
+  {
+    id: "SOL3975",
+    name: "Misc - Compute Unit Limit Griefing",
+    severity: "medium",
+    pattern: /(?:compute|cu)[\s\S]{0,80}(?:limit|budget)[\s\S]{0,50}(?!set|configure)/i,
+    description: "Default compute limits may be insufficient for complex operations.",
+    recommendation: "Set explicit compute unit limits for all instructions."
+  }
+];
+var ALL_BATCH_78_PATTERNS = [
+  ...STEP_FINANCE_PATTERNS
+];
+function checkBatch78Patterns(input) {
+  const findings = [];
+  const content = input.rust?.content || "";
+  if (!content) return findings;
+  for (const pattern of ALL_BATCH_78_PATTERNS) {
+    if (pattern.pattern.test(content)) {
+      const lines = content.split("\n");
+      let lineNumber = 1;
+      for (let i = 0; i < lines.length; i++) {
+        if (pattern.pattern.test(lines[i])) {
+          lineNumber = i + 1;
+          break;
+        }
+      }
+      findings.push({
+        id: pattern.id,
+        title: pattern.name,
+        severity: pattern.severity,
+        description: pattern.description,
+        location: { file: input.path, line: lineNumber },
+        recommendation: pattern.recommendation
+      });
+    }
+  }
+  return findings;
+}
+var solana_batched_patterns_78_default = {
+  checkBatch78Patterns,
+  patterns: ALL_BATCH_78_PATTERNS,
+  count: ALL_BATCH_78_PATTERNS.length
+};
+
 // src/patterns/index.ts
 var CORE_PATTERNS = [
   {
@@ -17803,6 +19600,14 @@ async function runPatterns(input) {
     findings.push(...checkBatch76Patterns(input));
   } catch (error) {
   }
+  try {
+    findings.push(...scanBatch77(input));
+  } catch (error) {
+  }
+  try {
+    findings.push(...checkBatch78Patterns(input));
+  } catch (error) {
+  }
   const seen = /* @__PURE__ */ new Set();
   const deduped = findings.filter((f) => {
     const key = `${f.id}-${f.location.line}`;
@@ -17846,7 +19651,7 @@ function listPatterns() {
     // Placeholder
   }));
 }
-var PATTERN_COUNT = ALL_PATTERNS.length + 5575;
+var PATTERN_COUNT = ALL_PATTERNS.length + 5775;
 
 // src/sdk.ts
 import { existsSync, readdirSync, statSync } from "fs";
