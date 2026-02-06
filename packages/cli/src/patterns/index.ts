@@ -1,8 +1,8 @@
 /**
  * SolGuard Pattern Registry
  * 
- * 8750+ security patterns for Solana smart contract auditing
- * Updated: Feb 6, 2026 12:00 PM - Added Batch 107-108 (DEV.to 15 Vulns + Sec3 2025 + arXiv Academic)
+ * 8825+ security patterns for Solana smart contract auditing
+ * Updated: Feb 6, 2026 12:30 PM - Added Batch 109 (Helius Complete Exploit Mechanics Deep Dive)
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
@@ -170,6 +170,9 @@ import { checkBatch107Patterns } from './solana-batched-patterns-107.js';
 
 // Import Batch 108 patterns (Feb 6, 2026 12:00 PM) - Sec3 2025 Report + arXiv:2504.07419 Academic Research (SOL7051-SOL7200)
 import { checkBatch108Patterns } from './solana-batched-patterns-108.js';
+
+// Import Batch 109 patterns (Feb 6, 2026 12:30 PM) - Helius Complete Exploit Mechanics Deep Dive (SOL7201-SOL7275)
+import { checkBatch109Patterns } from './solana-batched-patterns-109.js';
 
 export interface Finding {
   id: string;
@@ -1116,6 +1119,14 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     // Skip if Batch 108 patterns fail
   }
   
+  // Run Batch 109 patterns (75 patterns: Helius Complete Exploit Mechanics Deep Dive - SOL7201-SOL7275)
+  try {
+    const batch109Results = checkBatch109Patterns(input);
+    findings.push(...batch109Results);
+  } catch (error) {
+    // Skip if Batch 109 patterns fail
+  }
+  
   // Deduplicate by ID + line
   const seen = new Set<string>();
   const deduped = findings.filter(f => {
@@ -1232,5 +1243,6 @@ export function listPatterns(): Pattern[] {
 //   - solana-batched-patterns-100.ts (SOL6201-SOL6300): 🎉 100th Batch Milestone! Chrome Extension Malware (Crypto Copilot), Sec3 2025 Full Categories (Business Logic 38.5%, Input Validation 25%, Access Control 19%, Data Integrity 8.9%, DoS 8.5%), Helius 2026 Latest Exploits, Post-Quantum Security, AI Agent Security, Advanced 2026 Attack Vectors
 //   - solana-batched-patterns-107.ts (SOL6901-SOL7050): DEV.to 15 Critical Vulns + Helius Complete Exploit History (Solend, Audius, Nirvana, OptiFi, UXD, Tulip, Solareum, Pump.fun)
 //   - solana-batched-patterns-108.ts (SOL7051-SOL7200): Sec3 2025 Report (163 audits, 1,669 vulns) + arXiv:2504.07419 Academic Research (Lack of Check, Conflation, Tool Analysis)
-// 108 batched/pattern files × ~70-100 patterns each + 50 core + 250+ individual patterns = 8750+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 7200; // 8750+ total with Batch 107-108
+//   - solana-batched-patterns-109.ts (SOL7201-SOL7275): Helius Complete Exploit Mechanics Deep Dive - Solend Auth Bypass, Wormhole Guardian, Cashio Infinite Mint, Crema CLMM, Mango Oracle, Slope Key Exposure, 2024-2025 Latest Attacks
+// 109 batched/pattern files × ~70-100 patterns each + 50 core + 250+ individual patterns = 8825+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 7275; // 8825+ total with Batch 109
