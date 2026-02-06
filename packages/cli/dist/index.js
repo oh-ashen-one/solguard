@@ -9751,6 +9751,429 @@ function checkBatch67Patterns(input) {
   return findings;
 }
 
+// src/patterns/solana-batched-patterns-68.ts
+function createFinding2(id, title, severity, description, location, recommendation) {
+  return { id, title, severity, description, location, recommendation };
+}
+function checkOwnerPermissionPhishing(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("SetAuthority") && !input.rust.content.includes("owner_change_confirmation") && !input.rust.content.includes("transfer_ownership_warning")) {
+    findings.push(createFinding2(
+      "SOL3051",
+      "Owner Permission Phishing Vulnerability",
+      "critical",
+      "SetAuthority operations without explicit user confirmation can be exploited in phishing attacks that bypass transaction simulations.",
+      { file: input.path },
+      "Add explicit ownership transfer confirmations and warnings before SetAuthority operations"
+    ));
+  }
+  return findings;
+}
+function checkSilentAccountTransfer(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("owner") && input.rust.content.includes("transfer") && !input.rust.content.includes("emit_ownership_event") && !input.rust.content.includes("log_owner_change")) {
+    findings.push(createFinding2(
+      "SOL3052",
+      "Silent Account Control Transfer",
+      "critical",
+      "Account ownership transfers without logging or events can be exploited silently in phishing attacks.",
+      { file: input.path },
+      "Emit events and logs for all ownership transfers to ensure visibility"
+    ));
+  }
+  return findings;
+}
+function checkAnalyticsKeyHarvesting(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if ((input.rust.content.includes("analytics") || input.rust.content.includes("telemetry") || input.rust.content.includes("tracking")) && (input.rust.content.includes("private_key") || input.rust.content.includes("seed_phrase") || input.rust.content.includes("keypair"))) {
+    findings.push(createFinding2(
+      "SOL3053",
+      "Analytics Library Key Harvesting Risk",
+      "critical",
+      "Analytics/telemetry code has access to key material. Compromised analytics libraries (like posthog-js) can exfiltrate wallet credentials.",
+      { file: input.path },
+      "Isolate analytics code from key material. Never allow analytics libraries access to sensitive cryptographic data."
+    ));
+  }
+  return findings;
+}
+function checkThirdPartyCredentialExposure(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if ((input.rust.content.includes("extern crate") || input.rust.content.includes("use ")) && (input.rust.content.includes("wallet") || input.rust.content.includes("keypair")) && !input.rust.content.includes("audit") && !input.rust.content.includes("trusted")) {
+    findings.push(createFinding2(
+      "SOL3054",
+      "Third-Party Library Credential Exposure",
+      "high",
+      "External libraries with wallet access can be supply chain attack vectors. Trust Wallet lost $7M via malicious library injection.",
+      { file: input.path },
+      "Audit all third-party dependencies that access wallet/key functionality. Use lockfiles and verify checksums."
+    ));
+  }
+  return findings;
+}
+function checkSimulationBypassOwner(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("simulate") && !input.rust.content.includes("owner_field_check") && !input.rust.content.includes("authority_simulation")) {
+    findings.push(createFinding2(
+      "SOL3055",
+      "Transaction Simulation Bypass via Owner Field",
+      "high",
+      "Owner permission changes may not appear in standard transaction simulations, enabling phishing attacks.",
+      { file: input.path },
+      "Implement specialized simulation for authority/ownership changes that explicitly displays permission modifications"
+    ));
+  }
+  return findings;
+}
+function checkHotWalletKeyIsolation(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("hot_wallet") && !input.rust.content.includes("hsm") && !input.rust.content.includes("key_isolation") && !input.rust.content.includes("hardware_security")) {
+    findings.push(createFinding2(
+      "SOL3056",
+      "Hot Wallet Key Isolation Failure",
+      "critical",
+      "Hot wallet keys without HSM or hardware isolation are vulnerable to server-side compromises. Upbit lost $36M in similar scenario.",
+      { file: input.path },
+      "Use HSM (Hardware Security Modules) for hot wallet key storage with strict access controls"
+    ));
+  }
+  return findings;
+}
+function checkDepositAddressValidation(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("deposit") && input.rust.content.includes("address") && !input.rust.content.includes("whitelist") && !input.rust.content.includes("address_validation")) {
+    findings.push(createFinding2(
+      "SOL3057",
+      "Exchange Deposit Address Validation Missing",
+      "high",
+      "Deposit operations without address whitelisting or validation can lead to fund redirection attacks.",
+      { file: input.path },
+      "Implement deposit address whitelisting and multi-signature approval for new addresses"
+    ));
+  }
+  return findings;
+}
+function checkChromeExtensionSecurity(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if ((input.rust.content.includes("extension") || input.rust.content.includes("browser")) && input.rust.content.includes("wallet") && !input.rust.content.includes("content_security_policy") && !input.rust.content.includes("script_isolation")) {
+    findings.push(createFinding2(
+      "SOL3058",
+      "Browser Extension Wallet Security Risk",
+      "high",
+      "Browser extension wallets are vulnerable to malicious code injection. Trust Wallet breach drained $7M via extension compromise.",
+      { file: input.path },
+      "Implement strict CSP, script isolation, and code signing for browser extension components"
+    ));
+  }
+  return findings;
+}
+function checkConsensusVulnerabilityPattern(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("consensus") && (input.rust.content.includes("block") || input.rust.content.includes("slot")) && !input.rust.content.includes("validator_set_check") && !input.rust.content.includes("finality_confirmation")) {
+    findings.push(createFinding2(
+      "SOL3059",
+      "Consensus Layer Vulnerability Pattern",
+      "critical",
+      "Consensus operations without proper validator set and finality checks can lead to network stalling attacks.",
+      { file: input.path },
+      "Ensure consensus operations include validator set verification and finality confirmation mechanisms"
+    ));
+  }
+  return findings;
+}
+function checkNetworkStallingVector(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("network") && input.rust.content.includes("propagate") && !input.rust.content.includes("rate_limit") && !input.rust.content.includes("ddos_protection")) {
+    findings.push(createFinding2(
+      "SOL3060",
+      "Network Stalling Attack Vector",
+      "high",
+      "Network propagation without rate limiting can be exploited to stall block production.",
+      { file: input.path },
+      "Implement rate limiting and DDoS protection for network propagation paths"
+    ));
+  }
+  return findings;
+}
+function checkTransactionFeeManipulation(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("priority_fee") && !input.rust.content.includes("fee_cap") && !input.rust.content.includes("max_priority")) {
+    findings.push(createFinding2(
+      "SOL3061",
+      "Transaction Fee Manipulation Risk",
+      "medium",
+      "Priority fee handling without caps can lead to fee manipulation and transaction ordering attacks.",
+      { file: input.path },
+      "Implement priority fee caps and fair ordering mechanisms"
+    ));
+  }
+  return findings;
+}
+function checkWalletProviderIntegration(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if ((input.rust.content.includes("phantom") || input.rust.content.includes("okx") || input.rust.content.includes("wallet_adapter")) && !input.rust.content.includes("version_check") && !input.rust.content.includes("signature_validation")) {
+    findings.push(createFinding2(
+      "SOL3062",
+      "Wallet Provider Integration Security",
+      "medium",
+      "Wallet provider integrations should verify versions and signatures to prevent phishing attacks.",
+      { file: input.path },
+      "Validate wallet provider versions and implement signature verification for critical operations"
+    ));
+  }
+  return findings;
+}
+function checkBridgeFundLaundering(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("bridge") && !input.rust.content.includes("monitoring") && !input.rust.content.includes("rate_limit_bridge")) {
+    findings.push(createFinding2(
+      "SOL3063",
+      "Bridge Fund Exfiltration Risk",
+      "high",
+      "Bridge operations without monitoring or rate limits enable attackers to quickly move stolen funds cross-chain.",
+      { file: input.path },
+      "Implement bridge operation monitoring, rate limits, and pause mechanisms for suspicious activity"
+    ));
+  }
+  return findings;
+}
+function checkIncidentResponseCapability(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("admin") && !input.rust.content.includes("pause") && !input.rust.content.includes("emergency_stop") && !input.rust.content.includes("circuit_breaker")) {
+    findings.push(createFinding2(
+      "SOL3064",
+      "Missing Rapid Incident Response Capability",
+      "medium",
+      "Protocols without pause mechanisms cannot respond quickly to exploits. Modern attacks require sub-10-minute response.",
+      { file: input.path },
+      "Implement emergency pause/circuit breaker mechanisms controllable by multisig or guardian"
+    ));
+  }
+  return findings;
+}
+function checkExternalAlertIntegration(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("oracle") || input.rust.content.includes("price")) {
+    findings.push(createFinding2(
+      "SOL3065",
+      "External Security Alert Integration Recommended",
+      "info",
+      "Consider integrating external security alerts (CertiK, SlowMist) for early warning of oracle manipulation or exploits.",
+      { file: input.path },
+      "Subscribe to security monitoring services and implement automated pause on external alerts"
+    ));
+  }
+  return findings;
+}
+function checkTokenMixerUsage(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if ((input.rust.content.includes("tornado") || input.rust.content.includes("mixer") || input.rust.content.includes("tumbler")) && !input.rust.content.includes("compliance")) {
+    findings.push(createFinding2(
+      "SOL3066",
+      "Token Mixer Integration Risk",
+      "high",
+      "Integration with mixer services can facilitate money laundering and may violate compliance requirements.",
+      { file: input.path },
+      "Implement compliance checks and avoid direct integration with mixer services"
+    ));
+  }
+  return findings;
+}
+function checkSlowMistPhishingPatterns(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("approve") && input.rust.content.includes("unlimited") && !input.rust.content.includes("approval_limit")) {
+    findings.push(createFinding2(
+      "SOL3067",
+      "Unlimited Token Approval Phishing Risk",
+      "high",
+      "Unlimited token approvals are a primary phishing vector. SlowMist documented $3M+ in losses from approval drain attacks.",
+      { file: input.path },
+      "Limit token approvals to specific amounts and implement approval expiry mechanisms"
+    ));
+  }
+  return findings;
+}
+function checkSetAuthorityPhishing(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("set_authority") || input.rust.content.includes("SetAuthority")) {
+    if (!input.rust.content.includes("two_step") && !input.rust.content.includes("timelock") && !input.rust.content.includes("confirmation_required")) {
+      findings.push(createFinding2(
+        "SOL3068",
+        "SetAuthority Phishing Attack Vector",
+        "critical",
+        "SetAuthority without two-step confirmation or timelock can be exploited in phishing attacks for immediate account takeover.",
+        { file: input.path },
+        "Implement two-step authority transfer with timelock and explicit user confirmation"
+      ));
+    }
+  }
+  return findings;
+}
+function checkMemoPhishing(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("memo") && !input.rust.content.includes("memo_sanitize") && !input.rust.content.includes("url_filter")) {
+    findings.push(createFinding2(
+      "SOL3069",
+      "Memo-Based Phishing Vector",
+      "medium",
+      "Transaction memos containing URLs can be used for phishing. Fake airdrop scams commonly use memo links.",
+      { file: input.path },
+      "Sanitize memo content and warn users about URLs in transaction memos"
+    ));
+  }
+  return findings;
+}
+function checkInsuranceFundProtection(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("insurance") && input.rust.content.includes("fund")) {
+    if (!input.rust.content.includes("insurance_cap") && !input.rust.content.includes("insurance_min")) {
+      findings.push(createFinding2(
+        "SOL3070",
+        "Insurance Fund Depletion Risk",
+        "high",
+        "Insurance funds without caps and minimums can be drained through repeated claims or manipulation.",
+        { file: input.path },
+        "Implement insurance fund caps, minimums, and claim rate limits"
+      ));
+    }
+  }
+  return findings;
+}
+function checkWhiteHatCoordination(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("admin") || input.rust.content.includes("authority")) {
+    if (!input.rust.content.includes("contact") && !input.rust.content.includes("security_team")) {
+      findings.push(createFinding2(
+        "SOL3071",
+        "White Hat Contact Information Missing",
+        "info",
+        "Protocols should publish security contact information for white hat coordination. Loopscale recovered $5.8M through negotiation.",
+        { file: input.path },
+        "Add security.txt or on-chain contact for responsible disclosure"
+      ));
+    }
+  }
+  return findings;
+}
+function checkReimbursementCapability(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("treasury") || input.rust.content.includes("vault")) {
+    if (!input.rust.content.includes("emergency_fund") && !input.rust.content.includes("backup_treasury")) {
+      findings.push(createFinding2(
+        "SOL3072",
+        "Reimbursement Capability Assessment",
+        "info",
+        "Protocols with emergency funds can fully reimburse users after exploits (Wormhole: $326M, Pump.fun: $1.9M).",
+        { file: input.path },
+        "Maintain emergency funds or insurance coverage for potential exploit reimbursement"
+      ));
+    }
+  }
+  return findings;
+}
+function checkInsiderThreatControls(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("admin") || input.rust.content.includes("operator")) {
+    if (!input.rust.content.includes("multi_sig") && !input.rust.content.includes("timelock") && !input.rust.content.includes("approval_required")) {
+      findings.push(createFinding2(
+        "SOL3073",
+        "Insider Threat Control Missing",
+        "high",
+        "Admin operations without multisig or timelock enable insider theft. Pump.fun lost $1.9M to employee exploit.",
+        { file: input.path },
+        "Require multisig and timelock for all privileged operations"
+      ));
+    }
+  }
+  return findings;
+}
+function checkPartialRecoveryMechanism(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("recovery") || input.rust.content.includes("compensation")) {
+    if (!input.rust.content.includes("priority") && !input.rust.content.includes("pro_rata")) {
+      findings.push(createFinding2(
+        "SOL3074",
+        "Partial Recovery Priority Undefined",
+        "low",
+        "Define recovery priorities for partial reimbursement scenarios (e.g., Raydium: 100% native pools, 90% others).",
+        { file: input.path },
+        "Document recovery priorities and pro-rata distribution mechanisms in advance"
+      ));
+    }
+  }
+  return findings;
+}
+function checkRealTimeMonitoring(input) {
+  const findings = [];
+  if (!input.rust?.content) return findings;
+  if (input.rust.content.includes("transfer") || input.rust.content.includes("withdraw")) {
+    if (!input.rust.content.includes("monitor") && !input.rust.content.includes("alert") && !input.rust.content.includes("anomaly")) {
+      findings.push(createFinding2(
+        "SOL3075",
+        "Real-Time Monitoring Missing",
+        "medium",
+        "Protocols should implement real-time monitoring for rapid exploit detection. Response times have improved from hours to minutes.",
+        { file: input.path },
+        "Integrate real-time anomaly detection and alerting for critical operations"
+      ));
+    }
+  }
+  return findings;
+}
+function checkBatch68Patterns(input) {
+  const allFindings = [];
+  allFindings.push(...checkOwnerPermissionPhishing(input));
+  allFindings.push(...checkSilentAccountTransfer(input));
+  allFindings.push(...checkAnalyticsKeyHarvesting(input));
+  allFindings.push(...checkThirdPartyCredentialExposure(input));
+  allFindings.push(...checkSimulationBypassOwner(input));
+  allFindings.push(...checkHotWalletKeyIsolation(input));
+  allFindings.push(...checkDepositAddressValidation(input));
+  allFindings.push(...checkChromeExtensionSecurity(input));
+  allFindings.push(...checkConsensusVulnerabilityPattern(input));
+  allFindings.push(...checkNetworkStallingVector(input));
+  allFindings.push(...checkTransactionFeeManipulation(input));
+  allFindings.push(...checkWalletProviderIntegration(input));
+  allFindings.push(...checkBridgeFundLaundering(input));
+  allFindings.push(...checkIncidentResponseCapability(input));
+  allFindings.push(...checkExternalAlertIntegration(input));
+  allFindings.push(...checkTokenMixerUsage(input));
+  allFindings.push(...checkSlowMistPhishingPatterns(input));
+  allFindings.push(...checkSetAuthorityPhishing(input));
+  allFindings.push(...checkMemoPhishing(input));
+  allFindings.push(...checkInsuranceFundProtection(input));
+  allFindings.push(...checkWhiteHatCoordination(input));
+  allFindings.push(...checkReimbursementCapability(input));
+  allFindings.push(...checkInsiderThreatControls(input));
+  allFindings.push(...checkPartialRecoveryMechanism(input));
+  allFindings.push(...checkRealTimeMonitoring(input));
+  return allFindings;
+}
+
 // src/patterns/index.ts
 var CORE_PATTERNS = [
   {
@@ -10271,6 +10694,10 @@ async function runPatterns(input) {
     findings.push(...checkBatch67Patterns(input));
   } catch (error) {
   }
+  try {
+    findings.push(...checkBatch68Patterns(input));
+  } catch (error) {
+  }
   const seen = /* @__PURE__ */ new Set();
   const deduped = findings.filter((f) => {
     const key = `${f.id}-${f.location.line}`;
@@ -10314,7 +10741,7 @@ function listPatterns() {
     // Placeholder
   }));
 }
-var PATTERN_COUNT = ALL_PATTERNS.length + 4925;
+var PATTERN_COUNT = ALL_PATTERNS.length + 4950;
 
 // src/sdk.ts
 import { existsSync, readdirSync, statSync } from "fs";
