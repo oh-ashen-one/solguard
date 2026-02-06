@@ -1,8 +1,8 @@
 /**
  * SolGuard Pattern Registry
  * 
- * 5000+ security patterns for Solana smart contract auditing
- * Updated: Feb 5, 2026 9:00 PM - Added Batch 68 January 2026 Threats (SOL3051-SOL3075)
+ * 5050+ security patterns for Solana smart contract auditing
+ * Updated: Feb 5, 2026 9:30 PM - Added Batch 69 Deep Exploit Analysis (SOL3076-SOL3125)
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
@@ -50,6 +50,9 @@ import { checkBatch67Patterns } from './solana-batched-patterns-67.js';
 
 // Import Batch 68 patterns (Feb 5, 2026 9:00 PM) - January 2026 Threats: Owner Phishing, Trust Wallet, Consensus Vulns
 import { checkBatch68Patterns } from './solana-batched-patterns-68.js';
+
+// Import Batch 69 patterns (Feb 5, 2026 9:30 PM) - Deep Exploit Analysis: Solend, Wormhole, Cashio, Mango, Crema, DEXX
+import { checkBatch69Patterns } from './solana-batched-patterns-69.js';
 
 export interface Finding {
   id: string;
@@ -684,6 +687,12 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     findings.push(...checkBatch68Patterns(input));
   } catch (error) {
     // Skip if Batch 68 patterns fail
+  }
+  
+  try {
+    findings.push(...checkBatch69Patterns(input));
+  } catch (error) {
+    // Skip if Batch 69 patterns fail
   }
   
   // Deduplicate by ID + line
