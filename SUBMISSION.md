@@ -45,7 +45,7 @@ Click either link → Wait for environment to spin up → Web UI opens automatic
 *(Coming soon - Netlify deployment pending)*
 
 ## Key Stats
-- **150** vulnerability patterns
+- **5125+** vulnerability patterns
 - **110+** commits (100% AI-generated)
 - **23** documentation files
 - **19** tests (all passing)
