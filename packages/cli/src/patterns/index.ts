@@ -1,8 +1,8 @@
 /**
  * SolGuard Pattern Registry
  * 
- * 8500+ security patterns for Solana smart contract auditing
- * Updated: Feb 6, 2026 11:30 AM - Added Batch 106 (Response Evolution + Helius Updated + 2026 Emerging + arXiv + Sec3 Final + Supply Chain)
+ * 8750+ security patterns for Solana smart contract auditing
+ * Updated: Feb 6, 2026 12:00 PM - Added Batch 107-108 (DEV.to 15 Vulns + Sec3 2025 + arXiv Academic)
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
@@ -164,6 +164,12 @@ import { checkBatch105Patterns } from './solana-batched-patterns-105.js';
 
 // Import Batch 106 patterns (Feb 6, 2026 11:30 AM) - Response Evolution + Helius Updated + 2026 Emerging + arXiv + Sec3 Final + Supply Chain (SOL6801-SOL6900)
 import { checkBatch106Patterns } from './solana-batched-patterns-106.js';
+
+// Import Batch 107 patterns (Feb 6, 2026 12:00 PM) - DEV.to 15 Critical Vulns + Helius Complete Exploit History (SOL6901-SOL7050)
+import { checkBatch107Patterns } from './solana-batched-patterns-107.js';
+
+// Import Batch 108 patterns (Feb 6, 2026 12:00 PM) - Sec3 2025 Report + arXiv:2504.07419 Academic Research (SOL7051-SOL7200)
+import { checkBatch108Patterns } from './solana-batched-patterns-108.js';
 
 export interface Finding {
   id: string;
@@ -1094,6 +1100,22 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     // Skip if Batch 106 patterns fail
   }
   
+  // Run Batch 107 patterns (150 patterns: DEV.to 15 Critical Vulns + Helius Complete Exploit History - SOL6901-SOL7050)
+  try {
+    const batch107Results = checkBatch107Patterns(input);
+    findings.push(...batch107Results);
+  } catch (error) {
+    // Skip if Batch 107 patterns fail
+  }
+  
+  // Run Batch 108 patterns (100 patterns: Sec3 2025 Report + arXiv:2504.07419 Academic Research - SOL7051-SOL7200)
+  try {
+    const batch108Results = checkBatch108Patterns(input);
+    findings.push(...batch108Results);
+  } catch (error) {
+    // Skip if Batch 108 patterns fail
+  }
+  
   // Deduplicate by ID + line
   const seen = new Set<string>();
   const deduped = findings.filter(f => {
@@ -1208,5 +1230,7 @@ export function listPatterns(): Pattern[] {
 //   - solana-batched-patterns-93.ts (SOL5301-SOL5400): Step Finance $40M + arXiv Research + Sec3 2025 Final + Certora Lulo + GetFailsafe + Accretion + Token-2022 + AI Agent Security + Supply Chain + Monitoring
 //   - solana-batched-patterns-99.ts (SOL6101-SOL6136): Feb 2026 Emerging Threats - Whale Cascades, Infrastructure Concentration, Sec3 2025 Report Stats, arXiv Research, Phishing, Insider Threats
 //   - solana-batched-patterns-100.ts (SOL6201-SOL6300): 🎉 100th Batch Milestone! Chrome Extension Malware (Crypto Copilot), Sec3 2025 Full Categories (Business Logic 38.5%, Input Validation 25%, Access Control 19%, Data Integrity 8.9%, DoS 8.5%), Helius 2026 Latest Exploits, Post-Quantum Security, AI Agent Security, Advanced 2026 Attack Vectors
-// 100 batched/pattern files × ~70-100 patterns each + 50 core + 250+ individual patterns = 8000+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 7000; // 8000+ total with all batched patterns including Batch 100 🎉
+//   - solana-batched-patterns-107.ts (SOL6901-SOL7050): DEV.to 15 Critical Vulns + Helius Complete Exploit History (Solend, Audius, Nirvana, OptiFi, UXD, Tulip, Solareum, Pump.fun)
+//   - solana-batched-patterns-108.ts (SOL7051-SOL7200): Sec3 2025 Report (163 audits, 1,669 vulns) + arXiv:2504.07419 Academic Research (Lack of Check, Conflation, Tool Analysis)
+// 108 batched/pattern files × ~70-100 patterns each + 50 core + 250+ individual patterns = 8750+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 7200; // 8750+ total with Batch 107-108
