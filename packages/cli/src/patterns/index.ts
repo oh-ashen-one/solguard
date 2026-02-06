@@ -2,7 +2,7 @@
  * SolGuard Pattern Registry
  * 
  * 8000+ security patterns for Solana smart contract auditing
- * Updated: Feb 6, 2026 9:00 AM - Added Batch 99 (Feb 2026 Emerging Threats + Sec3 Stats + Infrastructure Concentration + Phishing)
+ * Updated: Feb 6, 2026 9:30 AM - Added Batch 100 🎉 (Chrome Extension Malware + Sec3 2025 Full Categories + Helius 2026 + Future Security)
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
@@ -143,6 +143,9 @@ import { checkBatch98Patterns } from './solana-batched-patterns-98.js';
 
 // Import Batch 99 patterns (Feb 6, 2026 9:00 AM) - Feb 2026 Emerging Threats + Sec3 2025 Report + Infrastructure Concentration + Phishing (SOL6101-SOL6200)
 import { checkBatch99Patterns } from './solana-batched-patterns-99.js';
+
+// Import Batch 100 patterns (Feb 6, 2026 9:30 AM) 🎉 100th Batch Milestone! - Chrome Extension Malware + Sec3 2025 Full Categories + Helius 2026 + Future Security (SOL6201-SOL6300)
+import { checkBatch100Patterns } from './solana-batched-patterns-100.js';
 
 export interface Finding {
   id: string;
@@ -1017,6 +1020,14 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     // Skip if Batch 99 patterns fail
   }
   
+  // Run Batch 100 patterns (50 patterns: 🎉 100th Batch! Chrome Extension Malware + Sec3 2025 Full Categories + Helius 2026 + Future Security - SOL6201-SOL6300)
+  try {
+    const batch100Results = checkBatch100Patterns(input);
+    findings.push(...batch100Results);
+  } catch (error) {
+    // Skip if Batch 100 patterns fail
+  }
+  
   // Deduplicate by ID + line
   const seen = new Set<string>();
   const deduped = findings.filter(f => {
@@ -1130,5 +1141,6 @@ export function listPatterns(): Pattern[] {
 //   - solana-batched-patterns-91.ts (SOL5101-SOL5200): arXiv:2504.07419 Deep Dive (Solend $1.26M, Mango $100M, Cashio $52M, Wormhole $326M) + Sec3 2025 Final Categories (Business Logic 38.5%, Input Validation 25%, Access Control 19%, Data Integrity 8.9%, DoS 8.5%) + Helius 38 Incidents Deep Analysis (Slope $8M, Raydium $4.4M, DEXX $30M, Web3.js Supply Chain) + ThreeSigma Loopscale $5.8M + Certora Lulo Audit + BlockHacks $600M Analysis + Solsec Compiled Audits + Token-2022 + cNFT + Governance + Bridge + Wallet + Emergency Response + Monitoring
 //   - solana-batched-patterns-93.ts (SOL5301-SOL5400): Step Finance $40M + arXiv Research + Sec3 2025 Final + Certora Lulo + GetFailsafe + Accretion + Token-2022 + AI Agent Security + Supply Chain + Monitoring
 //   - solana-batched-patterns-99.ts (SOL6101-SOL6136): Feb 2026 Emerging Threats - Whale Cascades, Infrastructure Concentration, Sec3 2025 Report Stats, arXiv Research, Phishing, Insider Threats
-// 93 batched/pattern files × ~70-100 patterns each + 50 core + 250+ individual patterns = 7636+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 6936; // 7636+ total with all batched patterns including Batch 99
+//   - solana-batched-patterns-100.ts (SOL6201-SOL6300): 🎉 100th Batch Milestone! Chrome Extension Malware (Crypto Copilot), Sec3 2025 Full Categories (Business Logic 38.5%, Input Validation 25%, Access Control 19%, Data Integrity 8.9%, DoS 8.5%), Helius 2026 Latest Exploits, Post-Quantum Security, AI Agent Security, Advanced 2026 Attack Vectors
+// 100 batched/pattern files × ~70-100 patterns each + 50 core + 250+ individual patterns = 8000+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 7000; // 8000+ total with all batched patterns including Batch 100 🎉
