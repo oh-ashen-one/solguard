@@ -3635,6 +3635,1226 @@ function checkBatch56Patterns(input) {
 }
 var BATCH_56_COUNT = BATCH_56_PATTERNS.length;
 
+// src/patterns/solana-batched-patterns-57.ts
+var BATCH_57_PATTERNS = [
+  // Kudelski Audit Patterns (SOL2281-SOL2295)
+  {
+    id: "SOL2281",
+    name: "Kudelski: Missing Ownership Validation",
+    severity: "critical",
+    pattern: /AccountInfo[\s\S]{0,100}(?!owner\s*==|\.owner\.eq)/i,
+    description: "Account ownership not validated per Kudelski audit methodology.",
+    recommendation: "Validate account owner matches expected program ID."
+  },
+  {
+    id: "SOL2282",
+    name: "Kudelski: Unvalidated Data Field",
+    severity: "high",
+    pattern: /data\s*=\s*account[\s\S]{0,50}(?!validate|check|verify)/i,
+    description: "Account data accessed without field validation.",
+    recommendation: "Validate all account data fields before use."
+  },
+  {
+    id: "SOL2283",
+    name: "Kudelski: Missing Stake Pool Validation",
+    severity: "high",
+    pattern: /stake_pool|StakePool(?![\s\S]{0,100}validator_list)/i,
+    description: "Stake pool operations without validator list check.",
+    recommendation: "Verify stake pool validator list integrity."
+  },
+  {
+    id: "SOL2284",
+    name: "Kudelski: Token Swap Slippage Missing",
+    severity: "high",
+    pattern: /swap|exchange(?![\s\S]{0,100}minimum_amount|slippage)/i,
+    description: "Token swap without slippage protection.",
+    recommendation: "Implement minimum output amount checks."
+  },
+  {
+    id: "SOL2285",
+    name: "Kudelski: Shared Memory Vulnerability",
+    severity: "high",
+    pattern: /shared_memory|SharedMemory(?![\s\S]{0,50}validate)/i,
+    description: "Shared memory access without validation.",
+    recommendation: "Validate shared memory before use."
+  },
+  {
+    id: "SOL2286",
+    name: "Kudelski: Synthetify Collateral Check",
+    severity: "critical",
+    pattern: /synthetic|collateral(?![\s\S]{0,100}ratio|threshold)/i,
+    description: "Synthetic asset without collateral ratio check.",
+    recommendation: "Enforce minimum collateralization ratios."
+  },
+  {
+    id: "SOL2287",
+    name: "Kudelski: Solido Stake Validation",
+    severity: "high",
+    pattern: /stake_account|StakeAccount(?![\s\S]{0,100}activation_epoch)/i,
+    description: "Stake account without activation epoch check.",
+    recommendation: "Verify stake account activation status."
+  },
+  {
+    id: "SOL2288",
+    name: "Kudelski: Friktion Volt Risk",
+    severity: "high",
+    pattern: /volt|option(?![\s\S]{0,100}expiry|strike)/i,
+    description: "Options vault without expiry validation.",
+    recommendation: "Validate option expiry and strike prices."
+  },
+  {
+    id: "SOL2289",
+    name: "Kudelski: Hubble Stability Check",
+    severity: "high",
+    pattern: /stability_pool|StabilityPool(?![\s\S]{0,100}debt_ceiling)/i,
+    description: "Stability pool without debt ceiling enforcement.",
+    recommendation: "Enforce debt ceiling limits."
+  },
+  {
+    id: "SOL2290",
+    name: "Kudelski: Swim Bridge Decimals",
+    severity: "medium",
+    pattern: /bridge|cross_chain(?![\s\S]{0,100}decimals)/i,
+    description: "Cross-chain bridge without decimal normalization.",
+    recommendation: "Normalize token decimals across chains."
+  },
+  {
+    id: "SOL2291",
+    name: "Kudelski: Marinade Delayed Unstake",
+    severity: "medium",
+    pattern: /unstake|withdraw_stake(?![\s\S]{0,100}delay|cooldown)/i,
+    description: "Unstaking without delay mechanism.",
+    recommendation: "Implement unstaking delay period."
+  },
+  {
+    id: "SOL2292",
+    name: "Kudelski: Hedge CDP Validation",
+    severity: "high",
+    pattern: /cdp|vault(?![\s\S]{0,100}health_factor|collateral_ratio)/i,
+    description: "CDP without health factor validation.",
+    recommendation: "Check vault health factor before operations."
+  },
+  {
+    id: "SOL2293",
+    name: "Kudelski: Orca Whirlpool Tick",
+    severity: "high",
+    pattern: /tick|whirlpool(?![\s\S]{0,100}spacing|bounds)/i,
+    description: "Whirlpool tick without bounds checking.",
+    recommendation: "Validate tick spacing and bounds."
+  },
+  {
+    id: "SOL2294",
+    name: "Kudelski: Aldrin DEX Order",
+    severity: "medium",
+    pattern: /order_book|OrderBook(?![\s\S]{0,100}expiry|cancel)/i,
+    description: "Order book without order expiry handling.",
+    recommendation: "Implement order expiry and cancellation."
+  },
+  {
+    id: "SOL2295",
+    name: "Kudelski: Audius Governance Race",
+    severity: "high",
+    pattern: /governance|proposal(?![\s\S]{0,100}snapshot|block_height)/i,
+    description: "Governance without snapshot mechanism.",
+    recommendation: "Use snapshot-based voting power."
+  },
+  // Neodyme Audit Patterns (SOL2296-SOL2310)
+  {
+    id: "SOL2296",
+    name: "Neodyme: Mango Oracle Staleness",
+    severity: "critical",
+    pattern: /oracle|price_feed(?![\s\S]{0,100}last_update|staleness)/i,
+    description: "Oracle price without staleness check (Mango pattern).",
+    recommendation: "Verify oracle price freshness."
+  },
+  {
+    id: "SOL2297",
+    name: "Neodyme: Wormhole SignatureSet",
+    severity: "critical",
+    pattern: /signature_set|SignatureSet(?![\s\S]{0,100}guardian_count)/i,
+    description: "Signature set without guardian count validation.",
+    recommendation: "Verify guardian quorum in signature sets."
+  },
+  {
+    id: "SOL2298",
+    name: "Neodyme: SPL Lending Precision",
+    severity: "high",
+    pattern: /interest|rate(?![\s\S]{0,100}precision|decimals)/i,
+    description: "Interest rate calculation without precision handling.",
+    recommendation: "Use high-precision arithmetic for rates."
+  },
+  {
+    id: "SOL2299",
+    name: "Neodyme: Rounding Direction",
+    severity: "high",
+    pattern: /\.round\(\)|as\s+u\d+(?![\s\S]{0,30}ceil|floor)/i,
+    description: "Rounding without explicit direction.",
+    recommendation: "Use explicit ceil/floor for financial math."
+  },
+  {
+    id: "SOL2300",
+    name: "Neodyme: Debridge Finality",
+    severity: "critical",
+    pattern: /bridge_message|cross_chain(?![\s\S]{0,100}finalized|confirmations)/i,
+    description: "Cross-chain message without finality check.",
+    recommendation: "Wait for chain finality before processing."
+  },
+  {
+    id: "SOL2301",
+    name: "Neodyme: PoC Attacker Framework",
+    severity: "high",
+    pattern: /test|poc(?![\s\S]{0,50}assert|expect)/i,
+    description: "Test code pattern detected in production.",
+    recommendation: "Remove test/PoC code from production."
+  },
+  {
+    id: "SOL2302",
+    name: "Neodyme: Common Pitfall Owner",
+    severity: "critical",
+    pattern: /AccountInfo[\s\S]{0,50}\.key(?![\s\S]{0,30}owner)/i,
+    description: "Account key check without owner verification.",
+    recommendation: "Always verify account owner with key."
+  },
+  {
+    id: "SOL2303",
+    name: "Neodyme: Common Pitfall Signer",
+    severity: "critical",
+    pattern: /authority|admin(?![\s\S]{0,50}is_signer|Signer)/i,
+    description: "Authority without signer check.",
+    recommendation: "Verify authority is signer for all admin ops."
+  },
+  {
+    id: "SOL2304",
+    name: "Neodyme: Marinade v2 Rate",
+    severity: "high",
+    pattern: /exchange_rate|conversion(?![\s\S]{0,100}update_time)/i,
+    description: "Exchange rate without update time check.",
+    recommendation: "Verify rate freshness before conversion."
+  },
+  {
+    id: "SOL2305",
+    name: "Neodyme: Solido Validator Selection",
+    severity: "medium",
+    pattern: /validator|stake_pool(?![\s\S]{0,100}selection|weight)/i,
+    description: "Validator selection without weighting.",
+    recommendation: "Implement weighted validator selection."
+  },
+  {
+    id: "SOL2306",
+    name: "Neodyme: Workshop Level 0",
+    severity: "medium",
+    pattern: /seeds\s*=\s*\[(?![\s\S]{0,30}bump)/i,
+    description: "PDA seeds without bump in derivation.",
+    recommendation: "Include bump seed in PDA derivation."
+  },
+  {
+    id: "SOL2307",
+    name: "Neodyme: Workshop Level 1",
+    severity: "high",
+    pattern: /try_borrow|borrow_mut(?![\s\S]{0,50}RefCell)/i,
+    description: "Mutable borrow without RefCell pattern.",
+    recommendation: "Use RefCell for safe interior mutability."
+  },
+  {
+    id: "SOL2308",
+    name: "Neodyme: Workshop Level 2",
+    severity: "high",
+    pattern: /checked_|saturating_(?![\s\S]{0,20}unwrap_or)/i,
+    description: "Checked math without default handling.",
+    recommendation: "Handle None case from checked operations."
+  },
+  {
+    id: "SOL2309",
+    name: "Neodyme: Workshop Level 3",
+    severity: "critical",
+    pattern: /invoke_signed[\s\S]{0,100}(?!seeds_with_bump)/i,
+    description: "invoke_signed without seeds_with_bump pattern.",
+    recommendation: "Use seeds_with_bump for CPI signing."
+  },
+  {
+    id: "SOL2310",
+    name: "Neodyme: Workshop Level 4",
+    severity: "high",
+    pattern: /discriminator[\s\S]{0,50}(?!unique|8\s*bytes)/i,
+    description: "Account discriminator may not be unique.",
+    recommendation: "Ensure 8-byte unique discriminators."
+  },
+  // OtterSec Audit Patterns (SOL2311-SOL2325)
+  {
+    id: "SOL2311",
+    name: "OtterSec: LP Token Oracle Manipulation",
+    severity: "critical",
+    pattern: /lp_token|liquidity_pool(?![\s\S]{0,100}fair_value|sqrt_price)/i,
+    description: "LP token valuation vulnerable to manipulation.",
+    recommendation: "Use fair LP pricing formula."
+  },
+  {
+    id: "SOL2312",
+    name: "OtterSec: Jet Governance PoC",
+    severity: "high",
+    pattern: /governance|vote(?![\s\S]{0,100}weight_at_slot)/i,
+    description: "Governance voting without historical weight.",
+    recommendation: "Use slot-based vote weight snapshots."
+  },
+  {
+    id: "SOL2313",
+    name: "OtterSec: Cashmere Multisig",
+    severity: "high",
+    pattern: /multisig|multi_sig(?![\s\S]{0,100}threshold|quorum)/i,
+    description: "Multisig without threshold validation.",
+    recommendation: "Validate multisig threshold before execution."
+  },
+  {
+    id: "SOL2314",
+    name: "OtterSec: Cega Vault Risk",
+    severity: "high",
+    pattern: /vault|strategy(?![\s\S]{0,100}max_deposit|cap)/i,
+    description: "Vault without deposit cap enforcement.",
+    recommendation: "Enforce vault deposit caps."
+  },
+  {
+    id: "SOL2315",
+    name: "OtterSec: Port Sundial Oracle",
+    severity: "high",
+    pattern: /sundial|fixed_rate(?![\s\S]{0,100}oracle_source)/i,
+    description: "Fixed rate without oracle source validation.",
+    recommendation: "Validate oracle sources for rate feeds."
+  },
+  {
+    id: "SOL2316",
+    name: "OtterSec: Juiced Yield Risk",
+    severity: "medium",
+    pattern: /yield|apy(?![\s\S]{0,100}sustainable|cap)/i,
+    description: "Yield strategy without sustainability check.",
+    recommendation: "Validate yield sustainability."
+  },
+  {
+    id: "SOL2317",
+    name: "OtterSec: Solvent NFT Fractionalization",
+    severity: "high",
+    pattern: /fractionalize|nft_shares(?![\s\S]{0,100}total_supply)/i,
+    description: "NFT fractionalization without supply tracking.",
+    recommendation: "Track total fractional shares accurately."
+  },
+  {
+    id: "SOL2318",
+    name: "OtterSec: Squads MPL Authority",
+    severity: "high",
+    pattern: /squad|multisig(?![\s\S]{0,100}member_count)/i,
+    description: "Squad without member count validation.",
+    recommendation: "Validate squad member count for quorum."
+  },
+  {
+    id: "SOL2319",
+    name: "OtterSec: Phoenix Order Matching",
+    severity: "high",
+    pattern: /order_matching|match_order(?![\s\S]{0,100}price_time_priority)/i,
+    description: "Order matching without price-time priority.",
+    recommendation: "Implement proper order matching rules."
+  },
+  {
+    id: "SOL2320",
+    name: "OtterSec: Bottomless Pit Attack",
+    severity: "critical",
+    pattern: /pool|liquidity(?![\s\S]{0,100}minimum_liquidity)/i,
+    description: "Pool without minimum liquidity protection.",
+    recommendation: "Lock minimum liquidity to prevent draining."
+  },
+  {
+    id: "SOL2321",
+    name: "OtterSec: Auditor Perspective Entry",
+    severity: "medium",
+    pattern: /entrypoint|process_instruction(?![\s\S]{0,100}verify_accounts)/i,
+    description: "Entry point without account verification.",
+    recommendation: "Verify all accounts at entry point."
+  },
+  {
+    id: "SOL2322",
+    name: "OtterSec: CPI Return Value",
+    severity: "high",
+    pattern: /invoke|invoke_signed(?![\s\S]{0,50}\?|Result)/i,
+    description: "CPI without error handling.",
+    recommendation: "Handle CPI return values with ?."
+  },
+  {
+    id: "SOL2323",
+    name: "OtterSec: Account Lifecycle",
+    severity: "high",
+    pattern: /close_account|close\s*=(?![\s\S]{0,100}rent_destination)/i,
+    description: "Account closure without rent destination.",
+    recommendation: "Specify rent destination on account close."
+  },
+  {
+    id: "SOL2324",
+    name: "OtterSec: State Machine Transition",
+    severity: "high",
+    pattern: /state\s*=|status\s*=(?![\s\S]{0,50}valid_transition)/i,
+    description: "State transition without validation.",
+    recommendation: "Validate state machine transitions."
+  },
+  {
+    id: "SOL2325",
+    name: "OtterSec: Event Ordering",
+    severity: "low",
+    pattern: /emit!|msg!(?![\s\S]{0,30}after.*state)/i,
+    description: "Event emitted before state finalized.",
+    recommendation: "Emit events after state changes complete."
+  },
+  // Bramah Systems Audit Patterns (SOL2326-SOL2335)
+  {
+    id: "SOL2326",
+    name: "Bramah: Crema Fee Accumulator",
+    severity: "high",
+    pattern: /fee_accumulator|accumulated_fee(?![\s\S]{0,100}overflow)/i,
+    description: "Fee accumulator vulnerable to overflow.",
+    recommendation: "Use checked math for fee accumulation."
+  },
+  {
+    id: "SOL2327",
+    name: "Bramah: Saber StableSwap Invariant",
+    severity: "critical",
+    pattern: /stable_swap|curve(?![\s\S]{0,100}invariant_check)/i,
+    description: "StableSwap without invariant verification.",
+    recommendation: "Verify curve invariant after operations."
+  },
+  {
+    id: "SOL2328",
+    name: "Bramah: Maple Loan Maturity",
+    severity: "high",
+    pattern: /loan|borrow(?![\s\S]{0,100}maturity|due_date)/i,
+    description: "Loan without maturity date enforcement.",
+    recommendation: "Enforce loan maturity dates."
+  },
+  {
+    id: "SOL2329",
+    name: "Bramah: Solido Validator Score",
+    severity: "medium",
+    pattern: /validator_score|performance(?![\s\S]{0,100}update_period)/i,
+    description: "Validator score without update period.",
+    recommendation: "Implement score update intervals."
+  },
+  {
+    id: "SOL2330",
+    name: "Bramah: Emergency Shutdown",
+    severity: "medium",
+    pattern: /emergency|pause(?![\s\S]{0,100}guardian|multisig)/i,
+    description: "Emergency shutdown without guardian.",
+    recommendation: "Require guardian/multisig for emergency."
+  },
+  {
+    id: "SOL2331",
+    name: "Bramah: Rate Limit Bypass",
+    severity: "high",
+    pattern: /rate_limit|throttle(?![\s\S]{0,100}per_epoch|per_slot)/i,
+    description: "Rate limit without time-based enforcement.",
+    recommendation: "Implement slot/epoch-based rate limits."
+  },
+  {
+    id: "SOL2332",
+    name: "Bramah: Collateral Rebalance",
+    severity: "high",
+    pattern: /rebalance|collateral(?![\s\S]{0,100}atomic)/i,
+    description: "Collateral rebalance not atomic.",
+    recommendation: "Make collateral operations atomic."
+  },
+  {
+    id: "SOL2333",
+    name: "Bramah: LP Share Dilution",
+    severity: "high",
+    pattern: /lp_shares|mint_lp(?![\s\S]{0,100}total_supply_check)/i,
+    description: "LP share minting without supply check.",
+    recommendation: "Check total supply before minting shares."
+  },
+  {
+    id: "SOL2334",
+    name: "Bramah: Auction Reserve Price",
+    severity: "high",
+    pattern: /auction|bid(?![\s\S]{0,100}reserve_price|minimum_bid)/i,
+    description: "Auction without reserve price.",
+    recommendation: "Set minimum reserve price for auctions."
+  },
+  {
+    id: "SOL2335",
+    name: "Bramah: Insurance Fund",
+    severity: "medium",
+    pattern: /insurance|coverage(?![\s\S]{0,100}fund_balance)/i,
+    description: "Insurance without fund balance check.",
+    recommendation: "Verify insurance fund solvency."
+  },
+  // Halborn Audit Patterns (SOL2336-SOL2350)
+  {
+    id: "SOL2336",
+    name: "Halborn: Cropper AMM Invariant",
+    severity: "critical",
+    pattern: /amm|swap(?![\s\S]{0,100}constant_product|xy=k)/i,
+    description: "AMM without constant product invariant.",
+    recommendation: "Verify xy=k invariant on all swaps."
+  },
+  {
+    id: "SOL2337",
+    name: "Halborn: GooseFX Swap Router",
+    severity: "high",
+    pattern: /router|swap_route(?![\s\S]{0,100}path_validation)/i,
+    description: "Swap router without path validation.",
+    recommendation: "Validate all swap path components."
+  },
+  {
+    id: "SOL2338",
+    name: "Halborn: Parrot Protocol Debt",
+    severity: "high",
+    pattern: /debt|borrow(?![\s\S]{0,100}debt_ceiling)/i,
+    description: "Protocol without debt ceiling.",
+    recommendation: "Enforce protocol-wide debt ceiling."
+  },
+  {
+    id: "SOL2339",
+    name: "Halborn: Phantasia NFT Store",
+    severity: "medium",
+    pattern: /nft_store|marketplace(?![\s\S]{0,100}listing_validation)/i,
+    description: "NFT store without listing validation.",
+    recommendation: "Validate NFT listings before sale."
+  },
+  {
+    id: "SOL2340",
+    name: "Halborn: Wormhole Guardian Rotation",
+    severity: "critical",
+    pattern: /guardian_set|guardians(?![\s\S]{0,100}rotation_delay)/i,
+    description: "Guardian set without rotation delay.",
+    recommendation: "Implement guardian rotation delay."
+  },
+  {
+    id: "SOL2341",
+    name: "Halborn: Cross-Chain Replay",
+    severity: "critical",
+    pattern: /cross_chain|bridge(?![\s\S]{0,100}chain_id|nonce)/i,
+    description: "Cross-chain message without replay protection.",
+    recommendation: "Include chain ID and nonce in messages."
+  },
+  {
+    id: "SOL2342",
+    name: "Halborn: Token Extension Conflict",
+    severity: "high",
+    pattern: /token_2022|extension(?![\s\S]{0,100}compatible)/i,
+    description: "Token-2022 extension compatibility not checked.",
+    recommendation: "Verify extension compatibility."
+  },
+  {
+    id: "SOL2343",
+    name: "Halborn: Metadata URI Injection",
+    severity: "medium",
+    pattern: /metadata_uri|uri(?![\s\S]{0,100}sanitize|validate)/i,
+    description: "Metadata URI without sanitization.",
+    recommendation: "Sanitize all metadata URIs."
+  },
+  {
+    id: "SOL2344",
+    name: "Halborn: Royalty Enforcement",
+    severity: "high",
+    pattern: /royalty|creator_fee(?![\s\S]{0,100}enforced|required)/i,
+    description: "Royalty not enforced on transfer.",
+    recommendation: "Use enforced royalty standards."
+  },
+  {
+    id: "SOL2345",
+    name: "Halborn: Program Upgrade Window",
+    severity: "medium",
+    pattern: /upgrade|set_authority(?![\s\S]{0,100}timelock|delay)/i,
+    description: "Program upgrade without timelock.",
+    recommendation: "Implement upgrade timelock."
+  },
+  {
+    id: "SOL2346",
+    name: "Halborn: Treasury Sweep",
+    severity: "high",
+    pattern: /treasury|sweep(?![\s\S]{0,100}recipient_validation)/i,
+    description: "Treasury sweep without recipient check.",
+    recommendation: "Validate treasury sweep recipients."
+  },
+  {
+    id: "SOL2347",
+    name: "Halborn: Staking Reward Calculation",
+    severity: "high",
+    pattern: /staking_reward|reward_rate(?![\s\S]{0,100}per_share)/i,
+    description: "Staking reward not using per-share calculation.",
+    recommendation: "Use reward-per-share for fairness."
+  },
+  {
+    id: "SOL2348",
+    name: "Halborn: Flash Mint Detection",
+    severity: "critical",
+    pattern: /flash_mint|instant_mint(?![\s\S]{0,100}burn_required)/i,
+    description: "Flash mint without burn verification.",
+    recommendation: "Verify flash mint is burned same tx."
+  },
+  {
+    id: "SOL2349",
+    name: "Halborn: Order Book DOS",
+    severity: "high",
+    pattern: /order_book|orders(?![\s\S]{0,100}max_orders|limit)/i,
+    description: "Order book without order limit.",
+    recommendation: "Limit orders per user/market."
+  },
+  {
+    id: "SOL2350",
+    name: "Halborn: Account Rent Attack",
+    severity: "medium",
+    pattern: /create_account|init(?![\s\S]{0,100}rent_exempt_check)/i,
+    description: "Account creation without rent exemption check.",
+    recommendation: "Verify rent-exempt minimum on creation."
+  }
+];
+function checkBatch57Patterns(input) {
+  const findings = [];
+  const content = input.rust?.content || "";
+  const fileName = input.path || input.rust?.filePath || "unknown";
+  if (!content) return findings;
+  const lines = content.split("\n");
+  for (const pattern of BATCH_57_PATTERNS) {
+    try {
+      const flags = pattern.pattern.flags.includes("g") ? pattern.pattern.flags : pattern.pattern.flags + "g";
+      const regex = new RegExp(pattern.pattern.source, flags);
+      const matches = [...content.matchAll(regex)];
+      for (const match of matches) {
+        const matchIndex = match.index || 0;
+        let lineNum = 1;
+        let charCount = 0;
+        for (let i = 0; i < lines.length; i++) {
+          charCount += lines[i].length + 1;
+          if (charCount > matchIndex) {
+            lineNum = i + 1;
+            break;
+          }
+        }
+        const startLine = Math.max(0, lineNum - 2);
+        const endLine = Math.min(lines.length, lineNum + 2);
+        const snippet = lines.slice(startLine, endLine).join("\n");
+        findings.push({
+          id: pattern.id,
+          title: pattern.name,
+          severity: pattern.severity,
+          description: pattern.description,
+          location: { file: fileName, line: lineNum },
+          recommendation: pattern.recommendation,
+          code: snippet.substring(0, 200)
+        });
+      }
+    } catch (error) {
+    }
+  }
+  return findings;
+}
+var BATCH_57_COUNT = BATCH_57_PATTERNS.length;
+
+// src/patterns/solana-batched-patterns-58.ts
+var BATCH_58_PATTERNS = [
+  // 2025-2026 Latest Exploit Patterns (SOL2351-SOL2370)
+  {
+    id: "SOL2351",
+    name: "Step Finance Treasury Pattern ($40M)",
+    severity: "critical",
+    pattern: /treasury|admin_wallet(?![\s\S]{0,100}multisig|timelock)/i,
+    description: "Treasury without multisig protection (Step Finance pattern).",
+    recommendation: "Use multisig + timelock for all treasury operations."
+  },
+  {
+    id: "SOL2352",
+    name: "Authority Transfer Phishing",
+    severity: "critical",
+    pattern: /set_authority|transfer_authority(?![\s\S]{0,100}two_step|pending)/i,
+    description: "Authority transfer without two-step confirmation.",
+    recommendation: "Implement two-step authority transfer with pending state."
+  },
+  {
+    id: "SOL2353",
+    name: "Owner Permission Spoofing",
+    severity: "critical",
+    pattern: /owner\s*=|authority\s*=(?![\s\S]{0,50}verify_signature)/i,
+    description: "Owner field manipulation without signature verification.",
+    recommendation: "Verify signatures for all authority changes."
+  },
+  {
+    id: "SOL2354",
+    name: "Transaction Simulation Bypass",
+    severity: "high",
+    pattern: /simulation|simulate(?![\s\S]{0,100}production_check)/i,
+    description: "Transaction may behave differently in simulation vs production.",
+    recommendation: "Add simulation detection safeguards."
+  },
+  {
+    id: "SOL2355",
+    name: "NoOnes Escrow Pattern ($8.5M)",
+    severity: "critical",
+    pattern: /escrow|p2p(?![\s\S]{0,100}release_verification)/i,
+    description: "Escrow release without proper verification.",
+    recommendation: "Implement multi-party escrow release verification."
+  },
+  {
+    id: "SOL2356",
+    name: "Loopscale Admin Launch ($5.8M)",
+    severity: "critical",
+    pattern: /launch|deploy(?![\s\S]{0,100}admin_rotation|key_ceremony)/i,
+    description: "Protocol launch without admin key rotation.",
+    recommendation: "Rotate admin keys post-launch."
+  },
+  {
+    id: "SOL2357",
+    name: "NPM Crypto-Clipper 2025",
+    severity: "critical",
+    pattern: /npm|package(?![\s\S]{0,100}integrity|checksum)/i,
+    description: "NPM dependency without integrity verification.",
+    recommendation: "Verify package checksums and use lockfiles."
+  },
+  {
+    id: "SOL2358",
+    name: "Pump.fun Early Withdrawal ($1.9M)",
+    severity: "high",
+    pattern: /bonding_curve|launch(?![\s\S]{0,100}lock_period|vesting)/i,
+    description: "Token launch without liquidity lock.",
+    recommendation: "Implement liquidity lock period."
+  },
+  {
+    id: "SOL2359",
+    name: "Banana Gun Bot Pattern ($1.4M)",
+    severity: "high",
+    pattern: /bot|trading_bot(?![\s\S]{0,100}session_validation)/i,
+    description: "Trading bot without session validation.",
+    recommendation: "Implement secure session management."
+  },
+  {
+    id: "SOL2360",
+    name: "Thunder Terminal MongoDB ($240K)",
+    severity: "high",
+    pattern: /mongodb|database(?![\s\S]{0,100}encrypted|tls)/i,
+    description: "Database connection without encryption.",
+    recommendation: "Use encrypted database connections."
+  },
+  {
+    id: "SOL2361",
+    name: "Cypher Insider Pattern ($317K)",
+    severity: "high",
+    pattern: /team_access|insider(?![\s\S]{0,100}audit_log|monitoring)/i,
+    description: "Insider access without audit logging.",
+    recommendation: "Log all insider/team actions."
+  },
+  {
+    id: "SOL2362",
+    name: "io.net API Key Exposure",
+    severity: "critical",
+    pattern: /api_key|secret(?![\s\S]{0,50}env|secret_manager)/i,
+    description: "API key potentially exposed in code.",
+    recommendation: "Use environment variables or secret manager."
+  },
+  {
+    id: "SOL2363",
+    name: "Aurory Game Exploit ($830K)",
+    severity: "high",
+    pattern: /game_item|nft_game(?![\s\S]{0,100}server_validation)/i,
+    description: "Game item without server-side validation.",
+    recommendation: "Validate all game actions server-side."
+  },
+  {
+    id: "SOL2364",
+    name: "SVT Token Unclaimed Vuln ($1M)",
+    severity: "high",
+    pattern: /unclaimed|claim(?![\s\S]{0,100}expiry|deadline)/i,
+    description: "Claim mechanism without expiry.",
+    recommendation: "Add claim deadlines and expiry."
+  },
+  {
+    id: "SOL2365",
+    name: "Saga DAO Insider ($1.5M)",
+    severity: "high",
+    pattern: /dao_treasury|community_fund(?![\s\S]{0,100}multisig)/i,
+    description: "DAO treasury without multisig.",
+    recommendation: "Require multisig for DAO treasury."
+  },
+  {
+    id: "SOL2366",
+    name: "Solareum Rug Detection",
+    severity: "critical",
+    pattern: /rugpull|rug(?![\s\S]{0,100}liquidity_lock)/i,
+    description: "Potential rugpull pattern detected.",
+    recommendation: "Lock liquidity and use trusted deployer."
+  },
+  {
+    id: "SOL2367",
+    name: "Parcl CDN Compromise",
+    severity: "high",
+    pattern: /cdn|frontend(?![\s\S]{0,100}sri|integrity)/i,
+    description: "Frontend without subresource integrity.",
+    recommendation: "Implement SRI for all external resources."
+  },
+  {
+    id: "SOL2368",
+    name: "Web3.js Supply Chain",
+    severity: "critical",
+    pattern: /web3\.js|@solana\/web3(?![\s\S]{0,100}version_pin)/i,
+    description: "Solana web3.js without version pinning.",
+    recommendation: "Pin specific web3.js versions."
+  },
+  {
+    id: "SOL2369",
+    name: "Tulip Flash Loan Vault ($5.2M)",
+    severity: "high",
+    pattern: /flash_loan|vault(?![\s\S]{0,100}same_block_check)/i,
+    description: "Vault vulnerable to flash loan attacks.",
+    recommendation: "Add same-block operation restrictions."
+  },
+  {
+    id: "SOL2370",
+    name: "UXD Depeg Risk ($3.9M)",
+    severity: "high",
+    pattern: /stablecoin|peg(?![\s\S]{0,100}oracle_deviation)/i,
+    description: "Stablecoin without depeg detection.",
+    recommendation: "Monitor and react to depeg events."
+  },
+  // Validator & Infrastructure Patterns (SOL2371-SOL2385)
+  {
+    id: "SOL2371",
+    name: "Validator Commission Manipulation",
+    severity: "high",
+    pattern: /commission|validator_fee(?![\s\S]{0,100}max_cap|limit)/i,
+    description: "Validator commission without cap.",
+    recommendation: "Enforce maximum commission rates."
+  },
+  {
+    id: "SOL2372",
+    name: "Stake Pool Centralization",
+    severity: "medium",
+    pattern: /stake_pool|delegation(?![\s\S]{0,100}distribution_check)/i,
+    description: "Stake pool without distribution requirements.",
+    recommendation: "Enforce stake distribution across validators."
+  },
+  {
+    id: "SOL2373",
+    name: "Turbine Block Propagation",
+    severity: "high",
+    pattern: /turbine|shred(?![\s\S]{0,100}validation)/i,
+    description: "Turbine shred handling without validation.",
+    recommendation: "Validate all turbine shreds."
+  },
+  {
+    id: "SOL2374",
+    name: "Durable Nonce Expiry Risk",
+    severity: "medium",
+    pattern: /durable_nonce|nonce(?![\s\S]{0,100}advance_check)/i,
+    description: "Durable nonce without advance verification.",
+    recommendation: "Check nonce state before use."
+  },
+  {
+    id: "SOL2375",
+    name: "JIT Cache Corruption",
+    severity: "critical",
+    pattern: /jit|cache(?![\s\S]{0,100}integrity_check)/i,
+    description: "JIT compilation without integrity verification.",
+    recommendation: "Verify JIT cache integrity."
+  },
+  {
+    id: "SOL2376",
+    name: "ELF Address Alignment",
+    severity: "high",
+    pattern: /elf|bpf_loader(?![\s\S]{0,100}alignment)/i,
+    description: "ELF loading without address alignment check.",
+    recommendation: "Verify proper ELF address alignment."
+  },
+  {
+    id: "SOL2377",
+    name: "Compute Unit Exhaustion",
+    severity: "high",
+    pattern: /compute_units|cu(?![\s\S]{0,100}budget_check)/i,
+    description: "Operation without compute budget check.",
+    recommendation: "Verify compute budget before expensive ops."
+  },
+  {
+    id: "SOL2378",
+    name: "Account Heap Overflow",
+    severity: "critical",
+    pattern: /heap|allocate(?![\s\S]{0,100}size_check)/i,
+    description: "Heap allocation without size check.",
+    recommendation: "Validate allocation sizes."
+  },
+  {
+    id: "SOL2379",
+    name: "Stack Frame Limit",
+    severity: "high",
+    pattern: /stack|recursion(?![\s\S]{0,100}depth_limit)/i,
+    description: "Recursion without stack depth limit.",
+    recommendation: "Limit recursive call depth."
+  },
+  {
+    id: "SOL2380",
+    name: "CPI Depth Exhaustion",
+    severity: "high",
+    pattern: /cpi|invoke(?![\s\S]{0,100}depth_check)/i,
+    description: "CPI without depth tracking.",
+    recommendation: "Track and limit CPI depth (max 4)."
+  },
+  {
+    id: "SOL2381",
+    name: "Account Reallocation DOS",
+    severity: "high",
+    pattern: /realloc|resize(?![\s\S]{0,100}max_size)/i,
+    description: "Account reallocation without size limit.",
+    recommendation: "Limit account reallocation size."
+  },
+  {
+    id: "SOL2382",
+    name: "Rent Epoch Skip",
+    severity: "medium",
+    pattern: /rent_epoch|epoch(?![\s\S]{0,100}validation)/i,
+    description: "Rent epoch not validated.",
+    recommendation: "Validate rent epoch for accounts."
+  },
+  {
+    id: "SOL2383",
+    name: "Slot Hash Manipulation",
+    severity: "high",
+    pattern: /slot_hashes|recent_blockhash(?![\s\S]{0,100}verify)/i,
+    description: "Slot hash used without verification.",
+    recommendation: "Verify slot hash freshness."
+  },
+  {
+    id: "SOL2384",
+    name: "Clock Sysvar Drift",
+    severity: "medium",
+    pattern: /sysvar::clock|Clock(?![\s\S]{0,100}drift_check)/i,
+    description: "Clock sysvar without drift consideration.",
+    recommendation: "Account for clock drift in time-based ops."
+  },
+  {
+    id: "SOL2385",
+    name: "Instructions Sysvar Abuse",
+    severity: "high",
+    pattern: /sysvar::instructions|Instructions(?![\s\S]{0,100}verify)/i,
+    description: "Instructions sysvar without verification.",
+    recommendation: "Verify instruction sysvar contents."
+  },
+  // MEV & Jito Patterns (SOL2386-SOL2395)
+  {
+    id: "SOL2386",
+    name: "Jito Bundle Sandwich",
+    severity: "high",
+    pattern: /bundle|jito(?![\s\S]{0,100}sandwich_protection)/i,
+    description: "Transaction vulnerable to Jito sandwich attacks.",
+    recommendation: "Implement private transaction submission."
+  },
+  {
+    id: "SOL2387",
+    name: "Priority Fee Manipulation",
+    severity: "medium",
+    pattern: /priority_fee|tip(?![\s\S]{0,100}max_cap)/i,
+    description: "Priority fee without maximum cap.",
+    recommendation: "Cap priority fees to prevent manipulation."
+  },
+  {
+    id: "SOL2388",
+    name: "MEV Frontrunning",
+    severity: "high",
+    pattern: /swap|trade(?![\s\S]{0,100}commit_reveal|private)/i,
+    description: "Trade vulnerable to frontrunning.",
+    recommendation: "Use commit-reveal or private mempools."
+  },
+  {
+    id: "SOL2389",
+    name: "Searcher Collusion",
+    severity: "high",
+    pattern: /searcher|mev(?![\s\S]{0,100}fair_ordering)/i,
+    description: "MEV extraction without fair ordering.",
+    recommendation: "Use fair ordering mechanisms."
+  },
+  {
+    id: "SOL2390",
+    name: "Backrunning Vulnerability",
+    severity: "medium",
+    pattern: /oracle_update|price_update(?![\s\S]{0,100}delay)/i,
+    description: "Oracle update vulnerable to backrunning.",
+    recommendation: "Add delay to oracle updates."
+  },
+  {
+    id: "SOL2391",
+    name: "Bundle Reversion Attack",
+    severity: "high",
+    pattern: /bundle|atomic(?![\s\S]{0,100}revert_check)/i,
+    description: "Bundle without reversion handling.",
+    recommendation: "Handle partial bundle execution."
+  },
+  {
+    id: "SOL2392",
+    name: "Jito DDoS Pattern",
+    severity: "high",
+    pattern: /spam|flood(?![\s\S]{0,100}rate_limit)/i,
+    description: "Spam vulnerability without rate limiting.",
+    recommendation: "Implement rate limiting."
+  },
+  {
+    id: "SOL2393",
+    name: "Block Builder Manipulation",
+    severity: "high",
+    pattern: /block_builder|validator(?![\s\S]{0,100}randomization)/i,
+    description: "Block building without randomization.",
+    recommendation: "Use randomized leader selection."
+  },
+  {
+    id: "SOL2394",
+    name: "Liquidation MEV",
+    severity: "high",
+    pattern: /liquidation|liquidate(?![\s\S]{0,100}dutch_auction)/i,
+    description: "Liquidation vulnerable to MEV extraction.",
+    recommendation: "Use Dutch auction for liquidations."
+  },
+  {
+    id: "SOL2395",
+    name: "Just-In-Time Liquidity",
+    severity: "medium",
+    pattern: /jit_liquidity|just_in_time(?![\s\S]{0,100}lockup)/i,
+    description: "JIT liquidity provision risk.",
+    recommendation: "Require minimum liquidity lockup."
+  },
+  // Token-2022 Advanced Patterns (SOL2396-SOL2408)
+  {
+    id: "SOL2396",
+    name: "Token-2022 Transfer Hook Reentry",
+    severity: "critical",
+    pattern: /transfer_hook|TransferHook(?![\s\S]{0,100}reentrancy_guard)/i,
+    description: "Transfer hook without reentrancy protection.",
+    recommendation: "Add reentrancy guard to transfer hooks."
+  },
+  {
+    id: "SOL2397",
+    name: "Token-2022 Confidential Amount",
+    severity: "high",
+    pattern: /confidential_transfer|encrypted(?![\s\S]{0,100}zk_verify)/i,
+    description: "Confidential transfer without ZK verification.",
+    recommendation: "Verify ZK proofs for confidential transfers."
+  },
+  {
+    id: "SOL2398",
+    name: "Token-2022 Interest Bearing Exploit",
+    severity: "high",
+    pattern: /interest_bearing|interest_rate(?![\s\S]{0,100}compound_check)/i,
+    description: "Interest bearing token without compound check.",
+    recommendation: "Properly calculate compounding interest."
+  },
+  {
+    id: "SOL2399",
+    name: "Token-2022 Permanent Delegate Abuse",
+    severity: "critical",
+    pattern: /permanent_delegate|PermanentDelegate(?![\s\S]{0,100}guardian)/i,
+    description: "Permanent delegate without guardian oversight.",
+    recommendation: "Require guardian for permanent delegation."
+  },
+  {
+    id: "SOL2400",
+    name: "Token-2022 Memo Required Bypass",
+    severity: "medium",
+    pattern: /memo_required|MemoTransfer(?![\s\S]{0,100}enforce)/i,
+    description: "Memo requirement can be bypassed.",
+    recommendation: "Enforce memo at program level."
+  },
+  {
+    id: "SOL2401",
+    name: "Token-2022 Non-Transferable Override",
+    severity: "high",
+    pattern: /non_transferable|soul_bound(?![\s\S]{0,100}immutable)/i,
+    description: "Non-transferable token can be overridden.",
+    recommendation: "Make non-transferable truly immutable."
+  },
+  {
+    id: "SOL2402",
+    name: "Token-2022 Default State Abuse",
+    severity: "medium",
+    pattern: /default_account_state|DefaultAccountState(?![\s\S]{0,100}verify)/i,
+    description: "Default account state not verified.",
+    recommendation: "Verify account state on operations."
+  },
+  {
+    id: "SOL2403",
+    name: "Token-2022 Group Member Attack",
+    severity: "high",
+    pattern: /token_group|GroupMember(?![\s\S]{0,100}authority_check)/i,
+    description: "Token group without authority verification.",
+    recommendation: "Verify group member authority."
+  },
+  {
+    id: "SOL2404",
+    name: "Token-2022 Metadata Pointer",
+    severity: "medium",
+    pattern: /metadata_pointer|MetadataPointer(?![\s\S]{0,100}validate)/i,
+    description: "Metadata pointer not validated.",
+    recommendation: "Validate metadata pointer targets."
+  },
+  {
+    id: "SOL2405",
+    name: "Token-2022 Close Authority Drain",
+    severity: "high",
+    pattern: /close_authority|CloseAuthority(?![\s\S]{0,100}balance_check)/i,
+    description: "Close authority without balance verification.",
+    recommendation: "Verify zero balance before close."
+  },
+  {
+    id: "SOL2406",
+    name: "Token-2022 Fee Config Abuse",
+    severity: "high",
+    pattern: /transfer_fee_config|TransferFeeConfig(?![\s\S]{0,100}max_fee)/i,
+    description: "Transfer fee without maximum cap.",
+    recommendation: "Cap transfer fees at reasonable maximum."
+  },
+  {
+    id: "SOL2407",
+    name: "Token-2022 CPI Guard State",
+    severity: "high",
+    pattern: /cpi_guard|CpiGuard(?![\s\S]{0,100}state_check)/i,
+    description: "CPI guard state not verified.",
+    recommendation: "Check CPI guard before operations."
+  },
+  {
+    id: "SOL2408",
+    name: "Token-2022 Immutable Owner Bypass",
+    severity: "high",
+    pattern: /immutable_owner|ImmutableOwner(?![\s\S]{0,100}verify)/i,
+    description: "Immutable owner can be bypassed.",
+    recommendation: "Enforce immutable owner check."
+  },
+  // Compressed NFT Patterns (SOL2409-SOL2420)
+  {
+    id: "SOL2409",
+    name: "cNFT Merkle Proof Spoofing",
+    severity: "critical",
+    pattern: /merkle_proof|MerkleProof(?![\s\S]{0,100}verify_proof)/i,
+    description: "cNFT merkle proof without verification.",
+    recommendation: "Verify all merkle proofs."
+  },
+  {
+    id: "SOL2410",
+    name: "cNFT Canopy Depth Attack",
+    severity: "high",
+    pattern: /canopy|tree_depth(?![\s\S]{0,100}depth_check)/i,
+    description: "Canopy depth not validated.",
+    recommendation: "Validate canopy depth on operations."
+  },
+  {
+    id: "SOL2411",
+    name: "cNFT Concurrent Modification",
+    severity: "high",
+    pattern: /concurrent|atomic_update(?![\s\S]{0,100}seq_check)/i,
+    description: "cNFT tree concurrent modification risk.",
+    recommendation: "Use sequence numbers for atomicity."
+  },
+  {
+    id: "SOL2412",
+    name: "cNFT Leaf Index Overflow",
+    severity: "high",
+    pattern: /leaf_index|tree_index(?![\s\S]{0,100}bounds_check)/i,
+    description: "cNFT leaf index without bounds check.",
+    recommendation: "Validate leaf index bounds."
+  },
+  {
+    id: "SOL2413",
+    name: "cNFT Creator Verification",
+    severity: "high",
+    pattern: /creator_hash|creator_verification(?![\s\S]{0,100}verify)/i,
+    description: "cNFT creator hash not verified.",
+    recommendation: "Verify creator hash on operations."
+  },
+  {
+    id: "SOL2414",
+    name: "cNFT Data Hash Collision",
+    severity: "high",
+    pattern: /data_hash|asset_hash(?![\s\S]{0,100}unique)/i,
+    description: "cNFT data hash may collide.",
+    recommendation: "Ensure data hash uniqueness."
+  },
+  {
+    id: "SOL2415",
+    name: "cNFT Tree Authority Transfer",
+    severity: "critical",
+    pattern: /tree_authority|tree_delegate(?![\s\S]{0,100}two_step)/i,
+    description: "Tree authority transfer without two-step.",
+    recommendation: "Use two-step authority transfer."
+  },
+  {
+    id: "SOL2416",
+    name: "cNFT Decompress Attack",
+    severity: "high",
+    pattern: /decompress|unpack(?![\s\S]{0,100}verify_ownership)/i,
+    description: "cNFT decompression without ownership verify.",
+    recommendation: "Verify ownership before decompression."
+  },
+  {
+    id: "SOL2417",
+    name: "cNFT Collection Verification",
+    severity: "high",
+    pattern: /collection_verified|collection_hash(?![\s\S]{0,100}check)/i,
+    description: "cNFT collection not verified.",
+    recommendation: "Verify collection membership."
+  },
+  {
+    id: "SOL2418",
+    name: "Bubblegum Creator Share",
+    severity: "medium",
+    pattern: /creator_share|royalty(?![\s\S]{0,100}total_100)/i,
+    description: "Creator shares may not sum to 100.",
+    recommendation: "Verify creator shares sum to 100%."
+  },
+  {
+    id: "SOL2419",
+    name: "Bubblegum Delegate Scope",
+    severity: "high",
+    pattern: /delegate|burn_delegate(?![\s\S]{0,100}scope_check)/i,
+    description: "cNFT delegate scope not limited.",
+    recommendation: "Limit delegate permissions scope."
+  },
+  {
+    id: "SOL2420",
+    name: "Bubblegum Metadata Update",
+    severity: "medium",
+    pattern: /metadata_update|update_metadata(?![\s\S]{0,100}authority)/i,
+    description: "Metadata update without authority check.",
+    recommendation: "Verify update authority."
+  }
+];
+function checkBatch58Patterns(input) {
+  const findings = [];
+  const content = input.rust?.content || "";
+  const fileName = input.path || input.rust?.filePath || "unknown";
+  if (!content) return findings;
+  const lines = content.split("\n");
+  for (const pattern of BATCH_58_PATTERNS) {
+    try {
+      const flags = pattern.pattern.flags.includes("g") ? pattern.pattern.flags : pattern.pattern.flags + "g";
+      const regex = new RegExp(pattern.pattern.source, flags);
+      const matches = [...content.matchAll(regex)];
+      for (const match of matches) {
+        const matchIndex = match.index || 0;
+        let lineNum = 1;
+        let charCount = 0;
+        for (let i = 0; i < lines.length; i++) {
+          charCount += lines[i].length + 1;
+          if (charCount > matchIndex) {
+            lineNum = i + 1;
+            break;
+          }
+        }
+        const startLine = Math.max(0, lineNum - 2);
+        const endLine = Math.min(lines.length, lineNum + 2);
+        const snippet = lines.slice(startLine, endLine).join("\n");
+        findings.push({
+          id: pattern.id,
+          title: pattern.name,
+          severity: pattern.severity,
+          description: pattern.description,
+          location: { file: fileName, line: lineNum },
+          recommendation: pattern.recommendation,
+          code: snippet.substring(0, 200)
+        });
+      }
+    } catch (error) {
+    }
+  }
+  return findings;
+}
+var BATCH_58_COUNT = BATCH_58_PATTERNS.length;
+
 // src/patterns/index.ts
 var CORE_PATTERNS = [
   {
@@ -4111,6 +5331,14 @@ async function runPatterns(input) {
     findings.push(...checkBatch56Patterns(input));
   } catch (error) {
   }
+  try {
+    findings.push(...checkBatch57Patterns(input));
+  } catch (error) {
+  }
+  try {
+    findings.push(...checkBatch58Patterns(input));
+  } catch (error) {
+  }
   const seen = /* @__PURE__ */ new Set();
   const deduped = findings.filter((f) => {
     const key = `${f.id}-${f.location.line}`;
@@ -4154,7 +5382,7 @@ function listPatterns() {
     // Placeholder
   }));
 }
-var PATTERN_COUNT = ALL_PATTERNS.length + 4185;
+var PATTERN_COUNT = ALL_PATTERNS.length + 4325;
 
 // src/sdk.ts
 import { existsSync, readdirSync, statSync } from "fs";
