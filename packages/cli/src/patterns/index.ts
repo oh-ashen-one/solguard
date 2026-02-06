@@ -1,8 +1,8 @@
 /**
  * SolGuard Pattern Registry
  * 
- * 8000+ security patterns for Solana smart contract auditing
- * Updated: Feb 6, 2026 10:00 AM - Added Batch 101 (Solsec Deep Dive + Armani Sealevel Attacks + Neodyme PoC + Sec3 2025)
+ * 8400+ security patterns for Solana smart contract auditing
+ * Updated: Feb 6, 2026 11:00 AM - Added Batch 104-105 (Solsec Deep Research + Armani Sealevel + Audit Firm PoCs + Protocol-Specific + 2026 Emerging Threats)
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
@@ -149,6 +149,18 @@ import { checkBatch100Patterns } from './solana-batched-patterns-100.js';
 
 // Import Batch 101 patterns (Feb 6, 2026 10:00 AM) - Solsec Deep Dive + Armani Sealevel + Neodyme PoC + Cope Roulette + Port Finance + Sec3 2025 (SOL6301-SOL6335)
 import { checkBatch101Patterns } from './solana-batched-patterns-101.js';
+
+// Import Batch 102 patterns (Feb 6, 2026 10:30 AM) - Helius 38 Verified Incidents Complete Deep Dive (2020-Q1 2025) - $600M Gross Losses Analysis (SOL6401-SOL6500)
+import { checkBatch102Patterns } from './solana-batched-patterns-102.js';
+
+// Import Batch 103 patterns (Feb 6, 2026 10:30 AM) - arXiv:2504.07419 Academic Research + Security Analysis Tools + Vulnerability Taxonomy (SOL6501-SOL6600)
+import { checkBatch103Patterns } from './solana-batched-patterns-103.js';
+
+// Import Batch 104 patterns (Feb 6, 2026 11:00 AM) - Solsec Deep Research + Armani Sealevel Attacks + Audit Firm PoCs (SOL6601-SOL6700)
+import { checkBatch104Patterns } from './solana-batched-patterns-104.js';
+
+// Import Batch 105 patterns (Feb 6, 2026 11:00 AM) - Protocol-Specific Audit Findings + 2026 Emerging Threats (SOL6701-SOL6800)
+import { checkBatch105Patterns } from './solana-batched-patterns-105.js';
 
 export interface Finding {
   id: string;
@@ -1037,6 +1049,38 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     findings.push(...batch101Results);
   } catch (error) {
     // Skip if Batch 101 patterns fail
+  }
+  
+  // Run Batch 102 patterns (100 patterns: Helius 38 Verified Incidents Complete Deep Dive - Solend, Slope, OptiFi, UXD, Tulip, Synthetify, Aurory, Saga, Solareum - SOL6401-SOL6500)
+  try {
+    const batch102Results = checkBatch102Patterns(input);
+    findings.push(...batch102Results);
+  } catch (error) {
+    // Skip if Batch 102 patterns fail
+  }
+  
+  // Run Batch 103 patterns (100 patterns: arXiv:2504.07419 Academic Research - Security Tools + Vulnerability Taxonomy + Attack Vectors - SOL6501-SOL6600)
+  try {
+    const batch103Results = checkBatch103Patterns(input);
+    findings.push(...batch103Results);
+  } catch (error) {
+    // Skip if Batch 103 patterns fail
+  }
+  
+  // Run Batch 104 patterns (100 patterns: Solsec Deep Research + Armani Sealevel Attacks + Audit Firm PoCs - SOL6601-SOL6700)
+  try {
+    const batch104Results = checkBatch104Patterns(input);
+    findings.push(...batch104Results);
+  } catch (error) {
+    // Skip if Batch 104 patterns fail
+  }
+  
+  // Run Batch 105 patterns (100 patterns: Protocol-Specific Audit Findings + 2026 Emerging Threats - SOL6701-SOL6800)
+  try {
+    const batch105Results = checkBatch105Patterns(input);
+    findings.push(...batch105Results);
+  } catch (error) {
+    // Skip if Batch 105 patterns fail
   }
   
   // Deduplicate by ID + line
