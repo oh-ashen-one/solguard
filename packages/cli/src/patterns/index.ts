@@ -1,8 +1,8 @@
 /**
  * SolGuard Pattern Registry
  * 
- * 6500+ security patterns for Solana smart contract auditing
- * Updated: Feb 6, 2026 2:30 AM - Added Batch 81-82 (Latest Exploit Deep Dives + Audit Firm Patterns + 2026 Emerging Threats)
+ * 6700+ security patterns for Solana smart contract auditing
+ * Updated: Feb 6, 2026 3:00 AM - Added Batch 83-84 (Helius Complete Exploit History + Solsec Deep Dive + Protocol Audits)
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
@@ -92,6 +92,12 @@ import { checkBatch81Patterns } from './solana-batched-patterns-81.js';
 
 // Import Batch 82 patterns (Feb 6, 2026 2:30 AM) - Audit Firm Patterns + 2026 Emerging Threats (SOL4201-SOL4300)
 import { checkBatch82Patterns } from './solana-batched-patterns-82.js';
+
+// Import Batch 83 patterns (Feb 6, 2026 3:00 AM) - Helius Complete Exploit History + Solsec + Sealevel Attacks (SOL4301-SOL4400)
+import { checkBatch83Patterns } from './solana-batched-patterns-83.js';
+
+// Import Batch 84 patterns (Feb 6, 2026 3:00 AM) - Protocol Audits (Mango, Marinade, Orca, Drift, Phoenix) + DeFi (SOL4401-SOL4500)
+import { checkBatch84Patterns } from './solana-batched-patterns-84.js';
 
 export interface Finding {
   id: string;
@@ -825,6 +831,20 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     // Skip if Batch 82 patterns fail
   }
   
+  // Run Batch 83 patterns (100 patterns: Helius Complete Exploit History + Solsec + Sealevel Attacks - SOL4301-SOL4400)
+  try {
+    findings.push(...checkBatch83Patterns(input));
+  } catch (error) {
+    // Skip if Batch 83 patterns fail
+  }
+  
+  // Run Batch 84 patterns (100 patterns: Protocol Audits + DeFi Patterns - SOL4401-SOL4500)
+  try {
+    findings.push(...checkBatch84Patterns(input));
+  } catch (error) {
+    // Skip if Batch 84 patterns fail
+  }
+  
   // Deduplicate by ID + line
   const seen = new Set<string>();
   const deduped = findings.filter(f => {
@@ -926,5 +946,7 @@ export function listPatterns(): Pattern[] {
 //   - solana-batched-patterns-78.ts (SOL3876-SOL3975): Step Finance $30M (Jan 31, 2026), DEV.to Deep Dive, NoOnes $8M, Upbit $36M, Trust Wallet $7M, Phishing
 //   - solana-batched-patterns-79.ts (SOL3976-SOL4025): Solsec Research + Sec3 2025 Deep Dive + Port Finance + Cope Roulette + Neodyme Rounding
 //   - solana-batched-patterns-80.ts (SOL4026-SOL4100): Helius Complete Exploit History + 2024-2026 Emerging Threats (AI Agents, Token-2022, MEV, Governance)
-// 80 batched/pattern files × ~70 patterns each + 50 core + 250+ individual patterns = 6000+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 5900; // 6000+ total with all batched patterns
+//   - solana-batched-patterns-83.ts (SOL4301-SOL4400): Helius 38 Verified Incidents + Sealevel Attacks + Audit Firm Patterns (Wormhole, Cashio, Crema, Mango, Nirvana, etc.)
+//   - solana-batched-patterns-84.ts (SOL4401-SOL4500): Protocol Audits (Mango, Marinade, Orca, Drift, Phoenix) + Advanced DeFi (Lending, AMM, Options, Staking, Bridges, NFT, Governance)
+// 84 batched/pattern files × ~70 patterns each + 50 core + 250+ individual patterns = 6700+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 6100; // 6700+ total with all batched patterns
