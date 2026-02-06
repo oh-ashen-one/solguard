@@ -2,7 +2,7 @@
  * SolGuard Pattern Registry
  * 
  * 8000+ security patterns for Solana smart contract auditing
- * Updated: Feb 6, 2026 9:30 AM - Added Batch 100 🎉 (Chrome Extension Malware + Sec3 2025 Full Categories + Helius 2026 + Future Security)
+ * Updated: Feb 6, 2026 10:00 AM - Added Batch 101 (Solsec Deep Dive + Armani Sealevel Attacks + Neodyme PoC + Sec3 2025)
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
@@ -146,6 +146,9 @@ import { checkBatch99Patterns } from './solana-batched-patterns-99.js';
 
 // Import Batch 100 patterns (Feb 6, 2026 9:30 AM) 🎉 100th Batch Milestone! - Chrome Extension Malware + Sec3 2025 Full Categories + Helius 2026 + Future Security (SOL6201-SOL6300)
 import { checkBatch100Patterns } from './solana-batched-patterns-100.js';
+
+// Import Batch 101 patterns (Feb 6, 2026 10:00 AM) - Solsec Deep Dive + Armani Sealevel + Neodyme PoC + Cope Roulette + Port Finance + Sec3 2025 (SOL6301-SOL6335)
+import { checkBatch101Patterns } from './solana-batched-patterns-101.js';
 
 export interface Finding {
   id: string;
@@ -1026,6 +1029,14 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     findings.push(...batch100Results);
   } catch (error) {
     // Skip if Batch 100 patterns fail
+  }
+  
+  // Run Batch 101 patterns (35 patterns: Solsec Deep Dive + Armani Sealevel + Neodyme PoC + Cope Roulette + Port Finance + Sec3 2025 - SOL6301-SOL6335)
+  try {
+    const batch101Results = checkBatch101Patterns(input);
+    findings.push(...batch101Results);
+  } catch (error) {
+    // Skip if Batch 101 patterns fail
   }
   
   // Deduplicate by ID + line
