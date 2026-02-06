@@ -1,8 +1,8 @@
 /**
  * SolGuard Pattern Registry
  * 
- * 7200+ security patterns for Solana smart contract auditing
- * Updated: Feb 6, 2026 4:35 AM - Added Batch 88-89 (Helius Complete + Zellic + Cantina + Advanced DeFi)
+ * 7300+ security patterns for Solana smart contract auditing
+ * Updated: Feb 6, 2026 5:00 AM - Added Batch 90 (arXiv Academic + Sec3 Final + 2026 Emerging Threats)
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
@@ -113,6 +113,9 @@ import { checkBatch88Patterns } from './solana-batched-patterns-88.js';
 
 // Import Batch 89 patterns (Feb 6, 2026 4:35 AM) - Zellic Anchor Vulnerabilities + Cantina Security Guide + Advanced DeFi + 2026 Threats (SOL4901-SOL5000)
 import { checkBatch89Patterns } from './solana-batched-patterns-89.js';
+
+// Import Batch 90 patterns (Feb 6, 2026 5:00 AM) - arXiv Academic + Sec3 Final + Helius 2026 + Token-2022 + cNFT + MEV + 2026 Emerging (SOL5001-SOL5100)
+import { checkBatch90Patterns } from './solana-batched-patterns-90.js';
 
 export interface Finding {
   id: string;
@@ -895,6 +898,13 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     // Skip if Batch 89 patterns fail
   }
   
+  // Run Batch 90 patterns (100 patterns: arXiv Academic + Sec3 Final + Helius 2026 + Token-2022 + cNFT + MEV - SOL5001-SOL5100)
+  try {
+    findings.push(...checkBatch90Patterns(input));
+  } catch (error) {
+    // Skip if Batch 90 patterns fail
+  }
+  
   // Deduplicate by ID + line
   const seen = new Set<string>();
   const deduped = findings.filter(f => {
@@ -1004,5 +1014,6 @@ export function listPatterns(): Pattern[] {
 //   - solana-batched-patterns-87.ts (SOL4701-SOL4800): Helius 38 Incidents Deep Dive + Solsec PoC (Cope Roulette, Port, Jet) + Armani Sealevel Attacks + DeFi + 2026 Emerging Threats
 //   - solana-batched-patterns-88.ts (SOL4801-SOL4900): Helius Complete History (38 Incidents) + Solsec PoC Deep Dives + Cope Roulette + Port Finance $2.6B + Jet Protocol Break Bug
 //   - solana-batched-patterns-89.ts (SOL4901-SOL5000): Zellic Anchor Vulnerabilities + Cantina Security Guide + Advanced DeFi Patterns + 2026 Emerging Threats
-// 89 batched/pattern files × ~70 patterns each + 50 core + 250+ individual patterns = 7200+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 6600; // 7200+ total with all batched patterns
+//   - solana-batched-patterns-90.ts (SOL5001-SOL5100): arXiv Academic Research + Sec3 2025 Final + Helius 2026 + Token-2022 + cNFT + MEV + Emerging Threats
+// 90 batched/pattern files × ~70 patterns each + 50 core + 250+ individual patterns = 7300+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 6700; // 7300+ total with all batched patterns
