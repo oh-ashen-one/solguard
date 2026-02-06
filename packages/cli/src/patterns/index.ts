@@ -1,8 +1,8 @@
 /**
  * SolGuard Pattern Registry
  * 
- * 7600+ security patterns for Solana smart contract auditing
- * Updated: Feb 6, 2026 6:30 AM - Added Batch 93 (Step Finance $40M + arXiv Research + Sec3 2025 Final + AI Agent Security)
+ * 7800+ security patterns for Solana smart contract auditing
+ * Updated: Feb 6, 2026 7:30 AM - Added Batches 94-95 (Helius + OtterSec + Neodyme + Zellic + Sec3 Workshop)
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
@@ -125,6 +125,12 @@ import { checkBatch92Patterns } from './solana-batched-patterns-92.js';
 
 // Import Batch 93 patterns (Feb 6, 2026 6:30 AM) - Step Finance $40M + arXiv Research + Sec3 2025 Final + Certora Lulo + Token-2022 + AI Agent Security (SOL5301-SOL5400)
 import { scanBatch93 as checkBatch93Patterns } from './solana-batched-patterns-93.js';
+
+// Import Batch 94 patterns (Feb 6, 2026 7:30 AM) - Helius Complete Exploit History + Solsec PoC Research + Feb 2026 Deep Dive (SOL5601-SOL5700)
+import { checkBatch94Patterns } from './solana-batched-patterns-94.js';
+
+// Import Batch 95 patterns (Feb 6, 2026 7:30 AM) - OtterSec Audits + Neodyme Research + Sec3 Workshop + Zellic Deep Dive (SOL5701-SOL5800)
+import { checkBatch95Patterns } from './solana-batched-patterns-95.js';
 
 export interface Finding {
   id: string;
@@ -933,6 +939,38 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     findings.push(...checkBatch93Patterns({ content: input.rust?.content || '', file: input.path }));
   } catch (error) {
     // Skip if Batch 93 patterns fail
+  }
+  
+  // Run Batch 94 patterns (60 patterns: Helius Complete Exploit History + Solsec PoC Research + Feb 2026 Deep Dive - SOL5601-SOL5700)
+  try {
+    const batch94Results = checkBatch94Patterns({ content: input.rust?.content || '', file: input.path } as any);
+    for (const r of batch94Results) {
+      findings.push({
+        id: r.id,
+        title: r.name,
+        severity: r.severity as any,
+        description: r.message,
+        location: { file: input.path, line: r.line },
+      });
+    }
+  } catch (error) {
+    // Skip if Batch 94 patterns fail
+  }
+  
+  // Run Batch 95 patterns (50 patterns: OtterSec Audits + Neodyme Research + Sec3 Workshop + Zellic Deep Dive - SOL5701-SOL5800)
+  try {
+    const batch95Results = checkBatch95Patterns({ content: input.rust?.content || '', file: input.path } as any);
+    for (const r of batch95Results) {
+      findings.push({
+        id: r.id,
+        title: r.name,
+        severity: r.severity as any,
+        description: r.message,
+        location: { file: input.path, line: r.line },
+      });
+    }
+  } catch (error) {
+    // Skip if Batch 95 patterns fail
   }
   
   // Deduplicate by ID + line

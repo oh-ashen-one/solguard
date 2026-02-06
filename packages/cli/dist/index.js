@@ -31838,6 +31838,2371 @@ function scanBatch93(input) {
 }
 var BATCH_93_COUNT = BATCH_93_PATTERNS.length;
 
+// src/patterns/solana-batched-patterns-94.ts
+var batch94Patterns = [
+  // ===== SIGNATURE VERIFICATION PATTERNS (Wormhole-style) =====
+  {
+    id: "SOL5601",
+    name: "signature-set-spoofing-deep",
+    severity: "critical",
+    category: "cross-chain",
+    description: "Deep detection of signature set spoofing attacks where attackers create fake SignatureSet accounts to bypass guardian validation (Wormhole $326M)",
+    pattern: /verify_signatures|guardian.*signature|signature_set|validate_guardian|check_guardian_set/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/verify_signatures/i.test(content) && !/owner\s*==|key\s*==|constraint\s*=.*owner/i.test(content)) {
+        issues.push("Signature verification without account owner check - vulnerable to spoofed SignatureSet accounts");
+      }
+      if (/guardian.*set|guardian.*signature/i.test(content) && !/(secp256k1|ed25519).*verify/i.test(content)) {
+        issues.push("Guardian validation without cryptographic signature verification");
+      }
+      if (/process_vaa|parse_vaa|verify_vaa/i.test(content)) {
+        issues.push("VAA processing detected - ensure guardian signatures are cryptographically verified, not just account-checked");
+      }
+      if (/invoke_signed.*verify_signatures_deprecated/i.test(content)) {
+        issues.push("Using deprecated verify_signatures - may contain known vulnerabilities");
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5602",
+    name: "guardian-threshold-bypass",
+    severity: "critical",
+    category: "cross-chain",
+    description: "Detection of guardian threshold bypass where attacker can validate with fewer signatures than required",
+    pattern: /guardian.*threshold|required_signatures|min_signatures|quorum/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/guardian.*threshold/i.test(content) && !/>=\s*\d+.*\/.*3|2.*\/.*3/i.test(content)) {
+        issues.push("Guardian threshold may not enforce 2/3 majority requirement");
+      }
+      if (/signature.*count|num_signatures/i.test(content) && !/require!|assert!/i.test(content)) {
+        issues.push("Signature count not enforced with require!/assert! macro");
+      }
+      return issues;
+    }
+  },
+  // ===== CLMM TICK ACCOUNT ATTACKS (Crema-style) =====
+  {
+    id: "SOL5603",
+    name: "tick-account-owner-bypass",
+    severity: "critical",
+    category: "defi",
+    description: "Detection of tick account owner bypass where attackers create fake tick accounts to manipulate fees (Crema $8.8M)",
+    pattern: /tick_account|tick_array|tick_state|position_tick|lower_tick|upper_tick/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/tick_account|tick_array/i.test(content)) {
+        if (!/owner\s*==.*program_id|has_one\s*=.*pool|seeds\s*=/i.test(content)) {
+          issues.push("Tick account missing owner or pool verification - vulnerable to fake tick data injection");
+        }
+      }
+      if (/claim.*fee|collect.*fee|withdraw.*fee/i.test(content) && /tick/i.test(content)) {
+        if (!/verify.*tick|validate.*tick|check.*tick.*owner/i.test(content)) {
+          issues.push("Fee claim uses tick data without verification - attacker can inflate claimed fees");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5604",
+    name: "clmm-flash-loan-fee-manipulation",
+    severity: "critical",
+    category: "defi",
+    description: "Detection of CLMM flash loan attacks that manipulate fee accumulation through fake tick data",
+    pattern: /flash_loan|swap.*large|fee_growth|accumulated_fee|position_fee/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/fee_growth|accumulated_fee/i.test(content)) {
+        if (!/snapshot|checkpoint|before_swap/i.test(content)) {
+          issues.push("Fee growth tracking without snapshots - vulnerable to single-tx fee manipulation");
+        }
+      }
+      if (/flash.*loan|flash.*swap/i.test(content) && /fee.*claim|collect.*fee/i.test(content)) {
+        issues.push("Flash loan combined with fee claim in same flow - potential for fee inflation attack");
+      }
+      return issues;
+    }
+  },
+  // ===== GOVERNANCE PROPOSAL ATTACKS (Audius-style) =====
+  {
+    id: "SOL5605",
+    name: "governance-proposal-injection",
+    severity: "critical",
+    category: "governance",
+    description: "Detection of governance proposal injection where malicious proposals can reconfigure treasury permissions (Audius $6.1M)",
+    pattern: /execute_proposal|proposal.*execute|governance.*action|treasury.*transfer/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/execute.*proposal/i.test(content)) {
+        if (!/timelock|delay|voting_period/i.test(content)) {
+          issues.push("Proposal execution without timelock - vulnerable to immediate malicious execution");
+        }
+        if (!/quorum|min_votes|threshold/i.test(content)) {
+          issues.push("Proposal execution without quorum check - attacker can self-approve proposals");
+        }
+      }
+      if (/treasury.*permission|treasury.*owner|treasury.*authority/i.test(content)) {
+        if (!/multi_sig|require.*signatures|2.*of.*3/i.test(content)) {
+          issues.push("Treasury permission changes without multi-sig requirement");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5606",
+    name: "governance-initialization-hijack",
+    severity: "critical",
+    category: "governance",
+    description: "Detection of governance initialization that can be hijacked by attackers",
+    pattern: /initialize_governance|setup_governor|create_governance/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/initialize.*governance|create.*governor/i.test(content)) {
+        if (!/is_initialized|initialized.*check|already_initialized/i.test(content)) {
+          issues.push("Governance initialization without initialization check - can be re-initialized");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== BONDING CURVE EXPLOITS (Nirvana-style) =====
+  {
+    id: "SOL5607",
+    name: "bonding-curve-flash-loan-manipulation",
+    severity: "critical",
+    category: "defi",
+    description: "Detection of bonding curve manipulation via flash loans where attackers inflate token minting (Nirvana $3.5M)",
+    pattern: /bonding_curve|mint_rate|price_curve|token_price|curve_multiplier/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/bonding_curve|price_curve/i.test(content)) {
+        if (!/flash.*protection|same_block.*check|loan.*guard/i.test(content)) {
+          issues.push("Bonding curve without flash loan protection - vulnerable to price manipulation attacks");
+        }
+      }
+      if (/mint_rate|token_price/i.test(content)) {
+        if (!/twap|time_weighted|oracle/i.test(content)) {
+          issues.push("Token price calculated without TWAP - vulnerable to single-block manipulation");
+        }
+      }
+      if (/curve.*mint|bonding.*mint/i.test(content)) {
+        if (!/reserve.*check|collateral.*ratio|backing/i.test(content)) {
+          issues.push("Bonding curve minting without reserve validation");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5608",
+    name: "rising-floor-mechanism-bypass",
+    severity: "high",
+    category: "defi",
+    description: 'Detection of "rising floor" price mechanism vulnerabilities in stablecoin protocols',
+    pattern: /floor_price|minimum_price|price_floor|backing_ratio/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/floor_price|price_floor/i.test(content)) {
+        if (!/oracle.*validate|external.*price|chainlink|pyth/i.test(content)) {
+          issues.push("Floor price mechanism without external oracle validation");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== INFINITE MINT EXPLOITS (Cashio-style) =====
+  {
+    id: "SOL5609",
+    name: "collateral-validation-chain-bypass",
+    severity: "critical",
+    category: "defi",
+    description: "Detection of collateral validation chain bypass where attackers use fake nested accounts (Cashio $52.8M)",
+    pattern: /collateral.*validate|arrow.*account|saber_swap|nested.*account|nested.*mint/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/arrow|nested|wrapped/i.test(content) && /collateral|mint/i.test(content)) {
+        if (!/validate.*mint|check.*mint.*address|verify.*underlying/i.test(content)) {
+          issues.push("Nested collateral account without mint field validation - vulnerable to fake collateral");
+        }
+      }
+      if (/lp.*token.*collateral|lp.*as.*backing/i.test(content)) {
+        if (!/verify.*lp.*pool|check.*pool.*address/i.test(content)) {
+          issues.push("LP token collateral without pool address verification");
+        }
+      }
+      if (/mint.*token|create.*token/i.test(content)) {
+        if (!/root_of_trust|trusted_mint|hardcoded.*mint/i.test(content)) {
+          issues.push("Token minting without establishing root of trust for collateral chain");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5610",
+    name: "infinite-mint-glitch-detection",
+    severity: "critical",
+    category: "defi",
+    description: "Detection of infinite mint vulnerabilities in stablecoin protocols",
+    pattern: /mint_to|token_mint|create_token|stablecoin.*mint/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/mint_to|stablecoin.*mint/i.test(content)) {
+        if (!/max_supply|supply_cap|mint_limit/i.test(content)) {
+          issues.push("Stablecoin minting without supply cap");
+        }
+        if (!/collateral.*>=|backing.*>=|ratio.*check/i.test(content)) {
+          issues.push("Minting without collateral ratio enforcement");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== AUTH BYPASS PATTERNS (Solend-style) =====
+  {
+    id: "SOL5611",
+    name: "lending-market-authority-bypass",
+    severity: "critical",
+    category: "defi",
+    description: "Detection of lending market authority bypass where attackers create fake markets to bypass admin checks (Solend Aug 2021)",
+    pattern: /update.*reserve|update.*config|lending_market|market.*authority/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/update.*reserve.*config/i.test(content)) {
+        if (!/market.*owner|lending_market.*authority|admin.*check/i.test(content)) {
+          issues.push("UpdateReserveConfig without market owner verification - attacker can pass own market");
+        }
+        if (!/has_one\s*=.*lending_market|constraint.*market.*key/i.test(content)) {
+          issues.push("Reserve config update without lending market constraint");
+        }
+      }
+      if (/liquidation_threshold|liquidation_bonus/i.test(content)) {
+        if (!/admin|owner|authority/i.test(content)) {
+          issues.push("Liquidation parameters modifiable without admin check");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5612",
+    name: "reserve-config-manipulation",
+    severity: "high",
+    category: "defi",
+    description: "Detection of reserve configuration manipulation vulnerabilities",
+    pattern: /reserve_config|asset_config|collateral_factor|borrow_rate/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/reserve_config|asset_config/i.test(content)) {
+        if (!/timelock|delay|circuit_breaker/i.test(content)) {
+          issues.push("Reserve config changes without timelock or circuit breaker");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== WALLET KEY EXPOSURE (Slope-style) =====
+  {
+    id: "SOL5613",
+    name: "private-key-logging-detection",
+    severity: "critical",
+    category: "wallet",
+    description: "Detection of private key logging vulnerabilities where keys are sent to remote servers (Slope $8M)",
+    pattern: /log.*key|send.*private|transmit.*seed|analytics.*wallet|sentry.*key/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/private_key|secret_key|seed_phrase|mnemonic/i.test(content)) {
+        if (/log|console|print|debug|sentry|analytics|http|fetch|post/i.test(content)) {
+          issues.push("CRITICAL: Private key or seed phrase may be logged or transmitted");
+        }
+      }
+      if (/store.*key|save.*key|persist.*key/i.test(content)) {
+        if (!/encrypt|cipher|aes|chacha/i.test(content)) {
+          issues.push("Private key storage without encryption");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5614",
+    name: "wallet-sentry-integration-risk",
+    severity: "high",
+    category: "wallet",
+    description: "Detection of risky Sentry/analytics integration that might capture sensitive data",
+    pattern: /sentry|analytics|crashlytics|bugsnag|raygun/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/sentry|crashlytics|bugsnag/i.test(content)) {
+        if (!/redact|scrub|filter|exclude.*key|exclude.*seed/i.test(content)) {
+          issues.push("Error reporting integration without key/seed redaction");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== ORACLE MANIPULATION (Mango-style) =====
+  {
+    id: "SOL5615",
+    name: "spot-oracle-manipulation-deep",
+    severity: "critical",
+    category: "oracle",
+    description: "Detection of spot oracle manipulation for self-liquidation attacks (Mango $116M)",
+    pattern: /spot_price|mark_price|index_price|perp.*price|oracle.*price/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/spot_price|mark_price/i.test(content)) {
+        if (!/deviation.*check|price.*band|circuit_breaker/i.test(content)) {
+          issues.push("Spot/mark price without deviation checks - vulnerable to manipulation");
+        }
+        if (!/twap|ema|time_weighted/i.test(content)) {
+          issues.push("Price oracle without time-weighted averaging");
+        }
+      }
+      if (/borrow|margin|leverage/i.test(content) && /oracle|price/i.test(content)) {
+        if (!/max_borrow|borrow_limit|position_limit/i.test(content)) {
+          issues.push("Borrowing/margin without position limits - vulnerable to price pump and borrow attack");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5616",
+    name: "perpetual-funding-manipulation",
+    severity: "high",
+    category: "defi",
+    description: "Detection of perpetual funding rate manipulation vulnerabilities",
+    pattern: /funding_rate|perp.*funding|funding.*payment/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/funding_rate/i.test(content)) {
+        if (!/cap|limit|max_funding/i.test(content)) {
+          issues.push("Funding rate without caps - vulnerable to extreme funding extraction");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== LP TOKEN ORACLE ATTACKS =====
+  {
+    id: "SOL5617",
+    name: "lp-token-oracle-manipulation",
+    severity: "critical",
+    category: "oracle",
+    description: "Detection of LP token oracle manipulation where attackers move AMM prices to inflate collateral value",
+    pattern: /lp.*price|lp.*oracle|lp.*value|pool.*token.*price/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/lp.*price|lp.*value/i.test(content)) {
+        if (!/fair.*pricing|alpha.*homora|geometric_mean/i.test(content)) {
+          issues.push("LP token pricing without fair value calculation - use Alpha Homora style pricing");
+        }
+      }
+      if (/pool.*reserve|amm.*reserve/i.test(content)) {
+        if (!/k.*invariant|constant_product/i.test(content)) {
+          issues.push("Pool reserve without constant product invariant verification");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== FLASH LOAN PROTECTION =====
+  {
+    id: "SOL5618",
+    name: "comprehensive-flash-loan-protection",
+    severity: "high",
+    category: "defi",
+    description: "Comprehensive flash loan protection detection",
+    pattern: /flash_loan|flash_borrow|atomic_swap|same_block/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/flash_loan|flash_borrow/i.test(content)) {
+        if (!/callback|receiver.*check|whitelist/i.test(content)) {
+          issues.push("Flash loan without receiver validation");
+        }
+        if (!/fee.*>=|min_fee/i.test(content)) {
+          issues.push("Flash loan without minimum fee enforcement");
+        }
+      }
+      if (/price|oracle|value/i.test(content)) {
+        if (!/slot.*check|block.*check|last_update/i.test(content)) {
+          issues.push("Price-sensitive operation without same-block check");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== ROUNDING DIRECTION ATTACKS (Neodyme-style) =====
+  {
+    id: "SOL5619",
+    name: "rounding-direction-exploit",
+    severity: "high",
+    category: "arithmetic",
+    description: "Detection of rounding direction exploits where attackers accumulate dust through repeated small transactions (Neodyme $2.6B at risk)",
+    pattern: /round|floor|ceil|div|division|truncate/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/\/.*\d|div\(|checked_div/i.test(content)) {
+        if (!/floor|ceil|round_up|round_down/i.test(content)) {
+          issues.push("Division without explicit rounding direction - may allow dust accumulation attacks");
+        }
+      }
+      if (/interest|yield|apy|apr/i.test(content) && /calculate|compute/i.test(content)) {
+        if (!/floor.*borrow|ceil.*deposit/i.test(content)) {
+          issues.push("Interest calculation without proper rounding (floor for borrower, ceil for protocol)");
+        }
+      }
+      if (/deposit|withdraw|transfer/i.test(content)) {
+        if (!/min_amount|minimum|threshold/i.test(content)) {
+          issues.push("Missing minimum amount threshold - vulnerable to dust attacks");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== EXPLOIT CHAINING DETECTION =====
+  {
+    id: "SOL5620",
+    name: "exploit-chain-vulnerability",
+    severity: "high",
+    category: "attack-surface",
+    description: "Detection of vulnerabilities that can be chained together for larger exploits (samczsun methodology)",
+    pattern: /multiple.*instruction|batch|chain.*call|sequential/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/remaining_accounts|additional_accounts|extra_accounts/i.test(content)) {
+        if (!/validate.*each|check.*all|verify.*remaining/i.test(content)) {
+          issues.push("Remaining accounts not validated - potential for instruction chaining attacks");
+        }
+      }
+      if (/state.*change|update.*state/i.test(content)) {
+        if (!/atomic|transaction.*boundary/i.test(content)) {
+          issues.push("State changes without atomicity guarantees");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== COPE ROULETTE PATTERN (Revert Exploitation) =====
+  {
+    id: "SOL5621",
+    name: "revert-transaction-exploitation",
+    severity: "medium",
+    category: "attack-surface",
+    description: "Detection of revert transaction exploitation where attackers exploit reverting transactions for information (Cope Roulette)",
+    pattern: /revert|rollback|undo|simulate|preflight/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/error.*message|revert.*reason/i.test(content)) {
+        if (/price|balance|amount|secret/i.test(content)) {
+          issues.push("Revert message may leak sensitive information (price/balance)");
+        }
+      }
+      if (/simulate|preflight/i.test(content)) {
+        if (!/rate.*limit|throttle/i.test(content)) {
+          issues.push("Transaction simulation without rate limiting - vulnerable to oracle probing");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== SIMULATION DETECTION BYPASS =====
+  {
+    id: "SOL5622",
+    name: "simulation-detection-bypass",
+    severity: "medium",
+    category: "attack-surface",
+    description: "Detection of simulation detection that can be bypassed by attackers (Opcodes research)",
+    pattern: /is_simulation|simulation.*check|bank.*check|preflight/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/is_simulation|simulation_mode/i.test(content)) {
+        issues.push("Simulation detection can be bypassed - do not rely on it for security");
+      }
+      if (/if.*simulation|when.*simulated/i.test(content)) {
+        issues.push("Different behavior in simulation vs execution - potential for attack");
+      }
+      return issues;
+    }
+  },
+  // ===== INCINERATOR ATTACK PATTERN =====
+  {
+    id: "SOL5623",
+    name: "incinerator-nft-attack-deep",
+    severity: "high",
+    category: "nft",
+    description: "Detection of incinerator/burn-based NFT attacks combining multiple small exploits (Solens research)",
+    pattern: /burn.*nft|incinerator|close_account.*nft|destroy.*token/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/burn.*nft|close.*nft.*account/i.test(content)) {
+        if (!/owner.*check|authority.*verify/i.test(content)) {
+          issues.push("NFT burn without proper owner verification");
+        }
+      }
+      if (/close_account|close.*token/i.test(content)) {
+        if (!/balance.*==.*0|empty.*check/i.test(content)) {
+          issues.push("Token account closure without zero balance check");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== TOKEN APPROVAL EXPLOITATION =====
+  {
+    id: "SOL5624",
+    name: "spl-token-approval-exploitation",
+    severity: "high",
+    category: "token",
+    description: "Detection of SPL token approval exploitation where delegated amounts can be stolen (Hana research)",
+    pattern: /approve|delegate|delegated_amount|authorized_amount/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/approve|delegate/i.test(content)) {
+        if (!/revoke|reset.*approval|clear.*delegate/i.test(content)) {
+          issues.push("Token approval without corresponding revoke mechanism");
+        }
+      }
+      if (/u64::MAX|max_amount|unlimited/i.test(content) && /approve|delegate/i.test(content)) {
+        issues.push("Unlimited token approval - prefer exact amounts");
+      }
+      return issues;
+    }
+  },
+  // ===== THIRD-PARTY DEPENDENCY RISKS =====
+  {
+    id: "SOL5625",
+    name: "mongodb-injection-exploit",
+    severity: "critical",
+    category: "infrastructure",
+    description: "Detection of MongoDB injection vulnerabilities in off-chain infrastructure (Thunder Terminal $240K)",
+    pattern: /mongodb|mongo|nosql|database.*query/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/mongo|nosql/i.test(content)) {
+        if (/\$where|\$regex|\.find\(|\.aggregate\(/i.test(content)) {
+          if (!/sanitize|escape|parameterize/i.test(content)) {
+            issues.push("MongoDB query without input sanitization - vulnerable to NoSQL injection");
+          }
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5626",
+    name: "session-token-theft-protection",
+    severity: "high",
+    category: "infrastructure",
+    description: "Detection of session token theft vulnerabilities in trading infrastructure",
+    pattern: /session.*token|auth.*token|bearer.*token|jwt/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/session.*token|auth.*token/i.test(content)) {
+        if (!/secure|httponly|samesite/i.test(content)) {
+          issues.push("Session token without secure cookie flags");
+        }
+        if (!/expire|ttl|timeout/i.test(content)) {
+          issues.push("Session token without expiration");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== INSIDER THREAT PATTERNS =====
+  {
+    id: "SOL5627",
+    name: "insider-employee-exploit",
+    severity: "critical",
+    category: "access-control",
+    description: "Detection of insider threat vulnerabilities where employees can exploit privileged access (Pump.fun, Cypher)",
+    pattern: /employee|admin|operator|privileged|internal/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/admin|operator/i.test(content)) {
+        if (!/multi_sig|multisig|2.*of.*3|threshold.*signature/i.test(content)) {
+          issues.push("Admin access without multi-sig requirement - vulnerable to insider exploit");
+        }
+      }
+      if (/withdraw_all|drain|emergency.*withdraw/i.test(content)) {
+        if (!/timelock|delay|require.*approval/i.test(content)) {
+          issues.push("Privileged withdrawal without timelock or multi-party approval");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5628",
+    name: "migration-key-custody-risk",
+    severity: "high",
+    category: "access-control",
+    description: "Detection of migration key custody risks during protocol upgrades",
+    pattern: /migration|upgrade|transfer_authority|new_owner/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/migration.*key|upgrade.*authority/i.test(content)) {
+        if (!/cold.*storage|hardware.*wallet|mpc/i.test(content)) {
+          issues.push("Migration/upgrade key without cold storage requirement");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== DAO GOVERNANCE ATTACKS =====
+  {
+    id: "SOL5629",
+    name: "dao-proposal-stealth-attack",
+    severity: "critical",
+    category: "governance",
+    description: "Detection of DAO proposal attacks where malicious proposals go unnoticed (Saga DAO $230K)",
+    pattern: /proposal|vote|governance.*action|dao.*execute/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/create.*proposal|submit.*proposal/i.test(content)) {
+        if (!/emit.*event|log.*proposal|notify/i.test(content)) {
+          issues.push("Proposal creation without event emission - may go unnoticed");
+        }
+      }
+      if (/voting.*period|vote.*deadline/i.test(content)) {
+        if (!/>=.*\d+.*day|>=.*\d+.*hour/i.test(content)) {
+          issues.push("Voting period may be too short for community review");
+        }
+      }
+      if (/execute.*proposal/i.test(content)) {
+        if (!/execution.*delay|grace.*period/i.test(content)) {
+          issues.push("No execution delay after proposal passes");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== LOOPSCALE RECOVERY PATTERNS =====
+  {
+    id: "SOL5630",
+    name: "admin-redemption-exploit",
+    severity: "critical",
+    category: "defi",
+    description: "Detection of admin redemption function exploits in lending protocols (Loopscale $5.8M)",
+    pattern: /admin.*redeem|force.*redeem|privileged.*withdraw|redemption.*override/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/admin.*redeem|force.*redeem/i.test(content)) {
+        if (!/emergency|pause.*state|circuit.*break/i.test(content)) {
+          issues.push("Admin redemption function without emergency state requirement");
+        }
+        if (!/emit.*event|audit.*log/i.test(content)) {
+          issues.push("Admin redemption without audit logging");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== DEXX PRIVATE KEY PATTERNS =====
+  {
+    id: "SOL5631",
+    name: "custodial-key-exposure",
+    severity: "critical",
+    category: "wallet",
+    description: "Detection of custodial key exposure vulnerabilities in DEX aggregators (DEXX $30M)",
+    pattern: /custodial|store.*key|server.*wallet|hot.*wallet/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/custodial|server.*wallet|hot.*wallet/i.test(content)) {
+        if (!/hsm|enclave|secure.*element/i.test(content)) {
+          issues.push("Custodial keys without HSM/secure enclave protection");
+        }
+        if (!/split.*key|mpc|shamir/i.test(content)) {
+          issues.push("Custodial keys without key splitting/MPC");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== SUPPLY CHAIN ATTACKS =====
+  {
+    id: "SOL5632",
+    name: "npm-supply-chain-2026",
+    severity: "critical",
+    category: "supply-chain",
+    description: "Detection of npm supply chain attack patterns (Web3.js $160K, solana-web3.js-v2 typosquat)",
+    pattern: /solana.*web3|@solana\/web3|require\(|import.*from/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/@solana\/web3|solana-web3/i.test(content)) {
+        if (/\^|~|latest/i.test(content)) {
+          issues.push("Unpinned @solana/web3.js version - vulnerable to malicious updates");
+        }
+      }
+      const typosquats = ["solana-web3.js-v2", "solana-web3", "@solana-web3", "solana_web3"];
+      for (const pkg of typosquats) {
+        if (content.includes(pkg)) {
+          issues.push(`Potential typosquat package detected: ${pkg}`);
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== NOONES BRIDGE PATTERNS =====
+  {
+    id: "SOL5633",
+    name: "bridge-endpoint-exposure",
+    severity: "critical",
+    category: "cross-chain",
+    description: "Detection of bridge endpoint exposure vulnerabilities (NoOnes $7.2M)",
+    pattern: /bridge.*endpoint|api.*bridge|withdraw.*api|exposed.*function/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/bridge.*api|withdraw.*endpoint/i.test(content)) {
+        if (!/auth|signature|verify.*caller/i.test(content)) {
+          issues.push("Bridge API endpoint without authentication");
+        }
+        if (!/rate.*limit|throttle/i.test(content)) {
+          issues.push("Bridge endpoint without rate limiting");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== SVT TOKEN PATTERNS =====
+  {
+    id: "SOL5634",
+    name: "token-creation-exploit",
+    severity: "high",
+    category: "token",
+    description: "Detection of token creation exploits where attackers manipulate new token launches (SVT Token $300K)",
+    pattern: /token.*launch|create.*mint|initialize.*token|ido|ico/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/token.*launch|ido|ico/i.test(content)) {
+        if (!/vesting|lock|cliff/i.test(content)) {
+          issues.push("Token launch without vesting schedule");
+        }
+        if (!/max.*buy|purchase.*limit/i.test(content)) {
+          issues.push("Token sale without purchase limits - vulnerable to whale manipulation");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== BANANA GUN BOT PATTERNS =====
+  {
+    id: "SOL5635",
+    name: "trading-bot-key-compromise",
+    severity: "critical",
+    category: "wallet",
+    description: "Detection of trading bot private key compromise patterns (Banana Gun $1.9M)",
+    pattern: /trading.*bot|sniper.*bot|auto.*trade|bot.*wallet/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/trading.*bot|sniper.*bot/i.test(content)) {
+        if (!/separate.*wallet|isolated.*key|burner/i.test(content)) {
+          issues.push("Trading bot without isolated wallet - main wallet at risk");
+        }
+        if (!/limit.*order|max.*trade/i.test(content)) {
+          issues.push("Trading bot without trade size limits");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== IO.NET PATTERNS =====
+  {
+    id: "SOL5636",
+    name: "fake-gpu-worker-exploit",
+    severity: "high",
+    category: "infrastructure",
+    description: "Detection of fake GPU worker exploits in decentralized compute networks (io.net $6M)",
+    pattern: /gpu.*worker|compute.*node|worker.*proof|resource.*verify/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/gpu.*worker|compute.*node/i.test(content)) {
+        if (!/proof.*of.*work|challenge.*response|attestation/i.test(content)) {
+          issues.push("Compute worker without proof of work verification");
+        }
+        if (!/slash|penalty|stake/i.test(content)) {
+          issues.push("Worker system without slashing for fake resources");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== SOLAREUM RUG PULL PATTERNS =====
+  {
+    id: "SOL5637",
+    name: "trading-platform-rug-detection",
+    severity: "critical",
+    category: "defi",
+    description: "Detection of trading platform rug pull indicators (Solareum $500K)",
+    pattern: /trading.*platform|copy.*trade|social.*trade|managed.*fund/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/trading.*platform|managed.*fund/i.test(content)) {
+        if (!/withdrawal.*right|instant.*withdraw|no.*lock/i.test(content)) {
+          issues.push("Trading platform with potential user fund lockup");
+        }
+        if (!/transparent.*pnl|public.*trade/i.test(content)) {
+          issues.push("Trading platform without transparent P&L tracking");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== OPTIFI LOCKUP PATTERNS =====
+  {
+    id: "SOL5638",
+    name: "accidental-program-close",
+    severity: "critical",
+    category: "program",
+    description: "Detection of accidental program closure vulnerabilities (OptiFi $661K locked)",
+    pattern: /close.*program|program.*close|solana.*program.*close|terminate.*program/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/close.*program|terminate.*program/i.test(content)) {
+        if (!/admin.*only|multi_sig|governance.*vote/i.test(content)) {
+          issues.push("Program close function without governance approval");
+        }
+        if (!/drain.*first|withdraw.*all|empty.*vault/i.test(content)) {
+          issues.push("Program close without ensuring funds are drained first");
+        }
+        if (!/confirm|double.*check|require.*confirmation/i.test(content)) {
+          issues.push("Program close without confirmation step");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== TULIP PROTOCOL PATTERNS =====
+  {
+    id: "SOL5639",
+    name: "vault-strategy-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of yield vault strategy exploits (Tulip Protocol)",
+    pattern: /vault.*strategy|yield.*strategy|harvest|compound/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/vault.*strategy|yield.*strategy/i.test(content)) {
+        if (!/slippage.*check|min.*output/i.test(content)) {
+          issues.push("Vault strategy without slippage protection");
+        }
+        if (!/deadline|max.*age/i.test(content)) {
+          issues.push("Vault strategy without transaction deadline");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== AURORY GAMING PATTERNS =====
+  {
+    id: "SOL5640",
+    name: "gaming-nft-exploit",
+    severity: "high",
+    category: "nft",
+    description: "Detection of gaming NFT exploits (Aurory $830K)",
+    pattern: /game.*nft|gaming.*token|play.*earn|in_game.*asset/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/game.*nft|play.*earn/i.test(content)) {
+        if (!/cooldown|rate.*limit|anti.*bot/i.test(content)) {
+          issues.push("Gaming NFT system without anti-bot protection");
+        }
+        if (!/max.*mint.*per.*user|limit.*per.*wallet/i.test(content)) {
+          issues.push("Gaming NFT without per-user limits");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== UXD PROTOCOL PATTERNS =====
+  {
+    id: "SOL5641",
+    name: "delta-neutral-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of delta-neutral stablecoin exploits (UXD Protocol)",
+    pattern: /delta.*neutral|hedge|short.*perp|backing.*perp/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/delta.*neutral|hedge.*perp/i.test(content)) {
+        if (!/funding.*check|negative.*funding/i.test(content)) {
+          issues.push("Delta-neutral strategy without funding rate risk management");
+        }
+        if (!/liquidation.*buffer|margin.*cushion/i.test(content)) {
+          issues.push("Perpetual hedge without liquidation buffer");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== RAYDIUM PATTERNS =====
+  {
+    id: "SOL5642",
+    name: "amm-admin-key-compromise",
+    severity: "critical",
+    category: "defi",
+    description: "Detection of AMM admin key compromise patterns (Raydium $4.4M)",
+    pattern: /amm.*admin|pool.*owner|liquidity.*admin|fee.*admin/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/amm.*admin|pool.*owner/i.test(content)) {
+        if (!/multi_sig|hardware.*wallet|cold.*storage/i.test(content)) {
+          issues.push("AMM admin key without multi-sig or cold storage");
+        }
+        if (!/rotation|key.*update/i.test(content)) {
+          issues.push("No admin key rotation mechanism");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== SYNTHETIFY DAO PATTERNS =====
+  {
+    id: "SOL5643",
+    name: "synthetic-asset-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of synthetic asset protocol exploits (Synthetify DAO)",
+    pattern: /synthetic|synth.*asset|debt.*pool|collateral.*ratio/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/synthetic|synth.*asset/i.test(content)) {
+        if (!/c_ratio|collateral.*ratio.*check/i.test(content)) {
+          issues.push("Synthetic asset without collateralization ratio check");
+        }
+        if (!/global.*debt|debt.*pool.*update/i.test(content)) {
+          issues.push("Synthetic asset without global debt tracking");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== PHANTOM DOS PATTERNS =====
+  {
+    id: "SOL5644",
+    name: "wallet-dos-protection",
+    severity: "medium",
+    category: "wallet",
+    description: "Detection of wallet DoS attack vulnerabilities (Phantom DoS)",
+    pattern: /render.*token|display.*nft|wallet.*ui|token.*list/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/render.*token|display.*nft/i.test(content)) {
+        if (!/pagination|limit.*display|lazy.*load/i.test(content)) {
+          issues.push("Token display without pagination - vulnerable to UI DoS");
+        }
+        if (!/sanitize.*metadata|validate.*uri/i.test(content)) {
+          issues.push("Token metadata rendering without sanitization");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== JITO DOS PATTERNS =====
+  {
+    id: "SOL5645",
+    name: "bundle-dos-protection",
+    severity: "medium",
+    category: "infrastructure",
+    description: "Detection of MEV bundle DoS vulnerabilities (Jito DoS)",
+    pattern: /bundle|mev|priority.*fee|tip/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/bundle|mev/i.test(content)) {
+        if (!/rate.*limit|max.*bundle/i.test(content)) {
+          issues.push("MEV bundle handling without rate limiting");
+        }
+        if (!/validate.*bundle|check.*tip/i.test(content)) {
+          issues.push("Bundle processing without validation");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== GRAPE PROTOCOL PATTERNS =====
+  {
+    id: "SOL5646",
+    name: "nft-spam-protection",
+    severity: "medium",
+    category: "nft",
+    description: "Detection of NFT spam attack vulnerabilities (Grape Protocol outage)",
+    pattern: /nft.*spam|mass.*mint|bulk.*transfer|airdrop.*nft/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/mass.*mint|bulk.*transfer/i.test(content)) {
+        if (!/compute.*limit|batch.*size/i.test(content)) {
+          issues.push("Bulk NFT operation without compute/batch limits");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== CANDY MACHINE PATTERNS =====
+  {
+    id: "SOL5647",
+    name: "candy-machine-v2-exploit",
+    severity: "high",
+    category: "nft",
+    description: "Detection of Candy Machine exploit patterns (Dec 2021 outage)",
+    pattern: /candy.*machine|nft.*mint.*bot|mint.*snipe/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/candy.*machine/i.test(content)) {
+        if (!/bot.*protection|captcha|proof.*of.*human/i.test(content)) {
+          issues.push("Candy Machine without bot protection");
+        }
+        if (!/guard|whitelist|allow.*list/i.test(content)) {
+          issues.push("Candy Machine without access guards");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== CORE PROTOCOL PATTERNS =====
+  {
+    id: "SOL5648",
+    name: "turbine-propagation-vulnerability",
+    severity: "high",
+    category: "protocol",
+    description: "Detection of Turbine block propagation vulnerabilities",
+    pattern: /turbine|shred|block.*propagation|data.*broadcast/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/turbine|shred/i.test(content)) {
+        if (!/erasure.*coding|reed.*solomon/i.test(content)) {
+          issues.push("Block propagation without erasure coding");
+        }
+        if (!/verify.*shred|validate.*shred/i.test(content)) {
+          issues.push("Shred handling without verification");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5649",
+    name: "durable-nonce-exploitation",
+    severity: "medium",
+    category: "protocol",
+    description: "Detection of durable nonce exploitation vulnerabilities",
+    pattern: /durable.*nonce|nonce.*account|advance.*nonce/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/durable.*nonce/i.test(content)) {
+        if (!/authority.*check|nonce.*authority/i.test(content)) {
+          issues.push("Durable nonce without authority verification");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5650",
+    name: "duplicate-block-exploitation",
+    severity: "high",
+    category: "protocol",
+    description: "Detection of duplicate block exploitation vulnerabilities",
+    pattern: /duplicate.*block|block.*hash.*collision|leader.*schedule/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/duplicate.*block|block.*collision/i.test(content)) {
+        issues.push("Potential duplicate block handling issue - ensure proper block deduplication");
+      }
+      return issues;
+    }
+  },
+  // ===== ADDITIONAL HELIUS PATTERNS =====
+  {
+    id: "SOL5651",
+    name: "pump-fun-employee-exploit",
+    severity: "critical",
+    category: "access-control",
+    description: "Detection of employee exploit patterns where insiders abuse privileged access (Pump.fun $1.9M)",
+    pattern: /employee.*access|staff.*key|internal.*wallet|team.*authority/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/employee.*access|team.*authority/i.test(content)) {
+        if (!/audit.*log|access.*log|monitoring/i.test(content)) {
+          issues.push("Employee access without audit logging");
+        }
+        if (!/separation.*of.*duties|dual.*control/i.test(content)) {
+          issues.push("No separation of duties for privileged operations");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5652",
+    name: "cypher-insider-theft-v2",
+    severity: "critical",
+    category: "access-control",
+    description: "Detection of insider theft patterns (Cypher $317K theft by Hoak)",
+    pattern: /former.*employee|ex.*team|past.*contributor|insider.*theft/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/former.*employee|ex.*team/i.test(content)) {
+        if (!/revoke.*access|key.*rotation|offboarding/i.test(content)) {
+          issues.push("No offboarding procedure for revoking former employee access");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== PARCL FRONTEND PATTERNS =====
+  {
+    id: "SOL5653",
+    name: "frontend-supply-chain-attack",
+    severity: "high",
+    category: "supply-chain",
+    description: "Detection of frontend supply chain attack patterns (Parcl $500K)",
+    pattern: /frontend|web.*app|react|vue|angular|next/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/frontend|web.*app/i.test(content)) {
+        if (!/sri|subresource.*integrity|hash.*check/i.test(content)) {
+          issues.push("Frontend without subresource integrity checks");
+        }
+        if (!/csp|content.*security.*policy/i.test(content)) {
+          issues.push("Frontend without Content Security Policy");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== SOLANA JIT CACHE PATTERNS =====
+  {
+    id: "SOL5654",
+    name: "jit-cache-overflow",
+    severity: "high",
+    category: "protocol",
+    description: "Detection of JIT cache overflow vulnerabilities",
+    pattern: /jit.*cache|program.*cache|compiled.*cache|bpf.*cache/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/jit.*cache|program.*cache/i.test(content)) {
+        if (!/cache.*limit|max.*cache|eviction/i.test(content)) {
+          issues.push("Program cache without size limits or eviction policy");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== ELF ALIGNMENT PATTERNS =====
+  {
+    id: "SOL5655",
+    name: "elf-address-alignment",
+    severity: "medium",
+    category: "protocol",
+    description: "Detection of ELF address alignment vulnerabilities in BPF programs",
+    pattern: /elf|bpf.*loader|program.*deploy|alignment/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/elf|bpf.*loader/i.test(content)) {
+        if (!/alignment.*check|aligned/i.test(content)) {
+          issues.push("BPF program without alignment checks");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== WEB3.JS SUPPLY CHAIN =====
+  {
+    id: "SOL5656",
+    name: "web3js-malicious-version",
+    severity: "critical",
+    category: "supply-chain",
+    description: "Detection of malicious @solana/web3.js version usage ($160K stolen)",
+    pattern: /@solana\/web3\.js|solana-web3|web3\.js.*1\.95\.[6-8]/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/1\.95\.6|1\.95\.7|1\.95\.8/i.test(content) && /@solana\/web3/i.test(content)) {
+        issues.push("CRITICAL: Using compromised @solana/web3.js version (1.95.6-1.95.8) - update immediately");
+      }
+      if (/@solana\/web3/i.test(content)) {
+        if (!/package-lock|yarn\.lock|pnpm-lock/i.test(content)) {
+          issues.push("No lockfile detected - vulnerable to malicious package updates");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== ADDITIONAL CRITICAL PATTERNS =====
+  {
+    id: "SOL5657",
+    name: "thunder-terminal-9min-response",
+    severity: "high",
+    category: "incident-response",
+    description: "Incident response time benchmark (Thunder Terminal 9-minute halt)",
+    pattern: /circuit.*breaker|emergency.*halt|kill.*switch|pause.*all/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/trading.*platform|dex|exchange/i.test(content)) {
+        if (!/circuit.*breaker|emergency.*halt|pause/i.test(content)) {
+          issues.push("Trading platform without emergency circuit breaker");
+        }
+        if (!/monitoring|alert|anomaly.*detection/i.test(content)) {
+          issues.push("No real-time monitoring for rapid incident response");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== CROSS-CHAIN BRIDGE COMPLETE =====
+  {
+    id: "SOL5658",
+    name: "bridge-complete-security",
+    severity: "critical",
+    category: "cross-chain",
+    description: "Comprehensive cross-chain bridge security patterns",
+    pattern: /bridge|cross.*chain|wormhole|portal|wrapped/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/bridge|cross.*chain/i.test(content)) {
+        if (!/guardian|validator.*set|relayer.*verify/i.test(content)) {
+          issues.push("Bridge without guardian/validator validation");
+        }
+        if (!/finality|confirmation|block.*confirm/i.test(content)) {
+          issues.push("Bridge without finality checks on source chain");
+        }
+        if (!/nonce|sequence|replay.*protect/i.test(content)) {
+          issues.push("Bridge without replay protection");
+        }
+        if (!/rate.*limit|max.*transfer|daily.*limit/i.test(content)) {
+          issues.push("Bridge without transfer rate limits");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== LENDING PROTOCOL COMPLETE =====
+  {
+    id: "SOL5659",
+    name: "lending-complete-security",
+    severity: "high",
+    category: "defi",
+    description: "Comprehensive lending protocol security patterns",
+    pattern: /lending|borrow|collateral|liquidat|interest.*rate/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/lending|borrow/i.test(content)) {
+        if (!/interest.*cap|max.*rate|rate.*limit/i.test(content)) {
+          issues.push("Lending without interest rate caps");
+        }
+        if (!/utilization|reserve.*ratio/i.test(content)) {
+          issues.push("Lending without utilization tracking");
+        }
+        if (!/bad.*debt|socialized.*loss|insurance/i.test(content)) {
+          issues.push("Lending without bad debt handling mechanism");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== DEX/AMM COMPLETE =====
+  {
+    id: "SOL5660",
+    name: "dex-complete-security",
+    severity: "high",
+    category: "defi",
+    description: "Comprehensive DEX/AMM security patterns",
+    pattern: /dex|amm|swap|pool|liquidity/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/dex|amm|swap/i.test(content)) {
+        if (!/slippage|min.*out|max.*in/i.test(content)) {
+          issues.push("DEX swap without slippage protection");
+        }
+        if (!/deadline|expire|valid.*until/i.test(content)) {
+          issues.push("DEX swap without deadline");
+        }
+        if (!/private.*mempool|jito|mev.*protect/i.test(content)) {
+          issues.push("Consider MEV/sandwich protection for swaps");
+        }
+      }
+      return issues;
+    }
+  }
+];
+function checkBatch94Patterns(parsed) {
+  const issues = [];
+  const content = parsed.content;
+  for (const pattern of batch94Patterns) {
+    if (pattern.pattern.test(content)) {
+      const detectedIssues = pattern.detector(content);
+      for (const issue of detectedIssues) {
+        issues.push({
+          id: pattern.id,
+          name: pattern.name,
+          severity: pattern.severity,
+          message: `${pattern.description}: ${issue}`
+        });
+      }
+    }
+    pattern.pattern.lastIndex = 0;
+  }
+  return issues;
+}
+
+// src/patterns/solana-batched-patterns-95.ts
+var batch95Patterns = [
+  // ===== OTTERSEC JET GOVERNANCE PATTERNS =====
+  {
+    id: "SOL5701",
+    name: "governance-voter-weight-manipulation",
+    severity: "critical",
+    category: "governance",
+    description: "Detection of voter weight manipulation in governance systems (Jet Governance audit)",
+    pattern: /voter_weight|voting_power|stake_weight|governance_power/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/voter_weight|voting_power/i.test(content)) {
+        if (!/snapshot|checkpoint|lock_time/i.test(content)) {
+          issues.push("Voter weight without snapshot mechanism - vulnerable to flash loan vote manipulation");
+        }
+        if (!/decay|linear_vesting|time_lock/i.test(content)) {
+          issues.push("Voter weight without time-based decay or vesting requirement");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5702",
+    name: "governance-proposal-spam-protection",
+    severity: "medium",
+    category: "governance",
+    description: "Detection of governance proposal spam vulnerabilities",
+    pattern: /create_proposal|new_proposal|submit_proposal/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/create_proposal|submit_proposal/i.test(content)) {
+        if (!/min_stake|proposal_deposit|bond/i.test(content)) {
+          issues.push("Proposal creation without stake requirement - vulnerable to spam");
+        }
+        if (!/active_proposal_limit|max_proposals/i.test(content)) {
+          issues.push("No limit on active proposals per user");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== OTTERSEC CEGA VAULT PATTERNS =====
+  {
+    id: "SOL5703",
+    name: "structured-product-pricing-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of structured product pricing vulnerabilities (Cega Vault audit)",
+    pattern: /structured_product|option_vault|exotic_option|barrier_option/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/structured_product|option_vault/i.test(content)) {
+        if (!/mark_to_market|fair_value|external_price/i.test(content)) {
+          issues.push("Structured product without external price verification");
+        }
+        if (!/settlement_price|expiry_price/i.test(content)) {
+          issues.push("Option vault without settlement price source");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5704",
+    name: "vault-deposit-timing-attack",
+    severity: "high",
+    category: "defi",
+    description: "Detection of vault deposit timing attacks",
+    pattern: /deposit_window|epoch_deposit|round_deposit/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/deposit_window|epoch/i.test(content)) {
+        if (!/close_window|deposit_lock|cut_off/i.test(content)) {
+          issues.push("Vault deposit window without clear cutoff - timing attack possible");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== NEODYME POC FRAMEWORK PATTERNS =====
+  {
+    id: "SOL5705",
+    name: "poc-framework-detectable-patterns",
+    severity: "high",
+    category: "attack-surface",
+    description: "Detection of patterns that are testable via Neodyme PoC framework",
+    pattern: /invoke_signed|cross_program|cpi.*invoke|program_invoke/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/invoke_signed|invoke/i.test(content)) {
+        if (!/cpi.*check|program_id.*verify/i.test(content)) {
+          issues.push("CPI invocation without program ID verification - add PoC test");
+        }
+      }
+      if (/set_state|update_state|modify/i.test(content)) {
+        if (!/owner.*check|authority.*verify/i.test(content)) {
+          issues.push("State modification without ownership check - add PoC test");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5706",
+    name: "semantic-inconsistency-detection",
+    severity: "high",
+    category: "logic",
+    description: "Detection of semantic inconsistencies between similar functions (Stake Pool audit)",
+    pattern: /update_|set_|modify_|change_/gi,
+    detector: (content) => {
+      const issues = [];
+      const updateFuncs = content.match(/fn\s+update_\w+|fn\s+set_\w+/gi) || [];
+      if (updateFuncs.length > 1) {
+        if (!/common.*validation|shared.*check|validate_authority/i.test(content)) {
+          issues.push("Multiple update functions may have inconsistent validation - review for semantic consistency");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== SEC3 WORKSHOP PATTERNS =====
+  {
+    id: "SOL5707",
+    name: "workshop-level0-owner-check",
+    severity: "critical",
+    category: "access-control",
+    description: "Sec3/Neodyme workshop Level 0 - missing owner check pattern",
+    pattern: /AccountInfo|UncheckedAccount/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/AccountInfo.*<|UncheckedAccount/i.test(content)) {
+        if (!/\.owner\s*==|owner\s*=\s*constraint/i.test(content)) {
+          issues.push("AccountInfo/UncheckedAccount without owner check - Workshop Level 0 vulnerability");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5708",
+    name: "workshop-signer-verification",
+    severity: "critical",
+    category: "access-control",
+    description: "Sec3 workshop - missing signer verification pattern",
+    pattern: /is_signer|Signer<|signer\s*:/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/transfer|withdraw|mint|burn/i.test(content)) {
+        if (!/is_signer|Signer<|#\[account\(.*signer/i.test(content)) {
+          issues.push("Critical operation may be missing signer requirement");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== ZELLIC ANCHOR DEEP DIVE =====
+  {
+    id: "SOL5709",
+    name: "zellic-init-if-needed-race",
+    severity: "high",
+    category: "initialization",
+    description: "Zellic: init_if_needed race condition vulnerability",
+    pattern: /init_if_needed|init\s*=\s*true/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/init_if_needed/i.test(content)) {
+        issues.push("init_if_needed can allow attacker to front-run and initialize account with malicious data");
+        if (!/realloc|space.*check/i.test(content)) {
+          issues.push("init_if_needed without realloc safety checks");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5710",
+    name: "zellic-account-reloading",
+    severity: "high",
+    category: "data-integrity",
+    description: "Zellic: account data reload vulnerability after CPI",
+    pattern: /invoke|cpi|cross_program.*call/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/invoke.*\(|cpi.*\(/i.test(content)) {
+        if (/\.data|account.*data/i.test(content)) {
+          if (!/reload|refresh|try_borrow_mut_data/i.test(content)) {
+            issues.push("Account data accessed after CPI without reload - may be stale");
+          }
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5711",
+    name: "zellic-type-cosplay-advanced",
+    severity: "critical",
+    category: "type-safety",
+    description: "Zellic: advanced type cosplay where accounts masquerade as different types",
+    pattern: /try_from_slice|deserialize|from_account_info/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/try_from_slice|deserialize/i.test(content)) {
+        if (!/discriminator|account_type|type_check/i.test(content)) {
+          issues.push("Deserialization without type discriminator check - type cosplay possible");
+        }
+      }
+      if (/Account<.*>/i.test(content)) {
+        if (!/discriminator|DISCRIMINATOR/i.test(content)) {
+          issues.push("Account type may be spoofable without discriminator verification");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== DRIFT PROTOCOL PATTERNS (Zellic Audit) =====
+  {
+    id: "SOL5712",
+    name: "drift-perp-market-manipulation",
+    severity: "critical",
+    category: "defi",
+    description: "Detection of perpetual market manipulation patterns (Drift audit)",
+    pattern: /perp.*market|perpetual|funding|mark_price|oracle_price/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/perp.*market|perpetual/i.test(content)) {
+        if (!/oracle.*guardrail|price.*band|deviation.*limit/i.test(content)) {
+          issues.push("Perpetual market without oracle guardrails");
+        }
+        if (!/open_interest.*limit|max_position/i.test(content)) {
+          issues.push("Perpetual market without open interest limits");
+        }
+        if (!/funding.*cap|max_funding/i.test(content)) {
+          issues.push("Perpetual market without funding rate caps");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5713",
+    name: "drift-liquidation-engine-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of liquidation engine exploits in perp protocols",
+    pattern: /liquidat|margin_call|under_collateral|bankruptcy/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/liquidat/i.test(content)) {
+        if (!/partial.*liquidat|full.*liquidat/i.test(content)) {
+          issues.push("Liquidation without partial liquidation option");
+        }
+        if (!/liquidation.*fee|penalty/i.test(content)) {
+          issues.push("Liquidation without fee mechanism");
+        }
+        if (!/insurance.*fund|backstop/i.test(content)) {
+          issues.push("Liquidation without insurance fund backstop");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== PHOENIX DEX PATTERNS (MadShield + OtterSec) =====
+  {
+    id: "SOL5714",
+    name: "phoenix-orderbook-manipulation",
+    severity: "high",
+    category: "defi",
+    description: "Detection of orderbook manipulation vulnerabilities (Phoenix audit)",
+    pattern: /orderbook|order_book|limit_order|market_order/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/orderbook|order_book/i.test(content)) {
+        if (!/self_trade.*prevent|wash.*trade/i.test(content)) {
+          issues.push("Orderbook without self-trade prevention");
+        }
+        if (!/order.*expiry|time_in_force/i.test(content)) {
+          issues.push("Orderbook without order expiry mechanism");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5715",
+    name: "phoenix-matching-engine-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of matching engine exploits in CLOB DEXes",
+    pattern: /match.*order|fill.*order|execute.*trade|matching.*engine/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/match.*order|matching.*engine/i.test(content)) {
+        if (!/price.*time.*priority|fifo/i.test(content)) {
+          issues.push("Matching engine without price-time priority");
+        }
+        if (!/atomic|all_or_none|fill_or_kill/i.test(content)) {
+          issues.push("Consider adding atomic order types");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== ORCA WHIRLPOOLS PATTERNS (Kudelski + Neodyme) =====
+  {
+    id: "SOL5716",
+    name: "whirlpool-tick-array-exploit",
+    severity: "critical",
+    category: "defi",
+    description: "Detection of Whirlpool tick array manipulation vulnerabilities",
+    pattern: /tick_array|tick_sequence|tick_spacing|current_tick/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/tick_array|tick_sequence/i.test(content)) {
+        if (!/tick_array.*pda|seeds.*tick/i.test(content)) {
+          issues.push("Tick array without PDA derivation verification");
+        }
+        if (!/tick_spacing.*check|valid.*tick/i.test(content)) {
+          issues.push("Tick operations without spacing validation");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5717",
+    name: "whirlpool-position-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of Whirlpool position manipulation vulnerabilities",
+    pattern: /position|liquidity_position|open_position|close_position/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/open_position|create_position/i.test(content)) {
+        if (!/position_mint|position_token/i.test(content)) {
+          issues.push("Position without position NFT mint");
+        }
+      }
+      if (/close_position/i.test(content)) {
+        if (!/collect_fee.*first|withdraw_rewards/i.test(content)) {
+          issues.push("Position close may leave uncollected fees");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== MARINADE FINANCE PATTERNS (Kudelski + Ackee + Neodyme) =====
+  {
+    id: "SOL5718",
+    name: "liquid-staking-exploit",
+    severity: "high",
+    category: "staking",
+    description: "Detection of liquid staking vulnerabilities (Marinade audits)",
+    pattern: /liquid_staking|stake_pool|msol|lst|staked_sol/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/liquid_staking|stake_pool/i.test(content)) {
+        if (!/exchange_rate|price_per_share/i.test(content)) {
+          issues.push("Liquid staking without exchange rate tracking");
+        }
+        if (!/delayed_unstake|unbonding/i.test(content)) {
+          issues.push("Consider delayed unstake for large amounts");
+        }
+        if (!/validator_list|delegation_strategy/i.test(content)) {
+          issues.push("Stake pool without validator delegation strategy");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5719",
+    name: "stake-delegation-manipulation",
+    severity: "high",
+    category: "staking",
+    description: "Detection of stake delegation manipulation vulnerabilities",
+    pattern: /delegate_stake|redelegate|merge_stake|split_stake/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/delegate_stake|redelegate/i.test(content)) {
+        if (!/cooldown|epoch.*boundary/i.test(content)) {
+          issues.push("Stake operations without epoch boundary checks");
+        }
+        if (!/validator.*score|performance.*check/i.test(content)) {
+          issues.push("Delegation without validator performance verification");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== MANGO MARKETS PATTERNS (Neodyme) =====
+  {
+    id: "SOL5720",
+    name: "mango-perp-insurance-fund",
+    severity: "critical",
+    category: "defi",
+    description: "Detection of insurance fund depletion vulnerabilities (Mango audit)",
+    pattern: /insurance_fund|socialized_loss|bankruptcy_fund/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/insurance_fund|bankruptcy_fund/i.test(content)) {
+        if (!/fund_balance.*check|sufficient.*fund/i.test(content)) {
+          issues.push("Insurance fund usage without balance check");
+        }
+        if (!/replenish|contribute|fee.*to.*fund/i.test(content)) {
+          issues.push("Insurance fund without replenishment mechanism");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5721",
+    name: "mango-spot-margin-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of spot margin trading exploits",
+    pattern: /spot_margin|margin_trade|leverage_spot|borrow_spot/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/spot_margin|margin_trade/i.test(content)) {
+        if (!/initial_margin|maintenance_margin/i.test(content)) {
+          issues.push("Spot margin without initial/maintenance margin requirements");
+        }
+        if (!/borrow_limit|utilization_cap/i.test(content)) {
+          issues.push("Margin trading without borrow limits");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== SOLIDO PATTERNS (Bramah + Neodyme) =====
+  {
+    id: "SOL5722",
+    name: "solido-validator-management",
+    severity: "medium",
+    category: "staking",
+    description: "Detection of validator management vulnerabilities (Solido audits)",
+    pattern: /validator_list|add_validator|remove_validator|validator_score/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/add_validator|remove_validator/i.test(content)) {
+        if (!/governance|multisig|admin/i.test(content)) {
+          issues.push("Validator list changes without governance");
+        }
+        if (!/validator.*vote|committee/i.test(content)) {
+          issues.push("Validator changes without committee approval");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== PYTH ORACLE PATTERNS (Zellic) =====
+  {
+    id: "SOL5723",
+    name: "pyth-price-confidence-check",
+    severity: "high",
+    category: "oracle",
+    description: "Detection of Pyth oracle usage without confidence interval checks",
+    pattern: /pyth|price_feed|get_price|price_account/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/pyth.*price|price_feed/i.test(content)) {
+        if (!/confidence|conf\b|uncertainty/i.test(content)) {
+          issues.push("Pyth price used without confidence interval check");
+        }
+        if (!/expo|exponent|scale/i.test(content)) {
+          issues.push("Pyth price used without exponent handling");
+        }
+        if (!/publish_time|price_age|stale/i.test(content)) {
+          issues.push("Pyth price used without staleness check");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5724",
+    name: "pyth-ema-price-usage",
+    severity: "medium",
+    category: "oracle",
+    description: "Detection of Pyth EMA price usage patterns",
+    pattern: /ema_price|twap_price|ema_conf/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/ema_price|twap/i.test(content)) {
+        if (!/ema_conf|ema_confidence/i.test(content)) {
+          issues.push("Pyth EMA price without EMA confidence check");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== QUARRY MINING PATTERNS (Quantstamp) =====
+  {
+    id: "SOL5725",
+    name: "quarry-reward-manipulation",
+    severity: "high",
+    category: "defi",
+    description: "Detection of quarry/mining reward manipulation vulnerabilities",
+    pattern: /quarry|mining|reward_rate|emission_rate|staking_reward/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/quarry|mining.*reward/i.test(content)) {
+        if (!/reward_per_token|accumulated_reward/i.test(content)) {
+          issues.push("Mining rewards without per-token accumulator");
+        }
+        if (!/update_reward.*before|accrue.*first/i.test(content)) {
+          issues.push("Reward claim may not accrue pending rewards first");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== SABER STABLE SWAP PATTERNS (Bramah) =====
+  {
+    id: "SOL5726",
+    name: "stableswap-imbalance-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of stableswap imbalance exploits (Saber audit)",
+    pattern: /stable_swap|curve|amplification|a_factor/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/stable_swap|amplification/i.test(content)) {
+        if (!/imbalance_fee|withdraw_imbalance/i.test(content)) {
+          issues.push("Stableswap without imbalance fees");
+        }
+        if (!/amp.*ramp|a_factor.*change/i.test(content)) {
+          issues.push("Amplification factor changes should be ramped over time");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== SOLEND LENDING PATTERNS (Kudelski) =====
+  {
+    id: "SOL5727",
+    name: "solend-interest-model-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of interest rate model exploits (Solend audit)",
+    pattern: /interest_rate|utilization_rate|borrow_rate|supply_rate/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/interest_rate|utilization/i.test(content)) {
+        if (!/optimal_utilization|kink/i.test(content)) {
+          issues.push("Interest model without optimal utilization kink");
+        }
+        if (!/max_rate|rate_cap/i.test(content)) {
+          issues.push("Interest rate without maximum cap");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5728",
+    name: "solend-obligation-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of obligation (borrow position) exploits",
+    pattern: /obligation|borrow_position|user_position|collateral_deposit/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/obligation|borrow_position/i.test(content)) {
+        if (!/refresh_obligation|update_obligation/i.test(content)) {
+          issues.push("Obligation accessed without refresh - may use stale data");
+        }
+        if (!/max_obligation|position_limit/i.test(content)) {
+          issues.push("No maximum obligation limit");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== SWIM PROTOCOL PATTERNS (Kudelski) =====
+  {
+    id: "SOL5729",
+    name: "swim-cross-chain-message",
+    severity: "high",
+    category: "cross-chain",
+    description: "Detection of cross-chain message handling vulnerabilities",
+    pattern: /cross_chain.*message|bridge.*message|relay.*message/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/cross_chain.*message|bridge.*message/i.test(content)) {
+        if (!/message_hash|hash_message/i.test(content)) {
+          issues.push("Cross-chain message without hash verification");
+        }
+        if (!/sequence|nonce|message_id/i.test(content)) {
+          issues.push("Cross-chain message without sequence/nonce for replay protection");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== FRIKTION VOLT PATTERNS (Kudelski) =====
+  {
+    id: "SOL5730",
+    name: "volt-epoch-transition-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of vault epoch transition exploits (Friktion audit)",
+    pattern: /epoch_transition|round_transition|vault_epoch|epoch_end/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/epoch_transition|round_transition/i.test(content)) {
+        if (!/pending_deposit|pending_withdraw/i.test(content)) {
+          issues.push("Epoch transition without handling pending deposits/withdrawals");
+        }
+        if (!/settle.*before|finalize.*epoch/i.test(content)) {
+          issues.push("Epoch transition without settlement");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== HUBBLE PROTOCOL PATTERNS (Kudelski) =====
+  {
+    id: "SOL5731",
+    name: "hubble-collateral-ratio-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of collateral ratio manipulation vulnerabilities (Hubble audit)",
+    pattern: /collateral_ratio|cr\b|mcr|min_collateral/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/collateral_ratio|mcr\b/i.test(content)) {
+        if (!/oracle.*price|external.*price/i.test(content)) {
+          issues.push("Collateral ratio calculated without oracle price");
+        }
+        if (!/recovery_mode|global_cr/i.test(content)) {
+          issues.push("No recovery mode for systemically low collateral");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== HEDGE PROTOCOL PATTERNS (Kudelski + OtterSec + Sec3) =====
+  {
+    id: "SOL5732",
+    name: "hedge-cdp-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of CDP (Collateralized Debt Position) exploits",
+    pattern: /cdp|vault_position|debt_position|mint_stable/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/cdp|debt_position/i.test(content)) {
+        if (!/liquidation_threshold|health_factor/i.test(content)) {
+          issues.push("CDP without health factor tracking");
+        }
+        if (!/stability_fee|interest_accrual/i.test(content)) {
+          issues.push("CDP without stability fee accrual");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== INVARIANT PATTERNS (Sec3) =====
+  {
+    id: "SOL5733",
+    name: "invariant-clmm-position",
+    severity: "high",
+    category: "defi",
+    description: "Detection of Invariant CLMM position vulnerabilities",
+    pattern: /invariant|position_list|fee_tier|sqrt_price/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/invariant|sqrt_price/i.test(content)) {
+        if (!/price_limit|sqrt_price_limit/i.test(content)) {
+          issues.push("CLMM swap without price limit");
+        }
+        if (!/sqrt_price_x64|q64/i.test(content)) {
+          issues.push("Consider using fixed-point sqrt price for precision");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== UXD PROTOCOL PATTERNS (Sec3) =====
+  {
+    id: "SOL5734",
+    name: "uxd-redeemable-parity",
+    severity: "high",
+    category: "defi",
+    description: "Detection of redeemable stablecoin parity vulnerabilities",
+    pattern: /redeemable|redeem_stable|parity|backing_ratio/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/redeemable|redeem_stable/i.test(content)) {
+        if (!/redemption_fee|exit_fee/i.test(content)) {
+          issues.push("Redeemable stablecoin without redemption fee");
+        }
+        if (!/cooldown|redemption_delay/i.test(content)) {
+          issues.push("Consider redemption cooldown to prevent runs");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== MEAN PROTOCOL PATTERNS (Sec3) =====
+  {
+    id: "SOL5735",
+    name: "mean-dca-exploit",
+    severity: "medium",
+    category: "defi",
+    description: "Detection of DCA (Dollar Cost Averaging) protocol vulnerabilities",
+    pattern: /dca|dollar_cost|recurring_swap|scheduled_trade/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/dca|recurring_swap/i.test(content)) {
+        if (!/slippage_per_trade|max_slippage/i.test(content)) {
+          issues.push("DCA trades without per-trade slippage limits");
+        }
+        if (!/cancel_order|stop_dca/i.test(content)) {
+          issues.push("DCA without cancellation mechanism");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== DEBRIDGE PATTERNS (Neodyme) =====
+  {
+    id: "SOL5736",
+    name: "debridge-claim-validation",
+    severity: "critical",
+    category: "cross-chain",
+    description: "Detection of cross-chain claim validation vulnerabilities",
+    pattern: /claim|redeem.*bridge|unlock_asset|release_token/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/claim.*bridge|unlock_asset/i.test(content)) {
+        if (!/proof.*verify|merkle.*proof|inclusion_proof/i.test(content)) {
+          issues.push("Bridge claim without proof verification");
+        }
+        if (!/claim_hash|unique_claim/i.test(content)) {
+          issues.push("Bridge claim without unique claim hash");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== PORT FINANCE PATTERNS (Kudelski + SlowMist) =====
+  {
+    id: "SOL5737",
+    name: "port-max-withdraw-bug",
+    severity: "high",
+    category: "defi",
+    description: "Detection of maximum withdraw calculation bugs (Port Finance PoC)",
+    pattern: /max_withdraw|available_liquidity|withdrawable/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/max_withdraw|withdrawable/i.test(content)) {
+        if (!/min\(|cmp::min|smaller/i.test(content)) {
+          issues.push("Max withdraw calculation may not consider all constraints");
+        }
+        if (!/reserve_liquidity|available_tokens/i.test(content)) {
+          issues.push("Withdraw calculation should consider reserve liquidity");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== STREAMFLOW PATTERNS (Opcodes) =====
+  {
+    id: "SOL5738",
+    name: "streamflow-vesting-exploit",
+    severity: "medium",
+    category: "defi",
+    description: "Detection of token vesting/streaming vulnerabilities",
+    pattern: /vesting|stream|linear_unlock|cliff/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/vesting|stream/i.test(content)) {
+        if (!/start_time|cliff_time/i.test(content)) {
+          issues.push("Vesting without start time or cliff");
+        }
+        if (!/cancel_stream|pause_stream/i.test(content)) {
+          issues.push("Consider stream cancellation/pause mechanism");
+        }
+        if (!/claimed|withdrawn_amount/i.test(content)) {
+          issues.push("Vesting should track claimed amount");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== LIGHT PROTOCOL PATTERNS (HashCloak) =====
+  {
+    id: "SOL5739",
+    name: "light-zk-proof-verification",
+    severity: "critical",
+    category: "privacy",
+    description: "Detection of ZK proof verification vulnerabilities",
+    pattern: /zk_proof|zero_knowledge|groth16|plonk|verify_proof/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/zk_proof|verify_proof/i.test(content)) {
+        if (!/verification_key|vk\b/i.test(content)) {
+          issues.push("ZK proof verification without verification key");
+        }
+        if (!/public_input|public_signal/i.test(content)) {
+          issues.push("ZK proof without public input binding");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== MAPLE FINANCE PATTERNS (Bramah) =====
+  {
+    id: "SOL5740",
+    name: "maple-pool-delegate-exploit",
+    severity: "high",
+    category: "defi",
+    description: "Detection of pool delegate vulnerabilities in lending pools",
+    pattern: /pool_delegate|loan_manager|fund_loan|default/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/pool_delegate|loan_manager/i.test(content)) {
+        if (!/delegate_fee|management_fee/i.test(content)) {
+          issues.push("Pool delegate without fee mechanism");
+        }
+        if (!/delegate_stake|skin_in_game/i.test(content)) {
+          issues.push("Pool delegate without stake requirement");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== CASHMERE MULTISIG PATTERNS (OtterSec) =====
+  {
+    id: "SOL5741",
+    name: "cashmere-multisig-exploit",
+    severity: "high",
+    category: "access-control",
+    description: "Detection of multisig implementation vulnerabilities",
+    pattern: /multisig|multi_sig|threshold_sig|m_of_n/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/multisig|multi_sig/i.test(content)) {
+        if (!/unique.*signature|duplicate.*check/i.test(content)) {
+          issues.push("Multisig without duplicate signature check");
+        }
+        if (!/signer.*order|canonical.*order/i.test(content)) {
+          issues.push("Consider enforcing signer order for deterministic verification");
+        }
+        if (!/nonce|sequence/i.test(content)) {
+          issues.push("Multisig transaction without nonce/sequence");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== SQUADS PROTOCOL PATTERNS (OtterSec) =====
+  {
+    id: "SOL5742",
+    name: "squads-proposal-execution",
+    severity: "high",
+    category: "governance",
+    description: "Detection of Squads-style proposal execution vulnerabilities",
+    pattern: /proposal_execute|execute_instruction|batch_execute/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/proposal_execute|batch_execute/i.test(content)) {
+        if (!/approved_by|threshold_met/i.test(content)) {
+          issues.push("Proposal execution without threshold verification");
+        }
+        if (!/instruction.*verify|validate_instruction/i.test(content)) {
+          issues.push("Batch execution without instruction validation");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== TRIDENT FUZZING PATTERNS (Ackee) =====
+  {
+    id: "SOL5743",
+    name: "trident-fuzzable-vulnerabilities",
+    severity: "medium",
+    category: "testing",
+    description: "Detection of patterns that should be fuzz-tested with Trident",
+    pattern: /arithmetic|overflow|underflow|division|modulo/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/\+|\-|\*|\/|%/i.test(content) && /u64|u128|i64|i128/i.test(content)) {
+        if (!/checked_|saturating_|wrapping_/i.test(content)) {
+          issues.push("Arithmetic operation should be fuzz-tested for overflow/underflow");
+        }
+      }
+      if (/if.*amount|if.*value|match.*input/i.test(content)) {
+        issues.push("Input-dependent branches should be fuzz-tested");
+      }
+      return issues;
+    }
+  },
+  // ===== BLOCKWORKS CHECKED MATH PATTERNS =====
+  {
+    id: "SOL5744",
+    name: "blockworks-checked-math-macro",
+    severity: "high",
+    category: "arithmetic",
+    description: "Detection of unsafe arithmetic that should use Blockworks checked_math",
+    pattern: /\+\s*=|\-\s*=|\*\s*=|\/\s*=/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/\+=|\-=|\*=|\/=/i.test(content)) {
+        if (!/checked!|I80F48|require!/i.test(content)) {
+          issues.push("Compound arithmetic assignment without checked! macro");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== ANCHOR TEST UI PATTERNS =====
+  {
+    id: "SOL5745",
+    name: "test-coverage-gaps",
+    severity: "low",
+    category: "testing",
+    description: "Detection of potential test coverage gaps",
+    pattern: /pub\s+fn\s+\w+|instruction|handler/gi,
+    detector: (content) => {
+      const issues = [];
+      const handlers = content.match(/pub\s+fn\s+\w+/gi) || [];
+      if (handlers.length > 0) {
+        if (!/\#\[test\]|test_/i.test(content)) {
+          issues.push("Instruction handlers should have corresponding tests");
+        }
+      }
+      return issues;
+    }
+  },
+  // ===== ADDITIONAL SECURITY PATTERNS =====
+  {
+    id: "SOL5746",
+    name: "rent-exemption-exploitation",
+    severity: "medium",
+    category: "protocol",
+    description: "Detection of rent exemption exploitation vulnerabilities",
+    pattern: /rent_exempt|minimum_balance|rent.*sysvar/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/rent_exempt|minimum_balance/i.test(content)) {
+        if (!/lamports\s*>=|sufficient_lamports/i.test(content)) {
+          issues.push("Account creation may not ensure rent exemption");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5747",
+    name: "account-close-lamport-drain",
+    severity: "high",
+    category: "token",
+    description: "Detection of account closure lamport drain vulnerabilities",
+    pattern: /close\s*=|close_account|lamports.*=.*0/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/close\s*=|close_account/i.test(content)) {
+        if (!/destination|recipient|refund_to/i.test(content)) {
+          issues.push("Account close without specifying lamport destination");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5748",
+    name: "pda-authority-escalation",
+    severity: "high",
+    category: "access-control",
+    description: "Detection of PDA authority escalation vulnerabilities",
+    pattern: /pda.*authority|authority.*pda|signer_seeds/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/pda.*authority|signer_seeds/i.test(content)) {
+        if (!/bump.*verify|canonical_bump/i.test(content)) {
+          issues.push("PDA authority without bump verification");
+        }
+        if (!/seeds.*check|derive.*verify/i.test(content)) {
+          issues.push("PDA authority without seed verification");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5749",
+    name: "cross-program-reentrancy",
+    severity: "critical",
+    category: "reentrancy",
+    description: "Detection of cross-program reentrancy vulnerabilities",
+    pattern: /invoke.*after|cpi.*then|callback.*invoke/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/invoke|cpi/i.test(content)) {
+        if (/after.*invoke|post.*cpi/i.test(content)) {
+          issues.push("State access after CPI - potential reentrancy");
+        }
+      }
+      if (/callback|on_return/i.test(content)) {
+        if (!/reentrancy.*guard|lock/i.test(content)) {
+          issues.push("Callback without reentrancy guard");
+        }
+      }
+      return issues;
+    }
+  },
+  {
+    id: "SOL5750",
+    name: "token-2022-hook-exploit",
+    severity: "high",
+    category: "token",
+    description: "Detection of Token-2022 transfer hook exploitation",
+    pattern: /transfer_hook|execute_transfer|hook_program/gi,
+    detector: (content) => {
+      const issues = [];
+      if (/transfer_hook|hook_program/i.test(content)) {
+        if (!/hook.*validate|verify.*hook/i.test(content)) {
+          issues.push("Transfer hook without validation");
+        }
+        if (!/compute.*limit|hook.*gas/i.test(content)) {
+          issues.push("Transfer hook without compute limit consideration");
+        }
+      }
+      return issues;
+    }
+  }
+];
+function checkBatch95Patterns(parsed) {
+  const issues = [];
+  const content = parsed.content;
+  for (const pattern of batch95Patterns) {
+    if (pattern.pattern.test(content)) {
+      const detectedIssues = pattern.detector(content);
+      for (const issue of detectedIssues) {
+        issues.push({
+          id: pattern.id,
+          name: pattern.name,
+          severity: pattern.severity,
+          message: `${pattern.description}: ${issue}`
+        });
+      }
+    }
+    pattern.pattern.lastIndex = 0;
+  }
+  return issues;
+}
+
 // src/patterns/index.ts
 var CORE_PATTERNS = [
   {
@@ -32460,6 +34825,32 @@ async function runPatterns(input) {
   }
   try {
     findings.push(...scanBatch93({ content: input.rust?.content || "", file: input.path }));
+  } catch (error) {
+  }
+  try {
+    const batch94Results = checkBatch94Patterns({ content: input.rust?.content || "", file: input.path });
+    for (const r of batch94Results) {
+      findings.push({
+        id: r.id,
+        title: r.name,
+        severity: r.severity,
+        description: r.message,
+        location: { file: input.path, line: r.line }
+      });
+    }
+  } catch (error) {
+  }
+  try {
+    const batch95Results = checkBatch95Patterns({ content: input.rust?.content || "", file: input.path });
+    for (const r of batch95Results) {
+      findings.push({
+        id: r.id,
+        title: r.name,
+        severity: r.severity,
+        description: r.message,
+        location: { file: input.path, line: r.line }
+      });
+    }
   } catch (error) {
   }
   const seen = /* @__PURE__ */ new Set();
