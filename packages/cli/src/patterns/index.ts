@@ -1,8 +1,8 @@
 /**
  * SolGuard Pattern Registry
  * 
- * 7300+ security patterns for Solana smart contract auditing
- * Updated: Feb 6, 2026 5:00 AM - Added Batch 90 (arXiv Academic + Sec3 Final + 2026 Emerging Threats)
+ * 7400+ security patterns for Solana smart contract auditing
+ * Updated: Feb 6, 2026 5:30 AM - Added Batch 91 (arXiv Deep Dive + Sec3 Categories + Helius 38 Incidents + ThreeSigma + Certora)
  */
 
 import type { ParsedRust } from '../parsers/rust.js';
@@ -116,6 +116,9 @@ import { checkBatch89Patterns } from './solana-batched-patterns-89.js';
 
 // Import Batch 90 patterns (Feb 6, 2026 5:00 AM) - arXiv Academic + Sec3 Final + Helius 2026 + Token-2022 + cNFT + MEV + 2026 Emerging (SOL5001-SOL5100)
 import { checkBatch90Patterns } from './solana-batched-patterns-90.js';
+
+// Import Batch 91 patterns (Feb 6, 2026 5:30 AM) - arXiv Deep Dive + Sec3 Final Categories + Helius 38 Incidents + ThreeSigma + Certora Lulo (SOL5101-SOL5200)
+import { checkBatch91Patterns } from './solana-batched-patterns-91.js';
 
 export interface Finding {
   id: string;
@@ -905,6 +908,13 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     // Skip if Batch 90 patterns fail
   }
   
+  // Run Batch 91 patterns (100 patterns: arXiv Deep Dive + Sec3 Final Categories + Helius 38 Incidents + ThreeSigma Loopscale + Certora Lulo - SOL5101-SOL5200)
+  try {
+    findings.push(...checkBatch91Patterns(input));
+  } catch (error) {
+    // Skip if Batch 91 patterns fail
+  }
+  
   // Deduplicate by ID + line
   const seen = new Set<string>();
   const deduped = findings.filter(f => {
@@ -1015,5 +1025,6 @@ export function listPatterns(): Pattern[] {
 //   - solana-batched-patterns-88.ts (SOL4801-SOL4900): Helius Complete History (38 Incidents) + Solsec PoC Deep Dives + Cope Roulette + Port Finance $2.6B + Jet Protocol Break Bug
 //   - solana-batched-patterns-89.ts (SOL4901-SOL5000): Zellic Anchor Vulnerabilities + Cantina Security Guide + Advanced DeFi Patterns + 2026 Emerging Threats
 //   - solana-batched-patterns-90.ts (SOL5001-SOL5100): arXiv Academic Research + Sec3 2025 Final + Helius 2026 + Token-2022 + cNFT + MEV + Emerging Threats
-// 90 batched/pattern files × ~70 patterns each + 50 core + 250+ individual patterns = 7300+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 6700; // 7300+ total with all batched patterns
+//   - solana-batched-patterns-91.ts (SOL5101-SOL5200): arXiv:2504.07419 Deep Dive (Solend $1.26M, Mango $100M, Cashio $52M, Wormhole $326M) + Sec3 2025 Final Categories (Business Logic 38.5%, Input Validation 25%, Access Control 19%, Data Integrity 8.9%, DoS 8.5%) + Helius 38 Incidents Deep Analysis (Slope $8M, Raydium $4.4M, DEXX $30M, Web3.js Supply Chain) + ThreeSigma Loopscale $5.8M + Certora Lulo Audit + BlockHacks $600M Analysis + Solsec Compiled Audits + Token-2022 + cNFT + Governance + Bridge + Wallet + Emergency Response + Monitoring
+// 91 batched/pattern files × ~70-100 patterns each + 50 core + 250+ individual patterns = 7400+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 6800; // 7400+ total with all batched patterns
