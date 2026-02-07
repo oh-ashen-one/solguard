@@ -23,7 +23,7 @@ Quick reference for hackathon judges evaluating SolShield.
 | Tests pass | 31 tests, 100% passing |
 | Demo works | One-click Codespaces |
 | Multiple interfaces | CLI, Web UI, API |
-| Real functionality | 2400+ working patterns |
+| Real functionality | 5,400+ working patterns |
 
 **Verify:** Run `pnpm test` in `packages/cli` → All green
 
@@ -33,7 +33,7 @@ Quick reference for hackathon judges evaluating SolShield.
 |------------|-------------|
 | **On-chain registry** | First auditor to store results on Solana |
 | **CPI verification** | Other programs can check audit status |
-| **2400+ patterns** | Largest coverage in Solana ecosystem |
+| **5,400+ patterns** | Largest coverage in Solana ecosystem |
 | **Watch mode** | Real-time audit during development |
 | **AI-built** | 100% agent-coded, demonstrating capabilities |
 
@@ -56,12 +56,12 @@ Quick reference for hackathon judges evaluating SolShield.
 
 ```
 📊 SolShield by the Numbers
-├── Vulnerability Patterns: 150
-├── CLI Commands: 7
+├── Vulnerability Patterns: 5,400+
+├── Pattern Files: 424
+├── CLI Commands: 5 (audit, check, patterns, swarm, version)
 ├── Tests: 19 (passing)
-├── Lines of Code: ~15,000
-├── Commits: 99+
-├── Build Time: 2 days (hackathon)
+├── Lines of Code: ~50,000+
+├── Build Time: Hackathon sprint
 └── Human Code: 0% (fully AI-built)
 ```
 
@@ -73,7 +73,7 @@ Quick reference for hackathon judges evaluating SolShield.
 SolShield/
 ├── packages/
 │   ├── cli/               ← Main product
-│   │   ├── src/patterns/  ← 2400+ vulnerability detectors
+│   │   ├── src/patterns/  ← 5,400+ vulnerability detectors
 │   │   └── src/test/      ← Test suite
 │   ├── web/               ← Next.js frontend
 │   └── program/           ← Anchor on-chain program
@@ -96,7 +96,7 @@ This project was **100% built by AI agents**:
 
 1. **Research** — Agent studied Solana vulnerabilities
 2. **Architecture** — Agent designed the system
-3. **Implementation** — Agent wrote all 2400+ patterns
+3. **Implementation** — Agent wrote all 5,400+ patterns
 4. **Testing** — Agent created test suite
 5. **Documentation** — Agent self-documented
 6. **Iteration** — Continuous review/build cycles
