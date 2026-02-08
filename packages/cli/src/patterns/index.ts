@@ -48,6 +48,9 @@ import { checkBatch66Patterns } from './solana-batched-patterns-66.js';
 // Import Batch 67 patterns (Feb 5, 2026 8:30 PM) - 2025-2026 Emerging Attack Vectors + Infrastructure
 import { checkBatch67Patterns } from './solana-batched-patterns-67.js';
 
+// Import Batch 110 patterns (Feb 8, 2026 12:33 PM) - Zealynx 45-Check Deep Dive + Pinocchio Native Safety + 2025-2026 Advanced
+import { checkBatch110Patterns } from './solana-batched-patterns-110.js';
+
 // Import Batch 68 patterns (Feb 5, 2026 9:00 PM) - January 2026 Threats: Owner Phishing, Trust Wallet, Consensus Vulns
 import { checkBatch68Patterns } from './solana-batched-patterns-68.js';
 
@@ -1127,6 +1130,14 @@ export async function runPatterns(input: PatternInput): Promise<Finding[]> {
     // Skip if Batch 109 patterns fail
   }
   
+  // Run Batch 110 patterns (30 patterns: Zealynx 45-Check + Pinocchio Native + 2025-2026 Advanced - SOL7526-SOL7555)
+  try {
+    const batch110Results = checkBatch110Patterns(input);
+    findings.push(...batch110Results);
+  } catch (error) {
+    // Skip if Batch 110 patterns fail
+  }
+  
   // Deduplicate by ID + line
   const seen = new Set<string>();
   const deduped = findings.filter(f => {
@@ -1245,4 +1256,4 @@ export function listPatterns(): Pattern[] {
 //   - solana-batched-patterns-108.ts (SOL7051-SOL7200): Sec3 2025 Report (163 audits, 1,669 vulns) + arXiv:2504.07419 Academic Research (Lack of Check, Conflation, Tool Analysis)
 //   - solana-batched-patterns-109.ts (SOL7201-SOL7275): Helius Complete Exploit Mechanics Deep Dive - Solend Auth Bypass, Wormhole Guardian, Cashio Infinite Mint, Crema CLMM, Mango Oracle, Slope Key Exposure, 2024-2025 Latest Attacks
 // 109 batched/pattern files × ~70-100 patterns each + 50 core + 250+ individual patterns = 6800+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 7275; // 6800+ total with Batch 109
+export const PATTERN_COUNT = ALL_PATTERNS.length + 7555; // 6800+ total with Batch 110 (Zealynx + Pinocchio + 2025-2026 Advanced)
