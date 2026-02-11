@@ -4,6 +4,7 @@
 
 import { scan, type ScanResult, type Finding as SdkFinding } from '../sdk.js';
 import chalk from 'chalk';
+import { getContextNotices, displayContextNotices, displayDisclaimer, type ContextNotices } from '../context-notices.js';
 
 export interface Finding {
   id: string;
@@ -77,15 +78,20 @@ export async function auditCommand(path: string, options: AuditOptions = {}): Pr
   // Display if output is terminal
   const outputMode = options.output || options.format || 'terminal';
   if (outputMode === 'terminal' || outputMode === 'text') {
-    displayAuditResult(auditResult);
+    displayAuditResult(auditResult, result.notices);
   } else if (outputMode === 'json') {
-    console.log(JSON.stringify(auditResult, null, 2));
+    console.log(JSON.stringify({ ...auditResult, notices: result.notices }, null, 2));
   }
 
   return auditResult;
 }
 
-function displayAuditResult(result: AuditResult) {
+function displayAuditResult(result: AuditResult, notices?: ContextNotices) {
+  // Show context-aware notices before findings
+  if (notices) {
+    displayContextNotices(notices);
+  }
+
   if (result.findings.length === 0) {
     console.log(chalk.green('✅ No vulnerabilities found!'));
   } else {
@@ -119,4 +125,7 @@ function displayAuditResult(result: AuditResult) {
   console.log(`  ${chalk.gray('Low:')} ${result.summary.low}`);
   console.log(`  ${chalk.blue('Total:')} ${result.summary.total}`);
   console.log(chalk.gray(`  Duration: ${result.duration}ms\n`));
+
+  // Always show disclaimer footer
+  displayDisclaimer();
 }

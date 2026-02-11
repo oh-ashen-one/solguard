@@ -5,6 +5,21 @@ import Link from 'next/link';
 
 type InputMode = 'github' | 'upload' | 'paste';
 
+const KNOWN_AUDITED_PROTOCOLS = [
+  'jupiter', 'kamino', 'marinade', 'orca', 'raydium', 'mango',
+  'pyth', 'metaplex', 'sanctum', 'drift', 'phoenix', 'tensor', 'jito'
+];
+
+function isKnownAuditedProtocol(code: string, githubUrl: string): boolean {
+  const combined = (code + ' ' + githubUrl).toLowerCase();
+  return KNOWN_AUDITED_PROTOCOLS.some(p => combined.includes(p));
+}
+
+function isCpiWrapperFile(finding: any): boolean {
+  const loc = finding.location?.file || finding.location?.path || '';
+  return /cpi|wrapper|adapter|proxy/i.test(loc);
+}
+
 export default function Home() {
   const [inputMode, setInputMode] = useState<InputMode>('github');
   const [code, setCode] = useState('');
@@ -354,7 +369,7 @@ pub enum VaultError {
           
           <p className="text-xl text-zinc-400 text-center max-w-2xl mx-auto mb-12">
             AI-powered vulnerability detection for Anchor programs. 
-            7,000+ patterns. Instant analysis. Ship secure code.
+            7,000+ vulnerability patterns. Instant analysis. Ship secure code.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -409,7 +424,7 @@ pub enum VaultError {
         <div className="max-w-6xl mx-auto px-6 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { value: '6,919+', label: 'Vulnerability Patterns', sublabel: 'Based on real exploits' },
+              { value: '7,000+', label: 'Vulnerability Patterns', sublabel: 'Based on real exploits' },
               { value: '$600M+', label: 'Exploits Covered', sublabel: 'Wormhole, Mango, Cashio, more' },
               { value: '5', label: 'CLI Commands', sublabel: 'Full audit toolkit' },
               { value: '<1s', label: 'Analysis Time', sublabel: 'Instant results' },
@@ -597,6 +612,28 @@ pub enum VaultError {
               </div>
             ) : (
               <>
+                {/* Disclaimer Banner */}
+                <div className="mb-6 p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl flex items-start gap-3">
+                  <svg className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                  </svg>
+                  <p className="text-sm text-amber-200/80 leading-relaxed">
+                    SolShield uses pattern-matching against known vulnerability signatures. Findings require manual review and may include false positives in well-audited code.
+                  </p>
+                </div>
+
+                {/* Known Audited Protocol Banner */}
+                {isKnownAuditedProtocol(code, githubUrl) && (
+                  <div className="mb-6 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl flex items-start gap-3">
+                    <svg className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                    </svg>
+                    <p className="text-sm text-emerald-300/90 leading-relaxed">
+                      <span className="font-semibold text-emerald-400">Known Audited Protocol</span> — This protocol has undergone professional security audits. Findings are informational.
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between mb-8">
                   <h3 className="text-xl font-semibold">Audit Results</h3>
                   <span className={`px-4 py-1.5 rounded-full text-sm font-medium ${
@@ -627,46 +664,56 @@ pub enum VaultError {
                 {/* Findings */}
                 {result.findings?.length > 0 && (
                   <div className="space-y-4">
-                    {result.findings.map((finding: any, i: number) => (
-                      <div key={i} className={`p-5 bg-zinc-800/30 rounded-xl border-l-4 ${
-                        finding.severity === 'critical' ? 'border-red-500' :
-                        finding.severity === 'high' ? 'border-orange-500' :
-                        finding.severity === 'medium' ? 'border-yellow-500' :
-                        'border-blue-500'
-                      }`}>
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                            <span className={`px-2.5 py-1 rounded text-xs font-medium ${
-                              finding.severity === 'critical' ? 'bg-red-500/10 text-red-400' :
-                              finding.severity === 'high' ? 'bg-orange-500/10 text-orange-400' :
-                              finding.severity === 'medium' ? 'bg-yellow-500/10 text-yellow-400' :
-                              'bg-blue-500/10 text-blue-400'
-                            }`}>
-                              {finding.severity?.toUpperCase()}
-                            </span>
-                            <code className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded">{finding.id}</code>
+                    {result.findings.map((finding: any, i: number) => {
+                      const lowConfidence = isCpiWrapperFile(finding);
+                      return (
+                        <div key={i} className={`p-5 bg-zinc-800/30 rounded-xl border-l-4 ${
+                          lowConfidence ? 'border-zinc-500' :
+                          finding.severity === 'critical' ? 'border-red-500' :
+                          finding.severity === 'high' ? 'border-orange-500' :
+                          finding.severity === 'medium' ? 'border-yellow-500' :
+                          'border-blue-500'
+                        }`}>
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                              {lowConfidence ? (
+                                <span className="px-2.5 py-1 rounded text-xs font-medium bg-zinc-500/10 text-zinc-400 border border-zinc-500/20">
+                                  LOW CONFIDENCE
+                                </span>
+                              ) : (
+                                <span className={`px-2.5 py-1 rounded text-xs font-medium ${
+                                  finding.severity === 'critical' ? 'bg-red-500/10 text-red-400' :
+                                  finding.severity === 'high' ? 'bg-orange-500/10 text-orange-400' :
+                                  finding.severity === 'medium' ? 'bg-yellow-500/10 text-yellow-400' :
+                                  'bg-blue-500/10 text-blue-400'
+                                }`}>
+                                  {finding.severity?.toUpperCase()}
+                                </span>
+                              )}
+                              <code className="text-xs text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded">{finding.id}</code>
+                            </div>
+                            {finding.location?.line && (
+                              <span className="text-zinc-500 text-sm">Line {finding.location.line}</span>
+                            )}
                           </div>
-                          {finding.location?.line && (
-                            <span className="text-zinc-500 text-sm">Line {finding.location.line}</span>
-                          )}
-                        </div>
-                        <h4 className="font-semibold mt-3 text-white">{finding.title}</h4>
-                        <p className="text-zinc-400 text-sm mt-2 leading-relaxed">{finding.description}</p>
-                        {finding.suggestion && (
-                          <div className="mt-4 p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-lg">
-                            <div className="flex items-start gap-2">
-                              <svg className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                              </svg>
-                              <div>
-                                <span className="text-emerald-400 text-sm font-medium">Suggested Fix</span>
-                                <p className="text-zinc-300 text-sm mt-1">{finding.suggestion.split('\n')[0]}</p>
+                          <h4 className="font-semibold mt-3 text-white">{finding.title}</h4>
+                          <p className="text-zinc-400 text-sm mt-2 leading-relaxed">{finding.description}</p>
+                          {finding.suggestion && (
+                            <div className="mt-4 p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-lg">
+                              <div className="flex items-start gap-2">
+                                <svg className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                                <div>
+                                  <span className="text-emerald-400 text-sm font-medium">Suggested Fix</span>
+                                  <p className="text-zinc-300 text-sm mt-1">{finding.suggestion.split('\n')[0]}</p>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </>
@@ -718,7 +765,7 @@ pub enum VaultError {
               href="/patterns"
               className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
             >
-              View all 6,919+ patterns
+              View all 7,000+ patterns
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
               </svg>

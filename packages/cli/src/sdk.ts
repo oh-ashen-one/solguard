@@ -16,6 +16,7 @@ import { parseIdl } from './parsers/idl.js';
 import { runPatterns } from './patterns/index.js';
 import { existsSync, readdirSync, statSync, readFileSync } from 'fs';
 import { join, basename } from 'path';
+import { getContextNotices, DISCLAIMER_TEXT, CPI_NOTICE_TEXT, auditedProtocolNoticeText, type ContextNotices } from './context-notices.js';
 
 export interface ScanOptions {
   /** Include AI-powered explanations (requires ANTHROPIC_API_KEY) */
@@ -57,6 +58,9 @@ export interface ScanResult {
     total: number;
   };
   passed: boolean;
+  notices?: ContextNotices;
+  disclaimer: string;
+  contextMessages?: string[];
 }
 
 /**
@@ -165,6 +169,17 @@ export async function scan(path: string, options: ScanOptions = {}): Promise<Sca
       break;
   }
 
+  // Gather all code for context analysis
+  const allCode = rustFiles.map(f => {
+    try { return readFileSync(f, 'utf-8'); } catch { return ''; }
+  }).join('\n');
+  
+  const notices = getContextNotices(path, allCode);
+  const contextMessages: string[] = [];
+  if (notices.isCpiWrapper) contextMessages.push(CPI_NOTICE_TEXT);
+  if (notices.auditedProtocol) contextMessages.push(auditedProtocolNoticeText(notices.auditedProtocol));
+  contextMessages.push(DISCLAIMER_TEXT);
+
   return {
     programPath: path,
     programName,
@@ -173,6 +188,9 @@ export async function scan(path: string, options: ScanOptions = {}): Promise<Sca
     findings: allFindings,
     summary,
     passed,
+    notices,
+    disclaimer: DISCLAIMER_TEXT,
+    contextMessages,
   };
 }
 
