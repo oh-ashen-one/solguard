@@ -140,6 +140,44 @@ const PATTERNS = [
   }
 ];
 
+// Context-aware notices
+const KNOWN_AUDITED_ORGS_V1 = [
+  { name: 'Jupiter', patterns: ['jup-ag', 'jupiter-exchange'] },
+  { name: 'Kamino', patterns: ['kamino-finance', 'hubbleprotocol'] },
+  { name: 'Marinade', patterns: ['marinade-finance'] },
+  { name: 'Orca', patterns: ['orca-so'] },
+  { name: 'Raydium', patterns: ['raydium-io'] },
+  { name: 'Mango v4', patterns: ['blockworks-foundation'] },
+  { name: 'Pyth', patterns: ['pyth-network'] },
+  { name: 'Metaplex', patterns: ['metaplex-foundation'] },
+  { name: 'Sanctum', patterns: ['sanctumfi'] },
+  { name: 'Drift', patterns: ['drift-labs'] },
+  { name: 'Phoenix', patterns: ['ellipsis-labs'] },
+  { name: 'Tensor', patterns: ['tensor-hq', 'tensor-foundation'] },
+  { name: 'Jito', patterns: ['jito-foundation', 'jito-labs'] },
+];
+
+const DISCLAIMER_V1 = '📋 Note: SolShield uses pattern-matching against known vulnerability signatures. Findings require manual review. Pattern matches in audited, battle-tested protocols are typically informational.';
+
+function detectCpiWrapperV1(code: string): boolean {
+  const cpiIndicators = [/\bcpi::/g, /\bCpiContext\b/g, /\binvoke\b/g, /\binvoke_signed\b/g];
+  const businessLogic = [/\bif\s+.*\{/g, /\bmatch\s+/g, /\brequire!\s*\(/g, /checked_/g];
+  let cpi = 0, biz = 0;
+  for (const p of cpiIndicators) { p.lastIndex = 0; cpi += (code.match(p) || []).length; }
+  for (const p of businessLogic) { p.lastIndex = 0; biz += (code.match(p) || []).length; }
+  return /mod\s+cpi\b|crate.*cpi|\/cpi\/|_cpi\b/.test(code) || (cpi > 3 && cpi > biz * 2);
+}
+
+function detectAuditedProtocolV1(code: string): string | null {
+  const text = code.substring(0, 2000).toLowerCase();
+  for (const proto of KNOWN_AUDITED_ORGS_V1) {
+    for (const pat of proto.patterns) {
+      if (text.includes(pat)) return proto.name;
+    }
+  }
+  return null;
+}
+
 interface Finding {
   id: string;
   title: string;
@@ -240,6 +278,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Context notices
+    const isCpiWrapper = detectCpiWrapperV1(code);
+    const auditedProtocol = detectAuditedProtocolV1(code);
+    const contextMessages: string[] = [];
+    if (isCpiWrapper) contextMessages.push('⚠️ CPI Interface Detected — This appears to be a cross-program invocation wrapper, not the core program. Findings are informational and may not represent actual vulnerabilities.');
+    if (auditedProtocol) contextMessages.push(`✅ Known Audited Protocol — ${auditedProtocol} has undergone professional security audits. Findings are informational and intended for educational purposes.`);
+    contextMessages.push(DISCLAIMER_V1);
+
     // Run inline pattern detection
     const findings = analyzeCode(code);
     
@@ -267,6 +313,10 @@ export async function POST(request: NextRequest) {
       executionTimeMs: Date.now() - startTime,
       apiVersion: '1.0.0',
       note: 'Web API uses simplified detection. Full CLI has 150+ patterns.',
+      isCpiWrapper,
+      auditedProtocol,
+      contextMessages,
+      disclaimer: DISCLAIMER_V1,
     };
 
     // Format response

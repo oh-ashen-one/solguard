@@ -645,6 +645,26 @@ pub enum VaultError {
                   </span>
                 </div>
                 
+                {/* Context Notices */}
+                {result.contextMessages && result.contextMessages.length > 0 && (
+                  <div className="space-y-3 mb-8">
+                    {result.contextMessages.map((msg: string, i: number) => {
+                      const isWarning = msg.startsWith('⚠️');
+                      const isSuccess = msg.startsWith('✅');
+                      const isNote = msg.startsWith('📋');
+                      return (
+                        <div key={i} className={`p-4 rounded-xl border text-sm ${
+                          isWarning ? 'bg-yellow-500/5 border-yellow-500/20 text-yellow-300' :
+                          isSuccess ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-300' :
+                          'bg-zinc-800/50 border-zinc-700 text-zinc-400'
+                        }`}>
+                          {msg}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
                 {/* Summary */}
                 <div className="grid grid-cols-5 gap-4 mb-8 p-4 bg-zinc-800/50 rounded-xl">
                   {[
