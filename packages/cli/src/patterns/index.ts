@@ -1266,5 +1266,7 @@ export function listPatterns(): Pattern[] {
 //   - solana-batched-patterns-107.ts (SOL6901-SOL7050): DEV.to 15 Critical Vulns + Helius Complete Exploit History (Solend, Audius, Nirvana, OptiFi, UXD, Tulip, Solareum, Pump.fun)
 //   - solana-batched-patterns-108.ts (SOL7051-SOL7200): Sec3 2025 Report (163 audits, 1,669 vulns) + arXiv:2504.07419 Academic Research (Lack of Check, Conflation, Tool Analysis)
 //   - solana-batched-patterns-109.ts (SOL7201-SOL7275): Helius Complete Exploit Mechanics Deep Dive - Solend Auth Bypass, Wormhole Guardian, Cashio Infinite Mint, Crema CLMM, Mango Oracle, Slope Key Exposure, 2024-2025 Latest Attacks
-// 109 batched/pattern files × ~70-100 patterns each + 50 core + 250+ individual patterns = 6800+
-export const PATTERN_COUNT = ALL_PATTERNS.length + 7585; // 6800+ total with Batch 55-Zealynx (Token-2022, CPI, Oracle, Real Exploits)
+//   - solana-batched-patterns-110.ts (SOL7526-SOL7555): Zealynx 45-Check Deep Dive + Pinocchio Native Safety + 2025-2026 Advanced Attack Vectors
+//   - solana-batched-patterns-111.ts (SOL7586-SOL7615): Jan 2026 Agave Gossip/Vote Vulns + Loopscale PT Token Pricing + LISA Governance + RPC Privacy + Validator Coordination
+// 111 batched/pattern files × ~70-100 patterns each + 50 core + 250+ individual patterns = 6889+
+export const PATTERN_COUNT = ALL_PATTERNS.length + 7615; // 6889+ total with Batch 111 (Agave v3.0.14, Loopscale, Governance)
